@@ -1,0 +1,30 @@
+# --- API Backend ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+pydantic==2.7.0
+python-multipart==0.0.9        # upload de fichiers JSONL via l'API
+
+# --- Interface Streamlit ---
+streamlit==1.35.0
+requests==2.32.0               # appels HTTP vers le backend
+
+# --- Providers LLM ---
+openai==1.35.0                 # OpenAI + Mistral API (compatible)
+ollama==0.2.1                  # Client Ollama pour modèles locaux
+
+# --- Données ---
+jsonlines==4.0.0               # lecture/écriture fichiers JSONL
+
+# --- Configuration ---
+python-dotenv==1.0.1           # chargement des clés API depuis .env
+
+# --- Analyse Lot D ---
+sentence-transformers==3.0.0  # embeddings multilingues
+pandas==2.2.0                  # manipulation des résultats
+numpy==1.26.0                  # calculs vectoriels (cosinus…)
+plotly==5.22.0                 # graphiques interactifs dans Streamlit
+scikit-learn==1.5.0            # métriques de similarité
+
+# --- Tests ---
+pytest==8.2.0
+httpx==0.27.0                  # client HTTP pour tester FastAPI
