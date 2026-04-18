@@ -1,0 +1,36 @@
+"""
+Point d'entrée de l'API FastAPI.
+
+Lancement :
+    uvicorn api.main:app --reload --port 8000
+"""
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from api.routes import router
+
+app = FastAPI(
+    title="ELOQUENT – Cultural Robustness & Diversity",
+    description=(
+        "API pour piloter des runs LLM sur les données du challenge "
+        "ELOQUENT @ CLEF 2026."
+    ),
+    version="0.1.0",
+)
+
+# Autoriser les requêtes depuis le frontend Streamlit (Lot B)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router, prefix="/api")
+
+
+@app.get("/")
+async def root():
+    return {"message": "ELOQUENT Cultural Robustness & Diversity – API opérationnelle"}
+

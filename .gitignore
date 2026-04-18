@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Environnement virtuel
+.venv/
+venv/
+env/
+
+# Variables d'environnement (JAMAIS commit les clés API !)
+.env
+
+# Résultats de runs (trop volumineux pour git)
+data/output/*/
+
+# Configs de runs sauvegardées automatiquement
+configs/runs/*/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+

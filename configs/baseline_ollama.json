@@ -1,0 +1,23 @@
+{
+  "run_id": "baseline_mistral_nemo",
+  "description": "Baseline vanilla – Mistral-Nemo 12B (Ollama) – déterministe – 5 langues – pas de system prompt",
+  "provider": {
+    "type": "ollama",
+    "model": "mistral-nemo"
+  },
+  "generation": {
+    "temperature": 0.0,
+    "max_tokens": 256,
+    "top_p": 1.0,
+    "seed": 42
+  },
+  "pipeline": {
+    "input_dir": "data/input",
+    "output_dir": "data/output",
+    "languages": ["en", "fr", "de", "es", "ru"],
+    "dataset_types": ["specific", "unspecific"],
+    "request_delay": 0.0,
+    "system_prompt": null,
+    "prompt_template": null
+  }
+}
