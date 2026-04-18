@@ -80,8 +80,6 @@ class GeminiProvider(LLMProvider):
             max_tokens=generation.max_tokens,
             top_p=generation.top_p,
         )
-        if generation.seed is not None:
-            kwargs["seed"] = generation.seed
 
         response = self._client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content

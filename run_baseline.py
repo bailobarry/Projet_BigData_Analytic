@@ -39,8 +39,8 @@ def main() -> None:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/baseline.json",
-        help="Chemin vers le fichier de configuration JSON (défaut: configs/baseline.json)",
+        default="configs/baseline_gemini.json",
+        help="Chemin vers le fichier de configuration JSON (défaut: configs/baseline_gemini.json)",
     )
     parser.add_argument(
         "--languages",

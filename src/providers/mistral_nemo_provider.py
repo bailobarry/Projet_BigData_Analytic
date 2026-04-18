@@ -33,7 +33,6 @@ class MistralNemoProvider(LLMProvider):
     def __init__(self, config: RunConfig) -> None:
         prov = config.provider
         self._model = prov.model
-        self._label = prov.provider_label or "ollama"
         self._host = prov.ollama_host or "http://localhost:11434"
 
         # Client Ollama
@@ -49,7 +48,7 @@ class MistralNemoProvider(LLMProvider):
 
     @property
     def provider_name(self) -> str:
-        return self._label
+        return "ollama"
 
     @property
     def model_id(self) -> str:

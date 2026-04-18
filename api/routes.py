@@ -82,7 +82,7 @@ async def list_runs():
                 runs.append({
                     "run_id": data.get("run_id"),
                     "description": data.get("description", ""),
-                    "provider": data.get("provider", {}).get("provider_label"),
+                    "provider": data.get("provider", {}).get("type"),
                     "model": data.get("provider", {}).get("model"),
                     "created_at": data.get("created_at"),
                     "summary": summary,
