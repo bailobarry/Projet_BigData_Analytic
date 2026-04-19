@@ -4,9 +4,9 @@ uvicorn[standard]>=0.30.0
 pydantic>=2.7.0
 python-multipart>=0.0.9        # upload de fichiers JSONL via l'API
 
-# --- Interface Streamlit (Lot B) ---
-streamlit>=1.35.0
-requests>=2.32.0               # appels HTTP vers le backend
+# --- Interface Streamlit ---
+streamlit==1.56.0
+requests==2.32.0               # appels HTTP vers le backend
 
 # --- Providers LLM ---
 openai>=1.35.0                 # OpenAI + Groq + Mistral (API compatible)
