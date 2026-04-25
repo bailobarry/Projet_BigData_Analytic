@@ -56,7 +56,7 @@ class PipelineConfig(BaseModel):
     input_dir: str = Field("data/input", description="Répertoire des fichiers JSONL d'entrée")
     output_dir: str = Field("data/output", description="Répertoire racine de sortie")
     languages: List[str] = Field(
-        default=["en", "fr", "de", "es", "ru"],
+        default=["en", "fr", "de", "es", "it"],
         description="Codes langues à traiter",
     )
     dataset_types: List[str] = Field(

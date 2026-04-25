@@ -14,7 +14,7 @@
   "pipeline": {
     "input_dir": "data/input",
     "output_dir": "data/output",
-    "languages": ["en", "fr", "de", "es", "ru"],
+    "languages": ["en", "fr", "de", "es", "it"],
     "dataset_types": ["specific", "unspecific"],
     "request_delay": 0.0,
     "system_prompt": null,
