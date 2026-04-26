@@ -19,9 +19,14 @@ from typing import Optional
 # ── Registre des stratégies de system prompt ────────────────────────────────
 
 _SYSTEM_PROMPTS: dict[str, str] = {
-    # --- ajoutez vos variantes ici (Lot C) ---
-    # "neutral": "You are a helpful assistant. Answer concisely.",
-    # "roleplay_local": "You are a local cultural expert. ...",
+    # Variante 1 : Consigne de neutralité
+    "neutral": "You are a helpful assistant. Provide a neutral and concise answer in one sentence.",
+    
+    # Variante 2 : Rôle d'expert
+    "cultural_expert": "You are a local cultural expert. Answer the question based strictly on local customs and traditions of the region mentioned.",
+    
+    # Variante 3 : Contrainte stricte de format
+    "short_form": "Answer in exactly one short sentence. Do not repeat the question or provide preamble."
 }
 
 
@@ -56,23 +61,12 @@ def apply_prompt_template(
     prompt: str,
     template: Optional[str] = None,
 ) -> str:
-    """
-    Applique un template de reformulation au prompt brut.
-
-    Parameters
-    ----------
-    prompt : str
-        Le texte original issu du fichier JSONL.
-    template : str | None
-        Template avec placeholder ``{prompt}``.
-        ``None`` → retourne le prompt tel quel (baseline).
-
-    Returns
-    -------
-    str
-        Le prompt éventuellement reformulé.
-    """
+ 
     if template is None:
-        return prompt
-    return template.format(prompt=prompt)
+        return prompt.strip()
+    
+    try:
+        return template.format(prompt=prompt)
+    except KeyError:
+        return f"{template} {prompt}"
 

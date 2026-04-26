@@ -1,0 +1,23 @@
+{
+  "run_id": "variant_expert_mistral",
+  "description": "Variante Expert Culturel - Test de diversité (Lot C)",
+  "provider": {
+    "type": "ollama",
+    "model": "mistral-nemo"
+  },
+  "generation": {
+    "temperature": 0.0,
+    "max_tokens": 256,
+    "top_p": 1.0,
+    "seed": 42
+  },
+  "pipeline": {
+    "input_dir": "data/input",
+    "output_dir": "data/output",
+    "languages": ["en", "fr", "de", "es", "it"],
+    "dataset_types": ["specific", "unspecific"],
+    "request_delay": 0.0,
+    "system_prompt": "cultural_expert",
+    "prompt_template": "As a local expert, answer this: {prompt}"
+  }
+}
