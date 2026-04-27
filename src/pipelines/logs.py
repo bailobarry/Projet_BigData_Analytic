@@ -55,7 +55,8 @@ def setup_logging(run_id: str, output_dir: str = "data/output") -> logging.Logge
     logger.addHandler(console)
 
     # Handler fichier
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler = logging.FileHandler(log_file, encoding="utf-8", delay=False)
+    file_handler.stream = open(log_file, "a", encoding="utf-8", buffering=1)
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)

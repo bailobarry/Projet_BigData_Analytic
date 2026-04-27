@@ -1,0 +1,36 @@
+{
+  "providers": [
+    {
+      "type": "openai_compatible",
+      "label": "gemini",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+      "api_key_env": "GEMINI_API_KEY",
+      "models": ["gemini-2.0-flash"]
+    },
+    {
+      "type": "ollama",
+      "label": "ollama",
+      "models": ["mistral-nemo"]
+    }
+  ],
+  "languages": ["en", "fr", "de", "es", "it"],
+  "dataset_types": ["unspecific", "specific"],
+  "variations": [
+    {
+      "name": "none",
+      "description": "Aucune modification"
+    },
+    {
+      "name": "neutral",
+      "description": "Consigne de neutralité"
+    },
+    {
+      "name": "cultural_expert",
+      "description": "Rôle d'expert"
+    },
+    {
+      "name": "short_form",
+      "description": "Contrainte stricte de format"
+    }
+  ]
+}
