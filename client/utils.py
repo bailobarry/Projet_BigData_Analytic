@@ -17,7 +17,7 @@ def run_experience(
         provider: str,
         model: str,
         languages: list[str],
-        dataset_type: str,
+        dataset_types: list[str],
         variation: str,
         temperature: float,
         max_tokens: int,
@@ -31,7 +31,7 @@ def run_experience(
         "generation": {"temperature": temperature, "max_tokens": max_tokens, "top_p": top_p, "seed": 42},
         "pipeline": {
             "languages": languages,
-            "dataset_type": dataset_type,
+            "dataset_types": dataset_types,
             "system_prompt": variation,
         },
     }

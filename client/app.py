@@ -88,7 +88,7 @@ with st.form("experience"):
         selection_mode="multi",
     )
 
-    dataset_type = st.pills(
+    dataset_types = st.pills(
         label="Choisir le type de dataset :",
         options=DATASET_TYPES,
         default=[DATASET_TYPES[0]],
@@ -117,7 +117,7 @@ with st.form("experience"):
 # ── Exécution ─────────────────────────────────────────────────────────────────
 
 if submitted:
-    if not languages or not dataset_type:
+    if not languages or not dataset_types:
         st.error("Sélectionner au moins une langue et un type de dataset.")
         st.stop()
 
@@ -126,7 +126,7 @@ if submitted:
             provider=provider,
             model=model,
             languages=languages,
-            dataset_type=dataset_type,
+            dataset_types=dataset_types,
             variation=variation,
             temperature=temperature,
             max_tokens=max_tokens,
