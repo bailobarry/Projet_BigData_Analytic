@@ -16,23 +16,23 @@
 base = "light"
 
 # Primary accent color.
-primaryColor = "#3e82d5"
+primaryColor = "#2563eb"
 
 # Background color of the app.
-backgroundColor = "#f5f8fc"
+backgroundColor = "#f0f4ff"
 
 # Background color used for most interactive widgets.
-secondaryBackgroundColor = "#7eb0ec"
+secondaryBackgroundColor = "#e0e7ff"
 
 # Color used for almost all text.
-textColor = "#060a10"
+textColor = "#0f1133"
 
 
 
 # Color used for all links.
 #
 # This defaults to the resolved value of `blueTextColor`.
-linkColor = "#5098f0"
+linkColor = "#4f46e5"
 
 # Whether or not links should be displayed with an underline.
 linkUnderline = true
@@ -95,7 +95,7 @@ font = "Golos:https://fonts.googleapis.com/css?family=Golos%20Text:700|Golos%20T
 # positive integer.
 #
 # If this isn't set, the font size will be 16px.
-#baseFontSize =
+baseFontSize = 15
 
 # The root font weight for the app.
 #
@@ -170,7 +170,7 @@ font = "Golos:https://fonts.googleapis.com/css?family=Golos%20Text:700|Golos%20T
 # Setting a single value (not in an array) will set the font weight for
 # all h1-h6 headings to that value:
 # headingFontWeights = 500
-#headingFontWeights =
+headingFontWeights = [700, 600, 600, 500, 500, 500]
 
 # The font family to use for code (monospace) in the sidebar.
 #
@@ -214,7 +214,7 @@ font = "Golos:https://fonts.googleapis.com/css?family=Golos%20Text:700|Golos%20T
 #
 # For example, you can use "10px", "0.5rem", or "2rem". To follow best
 # practices, use rem instead of pixels when specifying a numeric size.
-#baseRadius =
+baseRadius = "small"
 
 # The radius used as basis for the corners of buttons.
 #
@@ -230,10 +230,10 @@ font = "Golos:https://fonts.googleapis.com/css?family=Golos%20Text:700|Golos%20T
 # practices, use rem instead of pixels when specifying a numeric size.
 #
 # If this isn't set, Streamlit uses `theme.baseRadius` instead.
-#buttonRadius =
+buttonRadius = "full"
 
 # The color of the border around elements.
-#borderColor =
+borderColor = "#c7d2fe"
 
 # The color of the border around dataframes and tables.
 #
@@ -250,7 +250,7 @@ font = "Golos:https://fonts.googleapis.com/css?family=Golos%20Text:700|Golos%20T
 #dataframeHeaderBackgroundColor =
 
 # Whether to show a border around input widgets.
-#showWidgetBorder =
+showWidgetBorder = true
 
 # Whether to show a vertical separator between the sidebar and the main
 # content area.

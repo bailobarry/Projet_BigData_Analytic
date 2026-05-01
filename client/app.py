@@ -116,10 +116,14 @@ with st.form("experience"):
 
 # ── Exécution ─────────────────────────────────────────────────────────────────
 
+results_placeholder = st.empty()
+
 if submitted:
     if not languages or not dataset_types:
         st.error("Sélectionner au moins une langue et un type de dataset.")
         st.stop()
+
+    results_placeholder.empty()
 
     try:
         run_id = utils.run_experience(
@@ -139,42 +143,55 @@ if submitted:
 
     final_status = "unknown"
 
-    with st.spinner("Expérience lancée...", show_time=True):
-        log_container = st.container(border=True, height=300)
-        status_box = st.empty()
+    with results_placeholder.container():
+        with st.spinner("Expérience lancée...", show_time=True):
+            log_lines = []
+            log_box = st.empty()
+            status_box = st.empty()
 
-        with httpx.Client(timeout=None) as client:
-            with client.stream("GET", f"{utils.API_URL}/runs/{run_id}/stream") as r:
-                for line in r.iter_lines():
-                    if not line.startswith("data:"):
-                        continue
+            with httpx.Client(timeout=None) as client:
+                with client.stream("GET", f"{utils.API_URL}/runs/{run_id}/stream") as r:
+                    for line in r.iter_lines():
+                        if not line.startswith("data:"):
+                            continue
 
-                    event = json.loads(line[5:].strip())
-                    final_status = event.get("status", final_status)
+                        event = json.loads(line[5:].strip())
+                        final_status = event.get("status", final_status)
 
-                    for log_line in event.get("new_logs", []):
-                        log_container.write(f"`{log_line}`")
+                        for log_line in event.get("new_logs", []):
+                            log_lines.append(log_line)
+                            log_box.code("\n".join(log_lines), language=None)
 
-                    if final_status == "completed":
-                        s = event.get("summary", {})
-                        status_box.success(
-                            f"Terminé : {s.get('total_prompts')} prompts, "
-                            f"{s.get('total_errors')} erreurs, "
-                            f"{s.get('duration_seconds')}s"
-                        )
-                        break
+                        if final_status == "completed":
+                            s = event.get("summary", {})
+                            total_prompts = s.get('total_prompts')
+                            total_errors = s.get('total_errors')
+                            duration_seconds = s.get('duration_seconds')
+                            if total_errors == 0:
+                                status_box.success(
+                                    f"Terminé : {total_prompts} prompts, "
+                                    f"{total_errors} erreurs, "
+                                    f"{duration_seconds}s"
+                                )
+                            else:
+                                status_box.error(
+                                    f"Terminé : {total_prompts} prompts, "
+                                    f"{total_errors} erreurs, "
+                                    f"{duration_seconds}s"
+                                )
+                            break
 
-                    elif final_status == "failed":
-                        status_box.error(f"Échec : {event.get('error')}")
-                        break
+                        elif final_status == "failed":
+                            status_box.error(f"Échec : {event.get('error')}")
+                            break
 
 # ── Résultats ─────────────────────────────────────────────────────────────────
 
-    if final_status == "completed":
-        try:
-            results = utils.get_run_results(run_id)
-        except Exception as e:
-            st.error(f"Impossible de charger les résultats : {e}")
-            st.stop()
+        if final_status == "completed":
+            try:
+                results = utils.get_run_results(run_id)
+            except Exception as e:
+                st.error(f"Impossible de charger les résultats : {e}")
+                st.stop()
 
-        display_results(results)
+            display_results(results)
