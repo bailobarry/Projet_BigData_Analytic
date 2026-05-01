@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import jsonlines
+from dotenv import load_dotenv
 
 from src.models.config import RunConfig
 from src.models.schemas import PromptItem, ResultItem
@@ -30,8 +31,8 @@ from src.pipelines.logs import setup_logging
 from src.promptings.system_prompt import apply_prompt_template, get_system_prompt
 from src.providers import create_provider
 
+load_dotenv()
 logger = logging.getLogger("pipeline")
-
 
 # ── Callback de progression (pour Lot B – UI) ──────────────────────────────
 
@@ -70,8 +71,8 @@ def _already_processed_ids(output_file: Path) -> set[str]:
 
 
 def run_pipeline(
-    config: RunConfig,
-    progress_cb: ProgressCallback = None,
+        config: RunConfig,
+        progress_cb: ProgressCallback = None,
 ) -> dict:
     """
     Exécute un run complet à partir de la configuration donnée.
@@ -221,4 +222,3 @@ def run_pipeline(
     run_logger.info("═" * 60)
 
     return summary
-
