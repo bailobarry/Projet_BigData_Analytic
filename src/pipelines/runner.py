@@ -113,14 +113,8 @@ def run_pipeline(
     provider = create_provider(config)
     run_logger.info("Provider instancié : %s (%s)", provider.provider_name, provider.model_id)
 
-    # ── 4. Résolution du system prompt ──────────────────────────────────
-    system_prompt = get_system_prompt(config.pipeline.system_prompt)
-    if system_prompt:
-        run_logger.info("System prompt actif : '%s…'", system_prompt[:80])
-    else:
-        run_logger.info("Pas de system prompt (mode baseline vanilla)")
 
-    # ── 5. Itération sur les fichiers ───────────────────────────────────
+    # ── 4. Itération sur les fichiers ───────────────────────────────────
     input_files = config.input_files()
     total_files = len(input_files)
     total_prompts_processed = 0
@@ -134,6 +128,13 @@ def run_pipeline(
             continue
 
         filename = input_path.name
+        # On récupère les 2 premiers caractères 
+        current_lang = filename[:2] 
+        system_prompt = get_system_prompt(config.pipeline.system_prompt, lang=current_lang)
+        if system_prompt:
+            run_logger.info("System prompt actif : '%s…'", system_prompt[:80])
+        else:
+            run_logger.info("Pas de system prompt (mode baseline vanilla)")
         output_file = output_dir / filename
         run_logger.info("─" * 40)
         run_logger.info("[%d/%d] Traitement de %s", file_idx, total_files, filename)
