@@ -18,15 +18,33 @@ from typing import Optional
 
 # ── Registre des stratégies de system prompt ────────────────────────────────
 
-_SYSTEM_PROMPTS: dict[str, str] = {
-    # Variante 1 : Consigne de neutralité
-    "neutral": "You are a helpful assistant. Provide a neutral and concise answer in one sentence.",
+_SYSTEM_PROMPTS: dict[str, dict[str, str]] = {
+    # VARIANTE 1 : Neutralité (Objectif Robustesse)
+    "neutral": {
+        "en": "You are a helpful assistant. Provide a neutral and concise answer.",
+        "fr": "Vous êtes un assistant utile. Fournissez une réponse neutre et concise.",
+        "de": "Sie sind ein hilfreicher Assistent. Geben Sie eine neutrale und knappe Antwort.",
+        "es": "Eres un asistente útil. Proporciona una respuesta neutra y concisa.",
+        "it": "Sei un assistente utile. Fornisci una risposta neutrale e concisa."
+    },
     
-    # Variante 2 : Rôle d'expert
-    "cultural_expert": "You are a local cultural expert. Answer the question based strictly on local customs and traditions of the region mentioned.",
-    
-    # Variante 3 : Contrainte stricte de format
-    "short_form": "Answer in exactly one short sentence. Do not repeat the question or provide preamble."
+    # VARIANTE 2 : Expert Culturel (Objectif Diversité)
+    "cultural_expert": {
+        "en": "You are a local cultural expert. Answer the question based strictly on local customs and traditions.",
+        "fr": "Vous êtes un expert culturel local. Répondez à la question en vous basant strictement sur les coutumes et traditions locales.",
+        "de": "Sie sind ein lokaler Kulturexperte. Beantworten Sie die Frage ausschließlich auf der Grundlage lokaler Bräuche und Traditionen.",
+        "es": "Eres un experto cultural local. Responde a la pregunta basándote estrictamente en las costumbres y tradiciones locales.",
+        "it": "Sei un esperto culturale locale. Rispondi alla domanda basandoti rigorosamente sui costumi e le tradizioni locali."
+    },
+
+    # VARIANTE 3 : Format Court (Objectif Contrainte de Style)
+    "short_form": {
+        "en": "Answer in exactly one short sentence. Do not repeat the question.",
+        "fr": "Répondez en une seule phrase courte. Ne répétez pas la question.",
+        "de": "Antworten Sie in genau einem kurzen Satz. Wiederholen Sie die Frage nicht.",
+        "es": "Responde en exactamente una oración corta. No repitas la pregunta.",
+        "it": "Rispondi in una sola frase breve. Non ripetere la domanda."
+    }
 }
 
 
@@ -46,12 +64,13 @@ def get_system_prompt(strategy: Optional[str] = None) -> Optional[str]:
     """
     if strategy is None:
         return None
-    if strategy not in _SYSTEM_PROMPTS:
-        raise ValueError(
-            f"Stratégie de system prompt inconnue : '{strategy}'. "
-            f"Stratégies disponibles : {list(_SYSTEM_PROMPTS.keys())}"
-        )
-    return _SYSTEM_PROMPTS[strategy]
+        
+    strategy_dict = _SYSTEM_PROMPTS.get(strategy)
+    if not strategy_dict:
+        raise ValueError(f"Stratégie inconnue : {strategy}")
+    
+    # On renvoie la langue demandée, sinon l'anglais par défaut
+    return strategy_dict.get(lang, strategy_dict["en"])
 
 
 # ── Registre des transformations de prompt ──────────────────────────────────
