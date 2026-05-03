@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 from src.models.config import RunConfig
 from src.models.schemas import PromptItem, ResultItem
 from src.pipelines.logs import setup_logging
-from src.promptings.system_prompt import apply_prompt_template, get_system_prompt
+from src.promptings.system_prompt import apply_full_reformulation, apply_prompt_template, get_strategy_elements
 from src.providers import create_provider
 
 load_dotenv()
@@ -131,7 +131,11 @@ def run_pipeline(
         filename = input_path.name
         # On récupère les 2 premiers caractères 
         current_lang = filename[:2] 
-        system_prompt = get_system_prompt(config.pipeline.system_prompt, lang=current_lang)
+        strategy_pack = get_strategy_elements(config.pipeline.system_prompt, lang=current_lang)
+        
+        system_prompt = strategy_pack["system"]
+        prefix = strategy_pack["prefix"]
+        suffix = strategy_pack["suffix"]
         if system_prompt:
             run_logger.info("System prompt actif : '%s…'", system_prompt[:80])
         else:
@@ -158,9 +162,7 @@ def run_pipeline(
                     continue
 
                 # Appliquer le template de prompt (baseline = aucun changement)
-                final_prompt = apply_prompt_template(
-                    item.prompt, config.pipeline.prompt_template
-                )
+                final_prompt = apply_full_reformulation(item.prompt, prefix=prefix, suffix=suffix)
 
                 # Interroger le LLM
                 try:

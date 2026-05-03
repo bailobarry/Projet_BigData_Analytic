@@ -1,91 +1,114 @@
-"""
-Stratégies de prompting et de reformulation.
-
-Ce module fournit les fonctions utilisées par le pipeline pour :
-1. Obtenir un *system prompt* optionnel (consigne globale),
-2. Transformer le prompt utilisateur avant envoi au LLM.
-
-**Baseline** : aucun system prompt, aucune transformation du prompt.
-
-Le **Lot C** ajoutera ici des stratégies supplémentaires (ex: role-play,
-chain-of-thought, paraphrase contrôlée, etc.).
-"""
-
 from __future__ import annotations
-
 from typing import Optional
 
+# ── Registre des stratégies complètes (Lot C) ───────────────────────────
 
-# ── Registre des stratégies de system prompt ────────────────────────────────
-
-_SYSTEM_PROMPTS: dict[str, dict[str, str]] = {
-    # VARIANTE 1 : Neutralité (Objectif Robustesse)
-    "neutral": {
-        "en": "You are a helpful assistant. Provide a neutral and concise answer.",
-        "fr": "Vous êtes un assistant utile. Fournissez une réponse neutre et concise.",
-        "de": "Sie sind ein hilfreicher Assistent. Geben Sie eine neutrale und knappe Antwort.",
-        "es": "Eres un asistente útil. Proporciona una respuesta neutra y concisa.",
-        "it": "Sei un assistente utile. Fornisci una risposta neutrale e concisa."
-    },
-    
-    # VARIANTE 2 : Expert Culturel (Objectif Diversité)
+# Dictionnaire contenant les 3 variantes de test :
+# 1. cultural_expert : Favorise la diversité culturelle.
+# 2. neutral         : Favorise la robustesse et l'impartialité.
+# 3. logic_cot       : Force un raisonnement étape par étape (Chain of Thought).
+_STRATEGIES: dict[str, dict[str, dict[str, str]]] = {
     "cultural_expert": {
-        "en": "You are a local cultural expert. Answer the question based strictly on local customs and traditions.",
-        "fr": "Vous êtes un expert culturel local. Répondez à la question en vous basant strictement sur les coutumes et traditions locales.",
-        "de": "Sie sind ein lokaler Kulturexperte. Beantworten Sie die Frage ausschließlich auf der Grundlage lokaler Bräuche und Traditionen.",
-        "es": "Eres un experto cultural local. Responde a la pregunta basándote estrictamente en las costumbres y tradiciones locales.",
-        "it": "Sei un esperto culturale locale. Rispondi alla domanda basandoti rigorosamente sui costumi e le tradizioni locali."
+        "fr": {
+            "system": "Vous êtes un expert de la culture locale, des traditions et de l'histoire régionale.",
+            "prefix": "En tant qu'expert local, veuillez répondre à la question suivante :",
+            "suffix": "Répondez en vous basant exclusivement sur les coutumes locales."
+        },
+        "en": {
+            "system": "You are an expert in local culture, traditions, and regional history.",
+            "prefix": "As a local expert, please answer the following question:",
+            "suffix": "Answer based exclusively on local customs."
+        },
+        "de": {
+            "system": "Sie sind Experte für lokale Kultur, Traditionen und Regionalgeschichte.",
+            "prefix": "Als lokaler Experte beantworten Sie bitte die folgende Frage:",
+            "suffix": "Antworten Sie ausschließlich auf der Grundlage lokaler Bräuche."
+        },
+        "es": {
+            "system": "Eres un experto en cultura local, tradiciones e historia regional.",
+            "prefix": "Como experto local, por favor responda a la siguiente pregunta:",
+            "suffix": "Responda basándose exclusivamente en las costumbres locales."
+        },
+        "it": {
+            "system": "Sei un esperto di cultura locale, tradizioni e storia regionale.",
+            "prefix": "In qualità di esperto locale, rispondi alla seguente domanda:",
+            "suffix": "Rispondi basandoti esclusivamente sulle usanze locali."
+        }
     },
-
-    # VARIANTE 3 : Format Court (Objectif Contrainte de Style)
-    "short_form": {
-        "en": "Answer in exactly one short sentence. Do not repeat the question.",
-        "fr": "Répondez en une seule phrase courte. Ne répétez pas la question.",
-        "de": "Antworten Sie in genau einem kurzen Satz. Wiederholen Sie die Frage nicht.",
-        "es": "Responde en exactamente una oración corta. No repitas la pregunta.",
-        "it": "Rispondi in una sola frase breve. Non ripetere la domanda."
+    "neutral": {
+        "fr": {
+            "system": "Vous êtes un assistant utile, neutre et factuel.",
+            "prefix": "Voici une question pour laquelle j'ai besoin d'une réponse objective :",
+            "suffix": "Fournissez une réponse sans opinion personnelle ni biais."
+        },
+        "en": {
+            "system": "You are a helpful, neutral, and factual assistant.",
+            "prefix": "Here is a question for which I need an objective answer:",
+            "suffix": "Provide an answer without personal opinion or bias."
+        },
+        "de": {
+            "system": "Sie sind ein hilfreicher, neutraler und sachlicher Assistent.",
+            "prefix": "Hier ist eine Frage, auf die ich eine objektive Antwort benötige:",
+            "suffix": "Geben Sie eine Antwort ohne persönliche Meinung oder Voreingenommenheit."
+        },
+        "es": {
+            "system": "Eres un asistente útil, neutral y factual.",
+            "prefix": "Aquí hay una pregunta para la cual necesito una respuesta objetiva:",
+            "suffix": "Proporcione una respuesta sin opiniones personales ni sesgos."
+        },
+        "it": {
+            "system": "Sei un assistente utile, neutrale e fattuale.",
+            "prefix": "Ecco una domanda per la quale ho bisogno di una risposta obiettiva:",
+            "suffix": "Fornisci una risposta senza opinioni personali o pregiudizi."
+        }
+    },
+    "empathetic_synthesis": {
+        "fr": {
+            "system": "Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.",
+            "prefix": "Prenez en compte la sensibilité de la situation suivante :",
+            "suffix": "Donnez un conseil bienveillant et juste."
+        },
+        "en": {
+            "system": "You are a thoughtful advisor who understands the human element behind every question.",
+            "prefix": "Consider the sensitive nature of the following situation:",
+            "suffix": "Give a kind and fair piece of advice."
+        },
+        "de": {
+            "system": "Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage versteht.",
+            "prefix": "Berücksichtigen Sie die Sensibilität der folgenden Situation:",
+            "suffix": "Geben Sie einen wohlwollenden und fairen Rat."
+        },
+        "es": {
+            "system": "Eres un asesor atento que comprende el factor humano detrás de cada pregunta.",
+            "prefix": "Tenga en cuenta la sensibilidad de la siguiente situación:",
+            "suffix": "Dé un consejo amable y justo."
+        },
+        "it": {
+            "system": "Sei un consulente premuroso che comprende l'elemento umano dietro ogni domanda.",
+            "prefix": "Considera la natura sensibile della seguente situazione:",
+            "suffix": "Dai un consiglio gentile e giusto."
+        }
     }
 }
 
 
-def get_system_prompt(strategy: Optional[str] = None, lang: str=None) -> Optional[str]:
+def get_strategy_elements(strategy_name: Optional[str], lang: str = "en") -> dict[str, str]:
     """
-    Retourne le system prompt correspondant à la stratégie demandée.
-
-    Parameters
-    ----------
-    strategy : str | None
-        Nom de la stratégie. ``None`` → baseline (pas de system prompt).
-
-    Returns
-    -------
-    str | None
-        Le system prompt, ou ``None`` pour la baseline vanilla.
+    Récupère le pack complet (system, prefix, suffix) pour la stratégie et la langue données.
     """
-    if strategy is None:
-        return None
+    default_pack = {"system": "", "prefix": "", "suffix": ""}
+    
+    if not strategy_name or strategy_name not in _STRATEGIES:
+        return default_pack
         
-    strategy_dict = _SYSTEM_PROMPTS.get(strategy)
-    if not strategy_dict:
-        raise ValueError(f"Stratégie inconnue : {strategy}")
-    
-    # On renvoie la langue demandée, sinon l'anglais par défaut
-    return strategy_dict.get(lang, strategy_dict["en"])
+    return _STRATEGIES[strategy_name].get(lang, _STRATEGIES[strategy_name]["en"])
 
-
-# ── Registre des transformations de prompt ──────────────────────────────────
-
-
-def apply_prompt_template(
-    prompt: str,
-    template: Optional[str] = None,
-) -> str:
- 
-    if template is None:
-        return prompt.strip()
-    
-    try:
-        return template.format(prompt=prompt)
-    except KeyError:
-        return f"{template} {prompt}"
-
+def apply_full_reformulation(prompt: str, prefix: str = "", suffix: str = "") -> str:
+    """
+    Combine les éléments pour créer le prompt utilisateur final.
+    """
+    parts = []
+    if prefix: parts.append(prefix)
+    parts.append(prompt)
+    if suffix: parts.append(suffix)
+    return " ".join(parts).strip()
