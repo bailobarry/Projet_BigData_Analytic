@@ -55,7 +55,7 @@ def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dic
                 "top_p": config.generation.top_p,
                 "seed": config.generation.seed,
             },
-            "notes": config.description or "Baseline vanilla",
+            "notes": config.description,
         },
     }
 
@@ -74,7 +74,7 @@ def export_submission(
         ├── en_specific.jsonl
         ├── en_unspecific.jsonl
         ├── fr_specific.jsonl
-        └── ...
+        └── ... .
     """
 
     # Charger la config
