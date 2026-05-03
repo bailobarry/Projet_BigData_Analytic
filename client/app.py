@@ -59,7 +59,7 @@ def display_results(results: dict):
         else:
             rows = [json.loads(line) for line in decoded.splitlines() if line.strip()]
             with st.expander(f"{filename} ({len(rows)} lignes)", expanded=False):
-                st.dataframe(rows, width="stretch")
+                st.table(rows)
 
     zip_bytes = utils.download_submission_zip(run_id)
     download_submission_zip_button(zip_bytes)
