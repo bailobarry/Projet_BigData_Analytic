@@ -58,11 +58,8 @@ def get_run_results(run_id: str) -> dict[str, bytes]:
     return results
 
 
-def build_submission_zip(run_id: str) -> bytes:
-    """Construit le zip en mémoire à partir des fichiers récupérés via l'API."""
-    results = get_run_results(run_id)
-    buffer = BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for filename, content in results.items():
-            zf.writestr(filename, content)
-    return buffer.getvalue()
+def download_submission_zip(run_id: str) -> bytes:
+    """GET /runs/{run_id}/results/submission.zip — retourne le zip brut."""
+    r = httpx.get(f"{API_URL}/runs/{run_id}/results/submission.zip")
+    r.raise_for_status()
+    return r.content

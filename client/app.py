@@ -37,7 +37,7 @@ for provider in PROVIDERS:
 # ── Helpers UI ────────────────────────────────────────────────────────────────
 
 @st.fragment
-def download_submission_zip(data_bytes):
+def download_submission_zip_button(data_bytes):
     st.download_button(
         label="Télécharger submission.zip",
         data=data_bytes,
@@ -61,8 +61,8 @@ def display_results(results: dict):
             with st.expander(f"{filename} ({len(rows)} lignes)", expanded=False):
                 st.dataframe(rows, width="stretch")
 
-    zip_bytes = utils.build_submission_zip(run_id)
-    download_submission_zip(zip_bytes)
+    zip_bytes = utils.download_submission_zip(run_id)
+    download_submission_zip_button(zip_bytes)
 
 # ── Form ──────────────────────────────────────────────────────────────────────
 
