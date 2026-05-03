@@ -198,6 +198,12 @@ def run_pipeline(
                 if config.pipeline.request_delay > 0:
                     time.sleep(config.pipeline.request_delay)
 
+    # ── 5. Génération du ZIP ────────────────────────────────────────────────
+    run_logger.info(" Résultats dans : %s", output_dir)
+    from src.export.challenge_export import export_submission
+    submission_zip = export_submission(run_id=config.run_id, team_name="Master MIAGE Toulouse", )
+    run_logger.info(" Submission ZIP généré : %s", submission_zip)
+
     # ── 6. Résumé du run ────────────────────────────────────────────────
     elapsed = time.time() - start_time
     summary = {
@@ -210,10 +216,6 @@ def run_pipeline(
         "finished_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    run_logger.info(" Résultats dans : %s", output_dir)
-    from src.export.challenge_export import export_submission
-    submission_zip = export_submission(run_id=config.run_id, team_name="TON_NOM_EQUIPE", )
-    run_logger.info(" Submission ZIP généré : %s", submission_zip)
 
 
 

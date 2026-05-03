@@ -10,7 +10,7 @@ from typing import Optional
 from src.models.config import RunConfig
 
 
-def build_metadata(run_id: str, team_name: str = "your-team") -> dict:
+def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dict:
     """
     Génère le submission_metadata.json à partir d'un run_id.
     """
@@ -55,14 +55,14 @@ def build_metadata(run_id: str, team_name: str = "your-team") -> dict:
                 "top_p": config.generation.top_p,
                 "seed": config.generation.seed,
             },
-            "notes": config.description or "Baseline vanilla",
+            "notes": config.description,
         },
     }
 
 
 def export_submission(
     run_id: str,
-    team_name: str = "your-team",
+    team_name: str = "Master MIAGE Toulouse",
     output_path: Optional[Path] = None,
 ) -> Path:
     """
@@ -74,7 +74,7 @@ def export_submission(
         ├── en_specific.jsonl
         ├── en_unspecific.jsonl
         ├── fr_specific.jsonl
-        └── ...
+        └── ... .
     """
 
     # Charger la config
@@ -105,6 +105,20 @@ def export_submission(
 
     # Générer le metadata
     metadata = build_metadata(run_id, team_name)
+
+    # Sauvegarder aussi le metadata dans le dossier du run
+    metadata_path = run_output_dir / "submission_metadata.json"
+
+    metadata_json = json.dumps(
+        metadata,
+        indent=2,
+        ensure_ascii=False,
+    )
+
+    metadata_path.write_text(
+        metadata_json,
+        encoding="utf-8",
+    )
 
     # Construire le ZIP en mémoire
     buffer = BytesIO()
