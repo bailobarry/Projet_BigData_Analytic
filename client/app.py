@@ -119,31 +119,31 @@ with st.form("experience"):
 results_placeholder = st.empty()
 
 if submitted:
-    if not languages or not dataset_types:
-        st.error("Sélectionner au moins une langue et un type de dataset.")
-        st.stop()
-
     results_placeholder.empty()
-
-    try:
-        run_id = utils.run_experience(
-            provider=provider,
-            model=model,
-            languages=languages,
-            dataset_types=dataset_types,
-            variation=variation,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            description=description,
-        )
-    except Exception as e:
-        st.error(f"Impossible de lancer le run : {e}")
-        st.stop()
-
-    final_status = "unknown"
-
     with results_placeholder.container():
+
+        if not languages or not dataset_types:
+            st.error("Sélectionner au moins une langue et un type de dataset.")
+            st.stop()
+
+        try:
+            run_id = utils.run_experience(
+                provider=provider,
+                model=model,
+                languages=languages,
+                dataset_types=dataset_types,
+                variation=variation,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                description=description,
+            )
+        except Exception as e:
+            st.error(f"Impossible de lancer le run : {e}")
+            st.stop()
+
+        final_status = "unknown"
+
         with st.spinner("Expérience lancée...", show_time=True):
             log_lines = []
             log_box = st.empty()
