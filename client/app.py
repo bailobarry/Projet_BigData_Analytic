@@ -66,57 +66,61 @@ def display_results(results: dict):
 
 # ── Form ──────────────────────────────────────────────────────────────────────
 
-st.title("Cultural Robustness and Diversity (ELOQUENT @ CLEF 2026)")
+with st.sidebar:
 
-with st.form("experience"):
-    st.write("Personnaliser les paramètres de l'expérience")
+    st.title("Cultural Robustness and Diversity (ELOQUENT @ CLEF 2026)")
 
-    description = st.text_input(label="Entrer une description rapide de l'expérience :")
+    st.header("Lancer une expérience : ")
 
-    model = st.radio(
-        label="Choisir un modèle :",
-        options=model_options,
-        captions=model_captions,
-        horizontal=True,
-    )
-    provider = next(p for p in PROVIDERS if model in MODELS_BY_PROVIDER[p])
+    with st.form("experience"):
 
-    languages = st.pills(
-        label="Choisir les langues : ",
-        options=LANGUAGES,
-        default=LANGUAGES,
-        selection_mode="multi",
-    )
+        description = st.text_input(label="Entrer une description rapide :")
 
-    dataset_types = st.pills(
-        label="Choisir le type de dataset :",
-        options=DATASET_TYPES,
-        default=[DATASET_TYPES[0]],
-        selection_mode="multi",
-    )
+        model = st.radio(
+            label="Choisir un modèle :",
+            options=model_options,
+            captions=model_captions,
+            horizontal=True,
+        )
+        provider = next(p for p in PROVIDERS if model in MODELS_BY_PROVIDER[p])
 
-    variation = st.radio(
-        label="Choisir la stratégie :",
-        options=VARIATION,
-        captions=VARIATION_DETAILS,
-        horizontal=True,
-    )
-    if variation == "none":
-        variation = None
+        languages = st.pills(
+            label="Choisir les langues : ",
+            options=LANGUAGES,
+            default=LANGUAGES,
+            selection_mode="multi",
+        )
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        temperature = st.number_input(label="Temperature :", value=1.0, min_value=0.0, max_value=2.0, step=0.1)
-    with col2:
-        max_tokens = st.number_input(label="max_tokens :", value=256, min_value=1, max_value=8192, step=128)
-    with col3:
-        top_p = st.number_input(label="top_p :", value=1.0, min_value=0.0, max_value=1.0, step=0.05)
+        dataset_types = st.pills(
+            label="Choisir le type de dataset :",
+            options=DATASET_TYPES,
+            default=[DATASET_TYPES[0]],
+            selection_mode="multi",
+        )
 
-    submitted = st.form_submit_button(label="Lancer l'expérience")
+        variation = st.radio(
+            label="Choisir la stratégie :",
+            options=VARIATION,
+            captions=VARIATION_DETAILS,
+            horizontal=True,
+        )
+        if variation == "none":
+            variation = None
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            temperature = st.number_input(label="Temperature :", value=1.0, min_value=0.0, max_value=2.0, step=0.1)
+        with col2:
+            max_tokens = st.number_input(label="max_tokens :", value=256, min_value=1, max_value=8192, step=128)
+        with col3:
+            top_p = st.number_input(label="top_p :", value=1.0, min_value=0.0, max_value=1.0, step=0.05)
+
+        submitted = st.form_submit_button(label="Lancer l'expérience")
 
 # ── Exécution ─────────────────────────────────────────────────────────────────
 
 results_placeholder = st.empty()
+results_placeholder.info("Lancer une expérience pour que les résultats s'affichent ici.")
 
 if submitted:
     results_placeholder.empty()
