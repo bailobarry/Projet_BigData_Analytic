@@ -212,7 +212,7 @@ def run_pipeline(
 
     run_logger.info(" Résultats dans : %s", output_dir)
     from src.export.challenge_export import export_submission
-    submission_zip = export_submission(run_id=config.run_id, team_name="TON_NOM_EQUIPE", )
+    submission_zip = export_submission(run_id=config.run_id, team_name="Master MIAGE Toulouse", )
     run_logger.info(" Submission ZIP généré : %s", submission_zip)
 
 
