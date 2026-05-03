@@ -185,7 +185,7 @@ async def list_run_files(run_id: str):
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' introuvable.")
     files = [
         f.name for f in output_dir.iterdir()
-        if f.is_file() and f.suffix in (".jsonl", ".json") and f.name != "config.json"
+        if f.is_file() and (f.suffix == ".jsonl" or f.name == "submission_metadata.json")
     ]
     return {"files": sorted(files)}
 
