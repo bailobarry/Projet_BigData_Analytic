@@ -210,6 +210,13 @@ def run_pipeline(
         "finished_at": datetime.now(timezone.utc).isoformat(),
     }
 
+    run_logger.info(" Résultats dans : %s", output_dir)
+    from src.export.challenge_export import export_submission
+    submission_zip = export_submission(run_id=config.run_id, team_name="TON_NOM_EQUIPE", )
+    run_logger.info(" Submission ZIP généré : %s", submission_zip)
+
+
+
     # Sauvegarder le résumé
     summary_path = output_dir / "run_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
