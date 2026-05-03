@@ -7,7 +7,6 @@ Lancez avec : pytest tests/ -v
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -54,24 +53,23 @@ class TestConfig:
         assert gen.max_tokens == 256
         assert gen.seed == 42
 
-    def test_provider_config(self):
-        prov = ProviderConfig(
-            type="openai_compatible",
-            model="llama-3.3-70b-versatile",
-            base_url="https://api.groq.com/openai/v1",
-            api_key_env="GROQ_API_KEY",
-            provider_label="groq",
-        )
-        assert prov.type == "openai_compatible"
+    def test_provider_config_groq(self):
+        prov = ProviderConfig(type="groq", model="llama-3.3-70b-versatile")
+        assert prov.type == "groq"
         assert prov.model == "llama-3.3-70b-versatile"
+
+    def test_provider_config_ollama(self):
+        prov = ProviderConfig(type="ollama", model="gemma3:12b")
+        assert prov.type == "ollama"
+        assert prov.model == "gemma3:12b"
+        assert prov.ollama_host == "http://localhost:11434"
 
     def test_run_config_from_file(self, tmp_path):
         config_data = {
             "run_id": "test_run",
             "provider": {
-                "type": "openai_compatible",
-                "model": "test-model",
-                "provider_label": "test",
+                "type": "groq",
+                "model": "llama-3.3-70b-versatile",
             },
         }
         config_file = tmp_path / "test_config.json"
@@ -79,12 +77,12 @@ class TestConfig:
 
         config = RunConfig.from_file(config_file)
         assert config.run_id == "test_run"
-        assert config.provider.model == "test-model"
+        assert config.provider.model == "llama-3.3-70b-versatile"
         assert config.generation.temperature == 0.0  # default
 
     def test_input_files(self):
         config = RunConfig(
-            provider=ProviderConfig(type="ollama", model="mistral", provider_label="ollama"),
+            provider=ProviderConfig(type="ollama", model="gemma3:12b"),
             pipeline=PipelineConfig(
                 languages=["en", "fr"],
                 dataset_types=["unspecific"],
@@ -98,14 +96,14 @@ class TestConfig:
     def test_save_and_load(self, tmp_path):
         config = RunConfig(
             run_id="save_test",
-            provider=ProviderConfig(type="ollama", model="mistral", provider_label="ollama"),
+            provider=ProviderConfig(type="ollama", model="gemma3:12b"),
         )
         saved = config.save(tmp_path)
         assert saved.exists()
 
         loaded = RunConfig.from_file(saved)
         assert loaded.run_id == "save_test"
-        assert loaded.provider.model == "mistral"
+        assert loaded.provider.model == "gemma3:12b"
 
 
 # ── Tests du prompting ──────────────────────────────────────────────────────
@@ -168,8 +166,13 @@ class TestFactory:
     def test_unknown_provider_raises(self):
         from src.providers import create_provider
 
-        config = RunConfig(
-            provider=ProviderConfig(type="unknown", model="x", provider_label="x"),
+        # Utiliser model_construct pour contourner la validation Pydantic
+        # et tester directement la factory avec un type inconnu
+        config = RunConfig.model_construct(
+            run_id="test",
+            provider=ProviderConfig.model_construct(type="unknown", model="x"),
+            generation=GenerationConfig(),
+            pipeline=PipelineConfig(),
         )
         with pytest.raises(ValueError, match="Provider inconnu"):
             create_provider(config)
@@ -180,10 +183,10 @@ class TestFactory:
 
 class TestBaselineConfig:
     def test_load_baseline_json(self):
-        baseline = Path("configs/baseline_gimini.json")
+        baseline = Path("configs/baseline_groq.json")
         if baseline.exists():
             config = RunConfig.from_file(baseline)
-            assert config.run_id == "baseline_gemini_flash"
+            assert config.run_id == "baseline_groq"
             assert config.generation.temperature == 0.0
             assert config.generation.seed == 42
             assert len(config.pipeline.languages) == 5
@@ -195,5 +198,5 @@ class TestBaselineConfig:
         if baseline.exists():
             config = RunConfig.from_file(baseline)
             assert config.provider.type == "ollama"
-            assert config.provider.model == "mistral-nemo"
+            assert config.provider.model == "gemma3:12b"
 

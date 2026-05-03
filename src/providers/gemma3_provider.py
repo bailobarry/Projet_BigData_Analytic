@@ -1,14 +1,14 @@
 """
-Provider **Mistral-Nemo 12B** – exécuté localement via Ollama.
+Provider **Google Gemma 3 12B** – exécuté localement via Ollama.
 
-Mistral-Nemo (12 milliards de paramètres, par Mistral AI + NVIDIA) :
-- Très bon multilingue pour les langues européennes (EN, FR, DE, ES)
-- Correct en russe (RU)
-- Nécessite ~7.5 Go de RAM (compatible avec 14 Go)
+Gemma 3 12B (par Google, Mars 2025) :
+- Modèle très récent, excellent multilingue (EN, FR, DE, ES, IT)
+- Nécessite ~8 Go de RAM (compatible avec 16 Go)
 - Fenêtre de contexte de 128k tokens
+- Meilleures performances que Mistral-Nemo sur les benchmarks multilingues
 
 Pré-requis : Ollama doit être installé et le modèle téléchargé :
-    ollama pull mistral-nemo
+    ollama pull gemma3:12b
 """
 
 from __future__ import annotations
@@ -24,9 +24,9 @@ from src.providers.base import LLMProvider
 logger = logging.getLogger(__name__)
 
 
-class MistralNemoProvider(LLMProvider):
+class Gemma3Provider(LLMProvider):
     """
-    Fournisseur LLM pour Mistral-Nemo 12B, exécuté localement
+    Fournisseur LLM pour Google Gemma 3 12B, exécuté localement
     via la bibliothèque ``ollama``.
     """
 
@@ -39,7 +39,7 @@ class MistralNemoProvider(LLMProvider):
         self._client = _ollama_pkg.Client(host=self._host)
 
         logger.info(
-            "MistralNemoProvider initialisé : model=%s  host=%s",
+            "Gemma3Provider initialisé : model=%s  host=%s",
             self._model,
             self._host,
         )
@@ -62,7 +62,7 @@ class MistralNemoProvider(LLMProvider):
         generation: GenerationConfig,
         system_prompt: Optional[str] = None,
     ) -> str:
-        """Interroge Mistral-Nemo via Ollama et retourne la réponse texte."""
+        """Interroge Gemma 3 via Ollama et retourne la réponse texte."""
 
         # Construction des messages (session indépendante)
         messages: list[dict] = []

@@ -2,8 +2,8 @@
 Configuration centralisée d'un run.
 
 LLM retenus :
-  - Google Gemini 2.0 Flash (API)
-  - Mistral-Nemo 12B (Ollama local)
+  - Groq – Llama 3.3 70B Versatile (API cloud, gratuit)
+  - Google Gemma 3 12B (Ollama local)
 """
 
 from __future__ import annotations
@@ -23,17 +23,17 @@ class ProviderConfig(BaseModel):
     """Paramètres de connexion au provider LLM.
 
     Deux providers supportés :
-      - type='gemini'  → Google Gemini via API (nécessite GEMINI_API_KEY)
-      - type='ollama'  → Mistral-Nemo 12B en local via Ollama
+      - type='groq'   → Groq Cloud, Llama 3.3 70B (nécessite GROQ_API_KEY)
+      - type='ollama' → Google Gemma 3 12B en local via Ollama
     """
 
-    type: Literal["gemini", "ollama"] = Field(
+    type: Literal["groq", "ollama"] = Field(
         ...,
-        description="Type de provider : 'gemini' (API Google) ou 'ollama' (Mistral-Nemo local)",
+        description="Type de provider : 'groq' (API Groq Cloud) ou 'ollama' (Gemma 3 local)",
     )
-    model: Literal["gemini-2.0-flash", "mistral-nemo"] = Field(
+    model: Literal["llama-3.3-70b-versatile", "gemma3:12b"] = Field(
         ...,
-        description="Nom du modèle : 'gemini-2.0-flash' ou 'mistral-nemo'",
+        description="Nom du modèle : 'llama-3.3-70b-versatile' ou 'gemma3:12b'",
     )
     ollama_host: str = Field(
         "http://localhost:11434",

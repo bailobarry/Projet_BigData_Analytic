@@ -48,7 +48,7 @@ _SYSTEM_PROMPTS: dict[str, dict[str, str]] = {
 }
 
 
-def get_system_prompt(strategy: Optional[str] = None, lang: str = "en") -> Optional[str]:
+def get_system_prompt(strategy: Optional[str] = None, lang: str=None) -> Optional[str]:
     """
     Retourne le system prompt correspondant à la stratégie demandée.
 

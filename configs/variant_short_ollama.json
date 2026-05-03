@@ -1,9 +1,9 @@
 {
-  "run_id": "variant_short_mistral",
+  "run_id": "variant_short_gemma3",
   "description": "Variante Format Court - Test de contrainte (Lot C)",
   "provider": {
     "type": "ollama",
-    "model": "mistral-nemo"
+    "model": "gemma3:12b"
   },
   "generation": {
     "temperature": 0.0,

@@ -1,16 +1,16 @@
 {
   "providers": [
     {
-      "type": "openai_compatible",
-      "label": "gemini",
-      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-      "api_key_env": "GEMINI_API_KEY",
-      "models": ["gemini-2.0-flash"]
+      "type": "groq",
+      "label": "groq",
+      "base_url": "https://api.groq.com/openai/v1",
+      "api_key_env": "GROQ_API_KEY",
+      "models": ["llama-3.3-70b-versatile"]
     },
     {
       "type": "ollama",
       "label": "ollama",
-      "models": ["mistral-nemo"]
+      "models": ["gemma3:12b"]
     }
   ],
   "languages": ["en", "fr", "de", "es", "it"],

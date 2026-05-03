@@ -3,10 +3,10 @@
 run_baseline.py – Script CLI pour lancer un run depuis un fichier de config.
 
 Usage :
-    # Baseline Google Gemini 2.0 Flash (API)
+    # Baseline Groq Llama 3.3 70B (API cloud)
     python run_baseline.py
 
-    # Baseline Ollama Mistral-Nemo (local)
+    # Baseline Gemma 3 12B via Ollama (local)
     python run_baseline.py --config configs/baseline_ollama.json
 
     # Seulement les fichiers unspecific (test rapide)
@@ -39,8 +39,8 @@ def main() -> None:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/baseline_gemini.json",
-        help="Chemin vers le fichier de configuration JSON (défaut: configs/baseline_gemini.json)",
+        default="configs/baseline_groq.json",
+        help="Chemin vers le fichier de configuration JSON (défaut: configs/baseline_groq.json)",
     )
     parser.add_argument(
         "--languages",

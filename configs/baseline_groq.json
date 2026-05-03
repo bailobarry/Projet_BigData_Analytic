@@ -1,9 +1,9 @@
 {
-  "run_id": "variant_neutral_gemma3",
-  "description": "Variante Neutre - Test de robustesse (Lot C)",
+  "run_id": "baseline_groq",
+  "description": "Baseline vanilla – Groq Llama 3.3 70B – déterministe – 5 langues – pas de system prompt",
   "provider": {
-    "type": "ollama",
-    "model": "gemma3:12b"
+    "type": "groq",
+    "model": "llama-3.3-70b-versatile"
   },
   "generation": {
     "temperature": 0.0,
@@ -17,7 +17,8 @@
     "languages": ["en", "fr", "de", "es", "it"],
     "dataset_types": ["specific", "unspecific"],
     "request_delay": 0.0,
-    "system_prompt": "neutral",
-    "prompt_template": "Provide a neutral answer to the following question: {prompt}"
+    "system_prompt": null,
+    "prompt_template": null
   }
 }
+

@@ -194,9 +194,8 @@ def run_pipeline(
                 if progress_cb:
                     progress_cb(filename, file_idx, total_files, prompt_idx, total_in_file)
 
-                # Rate limiting
-                if config.pipeline.request_delay > 0:
-                    time.sleep(config.pipeline.request_delay)
+                # Note : le rate-limiting est géré directement par le provider
+                # (fenêtre glissante 15 req/min pour Gemini, aucune limite pour Ollama)
 
     # ── 5. Génération du ZIP ────────────────────────────────────────────────
     run_logger.info(" Résultats dans : %s", output_dir)

@@ -1,9 +1,9 @@
 {
-  "run_id": "variant_expert_mistral",
+  "run_id": "variant_expert_gemma3",
   "description": "Variante Expert Culturel - Test de diversité (Lot C)",
   "provider": {
     "type": "ollama",
-    "model": "mistral-nemo"
+    "model": "gemma3:12b"
   },
   "generation": {
     "temperature": 0.0,

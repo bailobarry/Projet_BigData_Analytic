@@ -6,7 +6,7 @@
 ## 📋 Description
 
 Ce projet interroge plusieurs modèles de langage (LLM) avec des questions multilingues
-(anglais, français, allemand, espagnol, russe) et compare les réponses pour évaluer :
+(anglais, français, allemand, espagnol, italien) et compare les réponses pour évaluer :
 
 - **Cultural Diversity** (questions *unspecific*) : les réponses varient-elles selon la langue ?
 - **Cultural Robustness** (questions *specific*) : les réponses sont-elles cohérentes quand le contexte culturel est fixé ?
@@ -24,8 +24,8 @@ Ce projet interroge plusieurs modèles de langage (LLM) avec des questions multi
 ├── src/
 │   ├── providers/             # Abstraction LLM + implémentations
 │   │   ├── base.py            # Classe abstraite LLMProvider
-│   │   ├── openai_compatible.py  # Google Gemini (API)
-│   │   └── ollama_provider.py    # Qwen 2.5:14b (local via Ollama)
+│   │   ├── groq_provider.py      # Groq – Llama 3.3 70B (API cloud)
+│   │   └── gemma3_provider.py    # Google Gemma 3 12B (local via Ollama)
 │   │
 │   ├── pipelines/             # Exécution des runs
 │   │   ├── runner.py          # Pipeline principal
@@ -45,9 +45,9 @@ Ce projet interroge plusieurs modèles de langage (LLM) avec des questions multi
 │   └── export/                # Export challenge (Lot E)
 │       └── challenge_export.py
 │
-├── configs/                   # Fichiers de configuration
-│   ├── baseline.json          # Config baseline (Google Gemini 2.0 Flash)
-│   ├── baseline_ollama.json   # Config baseline (Ollama Qwen 2.5:14b)
+│   ├── configs/                   # Fichiers de configuration
+│   ├── baseline_groq.json         # Config baseline (Groq – Llama 3.3 70B)
+│   ├── baseline_ollama.json       # Config baseline (Google Gemma 3 12B via Ollama)
 │   └── runs/                  # Configs sauvegardées par run
 │
 ├── data/
@@ -82,22 +82,22 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Configurer la clé API Google Gemini
+### 3. Configurer la clé API Groq
 
 ```bash
 # Copier le template
 cp .env.example .env
 
 # Éditer .env et renseigner votre clé :
-# GEMINI_API_KEY : https://aistudio.google.com/apikey (gratuit)
+# GROQ_API_KEY : https://console.groq.com/keys (gratuit)
 ```
 
 ### 4. Installer Ollama pour le modèle local
 
 ```bash
 # Installer Ollama : https://ollama.com/download
-# Puis télécharger le modèle (~7.5 Go, nécessite 14 Go de RAM) :
-ollama pull mistral-nemo
+# Puis télécharger le modèle (~8 Go, nécessite 16 Go de RAM) :
+ollama pull gemma3:12b
 ```
 
 ## ⚡ Utilisation
@@ -105,10 +105,10 @@ ollama pull mistral-nemo
 ### Lancer une baseline (CLI)
 
 ```bash
-# Baseline avec Google Gemini 2.0 Flash (API, recommandé)
-python run_baseline.py
+# Baseline avec Groq Llama 3.3 70B (API cloud, recommandé)
+python run_baseline.py --config configs/baseline_groq.json
 
-# Baseline avec Ollama Qwen 2.5:14b (local)
+# Baseline avec Google Gemma 3 12B (local via Ollama)
 python run_baseline.py --config configs/baseline_ollama.json
 
 # Test rapide : seulement les fichiers unspecific en français
@@ -139,13 +139,13 @@ uvicorn api.main:app --reload --port 8000
 
 | | API (Cloud) | Local |
 |---|---|---|
-| **Service** | Google AI Studio | Ollama |
-| **Modèle** | Gemini 2.0 Flash | Qwen 2.5:14b |
-| **Paramètres** | Non publié (très puissant) | 14 milliards |
+| **Service** | Groq Cloud | Ollama |
+| **Modèle** | Llama 3.3 70B Versatile | Gemma 3 12B |
+| **Paramètres** | 70 milliards | 12 milliards |
 | **Multilingue** | ★★★★★ | ★★★★★ |
-| **RAM nécessaire** | 0 (cloud) | ~9 Go |
-| **Coût** | Gratuit (15 req/min) | Gratuit (illimité) |
-| **Config** | `configs/baseline.json` | `configs/baseline_ollama.json` |
+| **RAM nécessaire** | 0 (cloud) | ~8 Go |
+| **Coût** | Gratuit (30 req/min) | Gratuit (illimité) |
+| **Config** | `configs/baseline_groq.json` | `configs/baseline_ollama.json` |
 
 ## 📁 Format des données
 

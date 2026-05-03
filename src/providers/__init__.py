@@ -2,8 +2,8 @@
 Providers LLM – factory et implémentations.
 
 Deux providers disponibles :
-- GeminiProvider       → Google Gemini 2.0 Flash (API cloud)
-- MistralNemoProvider  → Mistral-Nemo 12B (local via Ollama)
+- GroqProvider   → Groq Cloud (Llama 3.3 70B, API cloud, gratuit)
+- Gemma3Provider → Google Gemma 3 12B (local via Ollama)
 
 Utilisation :
     from src.providers import create_provider
@@ -24,15 +24,15 @@ def create_provider(config: "RunConfig") -> LLMProvider:
     """Factory : instancie le bon provider à partir de la configuration."""
     provider_type = config.provider.type.lower()
 
-    if provider_type == "gemini":
-        from src.providers.gemini_provider import GeminiProvider
-        return GeminiProvider(config)
+    if provider_type == "groq":
+        from src.providers.groq_provider import GroqProvider
+        return GroqProvider(config)
 
     if provider_type == "ollama":
-        from src.providers.mistral_nemo_provider import MistralNemoProvider
-        return MistralNemoProvider(config)
+        from src.providers.gemma3_provider import Gemma3Provider
+        return Gemma3Provider(config)
 
     raise ValueError(
         f"Provider inconnu : '{provider_type}'. "
-        f"Valeurs acceptées : 'gemini', 'ollama'."
+        f"Valeurs acceptées : 'groq', 'ollama'."
     )

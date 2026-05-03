@@ -1,9 +1,9 @@
 {
-  "run_id": "baseline_mistral_nemo",
-  "description": "Baseline vanilla – Mistral-Nemo 12B (Ollama) – déterministe – 5 langues – pas de system prompt",
+  "run_id": "baseline_gemma3",
+  "description": "Baseline vanilla – Google Gemma 3 12B (Ollama) – déterministe – 5 langues – pas de system prompt",
   "provider": {
     "type": "ollama",
-    "model": "mistral-nemo"
+    "model": "gemma3:12b"
   },
   "generation": {
     "temperature": 0.0,
