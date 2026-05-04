@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 from src.models.config import RunConfig
 from src.models.schemas import PromptItem, ResultItem
 from src.pipelines.logs import setup_logging
-from src.promptings.system_prompt import apply_full_reformulation, apply_prompt_template, get_strategy_elements
+from src.promptings.system_prompt import apply_full_reformulation, get_strategy_elements
 from src.providers import create_provider
 
 load_dotenv()
