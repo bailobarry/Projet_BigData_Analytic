@@ -109,7 +109,7 @@ with st.sidebar:
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            temperature = st.number_input(label="Temperature :", value=1.0, min_value=0.0, max_value=2.0, step=0.1)
+            temperature = st.number_input(label="Temperature :", value=0.0, min_value=0.0, max_value=2.0, step=0.1)
         with col2:
             max_tokens = st.number_input(label="max_tokens :", value=256, min_value=1, max_value=8192, step=128)
         with col3:
