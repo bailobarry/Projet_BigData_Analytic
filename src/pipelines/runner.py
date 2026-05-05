@@ -32,7 +32,9 @@ from src.promptings.system_prompt import apply_full_reformulation, get_strategy_
 from src.providers import create_provider
 
 load_dotenv()
-logger = logging.getLogger("pipeline")
+# Logger module (messages hors run – ex: imports). Chaque run utilise
+# son propre logger isolé retourné par setup_logging(run_id).
+logger = logging.getLogger(__name__)
 
 # ── Callback de progression (pour Lot B – UI) ──────────────────────────────
 
@@ -154,9 +156,15 @@ def run_pipeline(
         if done_ids:
             run_logger.info("  %d prompts déjà traités (reprise)", len(done_ids))
 
+        # Nombre de prompts réellement à traiter dans ce run
+        remaining = total_in_file - len(done_ids)
+        run_logger.info("  %d prompts à traiter", remaining)
+
         # Ouvrir le fichier de sortie en mode append
         with jsonlines.open(str(output_file), mode="a") as writer:
-            for prompt_idx, item in enumerate(prompts, start=1):
+            processed_in_file = 0  # compte uniquement les prompts traités dans CE run
+
+            for item in prompts:
                 # Reprise : sauter les prompts déjà traités
                 if item.id in done_ids:
                     continue
@@ -182,19 +190,20 @@ def run_pipeline(
                 result = ResultItem(id=item.id, prompt=item.prompt, answer=answer)
                 writer.write(result.model_dump())
                 total_prompts_processed += 1
+                processed_in_file += 1
 
-                # Log de progression
-                if prompt_idx % 50 == 0 or prompt_idx == total_in_file:
+                # Log de progression toutes les 50 requêtes ou à la fin
+                if processed_in_file % 50 == 0 or processed_in_file == remaining:
                     run_logger.info(
                         "  Progression : %d/%d  (erreurs: %d)",
-                        prompt_idx,
-                        total_in_file,
+                        processed_in_file,
+                        remaining,
                         total_errors,
                     )
 
                 # Callback de progression (pour le Lot B)
                 if progress_cb:
-                    progress_cb(filename, file_idx, total_files, prompt_idx, total_in_file)
+                    progress_cb(filename, file_idx, total_files, processed_in_file, remaining)
 
                 # Note : le rate-limiting est géré directement par le provider
                 # (fenêtre glissante 15 req/min pour Gemini, aucune limite pour Ollama)

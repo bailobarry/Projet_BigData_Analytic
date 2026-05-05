@@ -5,6 +5,11 @@ Deux handlers :
 - **Console** (StreamHandler)  : messages ≥ INFO,
 - **Fichier**  (FileHandler)   : messages ≥ DEBUG, écrit dans
   ``data/output/{run_id}/run.log``.
+
+Isolation par run :
+  Chaque run obtient un logger nommé ``pipeline.<run_id>`` afin que
+  plusieurs runs simultanés (ex: via l'API FastAPI) n'interfèrent pas
+  entre eux et écrivent chacun dans leur propre fichier de log.
 """
 
 from __future__ import annotations
@@ -16,35 +21,43 @@ from pathlib import Path
 
 def setup_logging(run_id: str, output_dir: str = "data/output") -> logging.Logger:
     """
-    Configure et retourne le logger principal du run.
+    Configure et retourne un logger **isolé par run**.
+
+    Chaque run reçoit un logger nommé ``pipeline.<run_id>`` :
+    - Deux runs simultanés n'interfèrent plus jamais entre eux.
+    - Chaque run écrit dans son propre fichier ``run.log``.
 
     Parameters
     ----------
     run_id : str
-        Identifiant du run (utilisé pour le nom du fichier de log).
+        Identifiant unique du run (utilisé comme suffixe du logger et
+        comme nom du sous-répertoire de sortie).
     output_dir : str
-        Répertoire racine de sortie.
+        Répertoire racine de sortie (défaut : ``data/output``).
 
     Returns
     -------
     logging.Logger
-        Logger configuré nommé ``pipeline``.
+        Logger configuré nommé ``pipeline.<run_id>``.
     """
     log_dir = Path(output_dir) / run_id
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "run.log"
 
-    # Logger principal
-    logger = logging.getLogger("pipeline")
+    # Logger UNIQUE par run → pas de singleton partagé entre runs concurrents
+    logger = logging.getLogger(f"pipeline.{run_id}")
     logger.setLevel(logging.DEBUG)
 
-    # Éviter les doublons si la fonction est appelée plusieurs fois
+    # Ne pas propager vers le logger racine (évite les doublons en console)
+    logger.propagate = False
+
+    # Éviter les doublons si setup_logging est appelé deux fois avec le même run_id
     if logger.handlers:
-        logger.handlers.clear()
+        return logger
 
     # Format
     fmt = logging.Formatter(
-        "[%(asctime)s] %(levelname)-8s %(name)s – %(message)s",
+        "[%(asctime)s] %(levelname)-8s pipeline – %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
@@ -54,9 +67,8 @@ def setup_logging(run_id: str, output_dir: str = "data/output") -> logging.Logge
     console.setFormatter(fmt)
     logger.addHandler(console)
 
-    # Handler fichier
-    file_handler = logging.FileHandler(log_file, encoding="utf-8", delay=False)
-    file_handler.stream = open(log_file, "a", encoding="utf-8", buffering=1)
+    # Handler fichier (mode append pour permettre la reprise)
+    file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)
