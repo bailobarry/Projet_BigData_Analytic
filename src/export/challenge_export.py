@@ -50,8 +50,8 @@ def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dic
         "languages": config.pipeline.languages,
         "modifications": {
             "system_prompt": system_prompt_en,
-            "prompt_prefix_english": prefix,
-            "prompt_suffix_english": suffix,
+            "prompt_prefix": prefix,
+            "prompt_suffix": suffix,
             "generation_params": {
                 "do_sample": config.generation.temperature > 0.0,
                 "temperature": config.generation.temperature,
