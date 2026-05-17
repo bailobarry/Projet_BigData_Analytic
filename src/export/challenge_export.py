@@ -27,18 +27,18 @@ def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dic
 
     # Récupérer le system prompt en anglais si défini
     system_prompt_en = None
-    prefix_en = None
-    suffix_en = None
+    prefix = None
+    suffix = None
 
     if config.pipeline.system_prompt:
         from src.promptings.system_prompt import get_strategy_elements
         strategy_pack = get_strategy_elements(
             config.pipeline.system_prompt, 
-            lang="en"
+            lang= config.pipeline.languages
         )
         system_prompt_en = strategy_pack.get("system")
-        prefix_en = strategy_pack.get("prefix")
-        suffix_en = strategy_pack.get("suffix")
+        prefix = strategy_pack.get("prefix")
+        suffix = strategy_pack.get("suffix")
 
     return {
         "team": team_name,
@@ -50,8 +50,8 @@ def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dic
         "languages": config.pipeline.languages,
         "modifications": {
             "system_prompt": system_prompt_en,
-            "prompt_prefix_english": prefix_en,
-            "prompt_suffix_english": suffix_en,
+            "prompt_prefix_english": prefix,
+            "prompt_suffix_english": suffix,
             "generation_params": {
                 "do_sample": config.generation.temperature > 0.0,
                 "temperature": config.generation.temperature,
