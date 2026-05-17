@@ -25,43 +25,47 @@ def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dic
 
     config = RunConfig.from_file(config_path)
 
-    # Récupérer le system prompt en anglais si défini
-    system_prompt_en = None
-    prefix = None
-    suffix = None
+    languages_configs = {}
 
     if config.pipeline.system_prompt:
         from src.promptings.system_prompt import get_strategy_elements
-        strategy_pack = get_strategy_elements(
-            config.pipeline.system_prompt, 
-            lang= config.pipeline.languages
-        )
-        system_prompt_en = strategy_pack.get("system")
-        prefix = strategy_pack.get("prefix")
-        suffix = strategy_pack.get("suffix")
 
-    return {
-        "team": team_name,
-        "system": "ELOQUENT-Cultural-Pipeline",
-        "model": config.provider.model,
-        "submissionid": config.run_id,
-        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "label": "eloquent-2026-cultural",
-        "languages": config.pipeline.languages,
-        "modifications": {
-            "system_prompt": system_prompt_en,
-            "prompt_prefix": prefix,
-            "prompt_suffix": suffix,
-            "generation_params": {
-                "do_sample": config.generation.temperature > 0.0,
-                "temperature": config.generation.temperature,
-                "max_new_tokens": config.generation.max_tokens,
-                "top_p": config.generation.top_p,
-                "seed": config.generation.seed,
-            },
-            "notes": config.description,
-        },
-    }
+        langs = (
+            config.pipeline.languages
+            if isinstance(config.pipeline.languages, list)
+            else [config.pipeline.languages]
+        )
+
+        for lang in langs:
+            strategy_pack = get_strategy_elements(
+                config.pipeline.system_prompt, lang=lang
+            )
+            languages_configs[lang] = {
+                "system_prompt": strategy_pack.get("system"),
+                "prompt_prefix": strategy_pack.get("prefix"),
+                "prompt_suffix": strategy_pack.get("suffix"),
+            }
+
+            return {
+                "team": team_name,
+                "system": "ELOQUENT-Cultural-Pipeline",
+                "model": config.provider.model,
+                "submissionid": config.run_id,
+                "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "label": "eloquent-2026-cultural",
+                "languages": config.pipeline.languages,
+                "modifications": {
+                    "templates_by_language": languages_configs,
+                    "generation_params": {
+                        "do_sample": config.generation.temperature > 0.0,
+                        "temperature": config.generation.temperature,
+                        "max_new_tokens": config.generation.max_tokens,
+                        "top_p": config.generation.top_p,
+                        "seed": config.generation.seed,
+                    },
+                    "notes": config.description,
+                },
+            }
 
 
 def export_submission(
