@@ -46,26 +46,26 @@ def build_metadata(run_id: str, team_name: str = "Master MIAGE Toulouse") -> dic
                 "prompt_suffix": strategy_pack.get("suffix"),
             }
 
-            return {
-                "team": team_name,
-                "system": "ELOQUENT-Cultural-Pipeline",
-                "model": config.provider.model,
-                "submissionid": config.run_id,
-                "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-                "label": "eloquent-2026-cultural",
-                "languages": config.pipeline.languages,
-                "modifications": {
-                    "templates_by_language": languages_configs,
-                    "generation_params": {
-                        "do_sample": config.generation.temperature > 0.0,
-                        "temperature": config.generation.temperature,
-                        "max_new_tokens": config.generation.max_tokens,
-                        "top_p": config.generation.top_p,
-                        "seed": config.generation.seed,
-                    },
-                    "notes": config.description,
-                },
-            }
+    return {
+        "team": team_name,
+        "system": "ELOQUENT-Cultural-Pipeline",
+        "model": config.provider.model,
+        "submissionid": config.run_id,
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "label": "eloquent-2026-cultural",
+        "languages": config.pipeline.languages,
+        "modifications": {
+            "templates_by_language": languages_configs,
+            "generation_params": {
+                "do_sample": config.generation.temperature > 0.0,
+                "temperature": config.generation.temperature,
+                "max_new_tokens": config.generation.max_tokens,
+                "top_p": config.generation.top_p,
+                "seed": config.generation.seed,
+            },
+            "notes": config.description,
+        },
+    }
 
 
 def export_submission(
