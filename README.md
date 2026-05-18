@@ -182,16 +182,16 @@ Documentation Swagger interactive : **http://localhost:8000/docs**
 
 ## Modèles LLM utilisés (100% gratuits)
 
-| | **API Cloud** | **Local** |
-|---|---|---|
-| **Service** | Groq Cloud | Ollama |
-| **Modèle** | Llama 3.3 70B Versatile | Google Gemma 3 12B |
-| **Paramètres** | 70 milliards | 12 milliards |
-| **Date de sortie** | Décembre 2024 | Mars 2025 |
-| **Multilingue EU** | ★★★★★ | ★★★★★ |
-| **RAM nécessaire** | 0 (cloud) | ~8 Go |
-| **Limite** | 30 req/min, 14 400 req/jour | Illimité |
-| **Coût** | Gratuit | Gratuit |
+| | **API Cloud**               | **Local**                      |
+|---|-----------------------------|--------------------------------|
+| **Service** | Groq Cloud                  | Ollama                         |
+| **Modèle** | Llama 3.3 70B Versatile     | Google Gemma 3 12B             |
+| **Paramètres** | 70 milliards                | 12 milliards                   |
+| **Date de sortie** | Décembre 2024               | Mars 2025                      |
+| **Multilingue EU** | *****                       | *****                          |
+| **RAM nécessaire** | 0 (cloud)                   | ~8 Go                          |
+| **Limite** | 30 req/min, 14 400 req/jour | Illimité                       |
+| **Coût** | Gratuit                     | Gratuit                        |
 | **Config** | `configs/baseline_groq.json` | `configs/baseline_ollama.json` |
 
 ---
