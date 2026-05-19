@@ -13,6 +13,13 @@ def get_all_configs() -> dict:
     return response.json()
 
 
+def list_runs() -> list[dict]:
+    """GET /runs — retourne la liste de tous les runs avec statut."""
+    response = httpx.get(f"{API_URL}/runs", timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+
 def run_experience(
         provider: str,
         model: str,
@@ -40,6 +47,37 @@ def run_experience(
     return response.json()["run_id"]
 
 
+def resume_run(run_id: str) -> str:
+    """POST /runs/{run_id}/resume — reprend un run interrompu."""
+    response = httpx.post(f"{API_URL}/runs/{run_id}/resume", timeout=10)
+    response.raise_for_status()
+    return response.json()["run_id"]
+
+
+def start_analysis(
+        run_id: str,
+        methods: list[str],
+        sample_size: int = 10,
+        run_specific_id: str | None = None,
+) -> dict:
+    """POST /runs/{run_id}/analyse — lance les analyses en arrière-plan."""
+    payload = {
+        "methods": methods,
+        "sample_size": sample_size,
+        "run_specific_id": run_specific_id,
+    }
+    response = httpx.post(f"{API_URL}/runs/{run_id}/analyse", json=payload, timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+
+def get_analysis_results(run_id: str) -> dict:
+    """GET /runs/{run_id}/analyse/results — retourne les JSON d'analyse sauvegardés."""
+    response = httpx.get(f"{API_URL}/runs/{run_id}/analyse/results", timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+
 def get_run_results(run_id: str) -> dict[str, bytes]:
     """Récupère dynamiquement tous les fichiers de résultats du run via l'API."""
     # 1. Lister les fichiers disponibles
@@ -63,3 +101,17 @@ def download_submission_zip(run_id: str) -> bytes:
     r = httpx.get(f"{API_URL}/runs/{run_id}/results/submission.zip")
     r.raise_for_status()
     return r.content
+
+
+def cancel_run(run_id: str) -> dict:
+    """POST /runs/{run_id}/cancel — annule une expérience en cours."""
+    response = httpx.post(f"{API_URL}/runs/{run_id}/cancel", timeout=5)
+    response.raise_for_status()
+    return response.json()
+
+
+def cancel_analysis(run_id: str) -> dict:
+    """POST /runs/{run_id}/analyse/cancel — annule une analyse en cours."""
+    response = httpx.post(f"{API_URL}/runs/{run_id}/analyse/cancel", timeout=5)
+    response.raise_for_status()
+    return response.json()
