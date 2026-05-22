@@ -29,8 +29,8 @@
       "description": "Rôle d'expert"
     },
     {
-      "name": "empathetic_synthesis",
-      "description": "Conseiller humain"
+      "name": "short_form",
+      "description": "Contrainte stricte de format"
     }
   ]
 }

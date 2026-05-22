@@ -219,7 +219,7 @@ Imaginez que vous lancez une expérience avec ces paramètres :
 
 ```python
 # 1. CHARGER une config existante
-config = RunConfig.from_file("configs/baseline_gimini.json")
+config = RunConfig.from_file("configs/baseline.json")
 
 # 2. ACCÉDER aux paramètres
 print(config.provider.model)          # "gemini-2.0-flash"
@@ -617,7 +617,7 @@ provider = create_provider(config)  # Une seule ligne
 # Dans runner.py :
 from src.providers import create_provider
 
-config = RunConfig.from_file("configs/baseline_gimini.json")
+config = RunConfig.from_file("configs/baseline.json")
 provider = create_provider(config)
 # → Retourne GeminiProvider si type="openai_compatible"
 # → Retourne MistralNemoProvider si type="ollama"
@@ -681,7 +681,7 @@ def create_provider(config: "RunConfig") -> LLMProvider:
 ```python
 from src.providers import create_provider
 
-config = RunConfig.from_file("configs/baseline_gimini.json")
+config = RunConfig.from_file("configs/baseline.json")
 provider = create_provider(config)  # → GeminiProvider ou MistralNemoProvider
 answer = provider.generate("Que manger ?", config.generation)
 ```
@@ -1390,7 +1390,7 @@ Sans ce fichier, vous devriez écrire tout ça à la main à chaque fois.
 from src.models.config import RunConfig
 from src.pipelines.runner import run_pipeline
 
-config = RunConfig.from_file("configs/baseline_gimini.json")
+config = RunConfig.from_file("configs/baseline.json")
 summary = run_pipeline(config)
 
 print(summary)
@@ -1912,7 +1912,7 @@ C'est le **point d'entrée utilisateur**. Au lieu de lancer Python et taper :
 >>> from src.pipelines.runner import run_pipeline
 >>> from dotenv import load_dotenv
 >>> load_dotenv()
->>> config = RunConfig.from_file("configs/baseline_gimini.json")
+>>> config = RunConfig.from_file("configs/baseline.json")
 >>> run_pipeline(config)
 ```
 
@@ -2032,7 +2032,7 @@ def main() -> None:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/baseline_gimini.json",
+        default="configs/baseline.json",
         help="Chemin vers la config JSON",
     )
     

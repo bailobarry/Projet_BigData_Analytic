@@ -242,3 +242,4 @@ def run_pipeline(
     run_logger.info("═" * 60)
 
     return summary
+

@@ -234,7 +234,7 @@ Trois methodes sont disponibles et combinables :
 
 ### Analyse quantitative
 
-Calcule des statistiques brutes sur les réponses : nombre de mots, nombre de caractères,
+Calcule des statistiques brutes sur les réponses : nombre moyen de mots, nombre moyen de caractères,
 taux de réponses vides, taux d'erreurs. Disponible pour tous les runs, tres rapide.
 
 ### Analyse semantique (Embeddings)
@@ -244,12 +244,25 @@ pour produire deux scores :
 
 - **Score de Diversite** (fichiers *unspecific*) : mesure a quel point les réponses sont
   culturellement differentes selon la langue. Proche de 1 = forte diversite.
+  Formule : `1 - similarite_cosinus_moyenne` sur toutes les paires de langues.
 - **Score de Robustesse** (fichiers *specific*) : mesure la coherence des réponses malgre
   les contextes culturels differents. Proche de 1 = forte robustesse.
-- **Score combine** : moyenne harmonique diversite x robustesse.
+  Formule : `similarite_cosinus_moyenne` sur toutes les paires de langues.
+- **Score combine** : `diversite × robustesse` (methode officielle du challenge).
 
-Chaque score est accompagne d'un ecart-type (`score_std`) qui indique
-la variabilite des scores d'un prompt a l'autre.
+Chaque score est accompagne de quatre indicateurs statistiques :
+
+| Indicateur | Description |
+|---|---|
+| `score` | Score global (moyenne sur tous les prompts) |
+| `score_std` | Ecart-type — variabilite d'un prompt a l'autre |
+| `score_min` | Valeur minimale (pire cas) |
+| `score_max` | Valeur maximale (meilleur cas) |
+| `score_median` | Mediane — robuste aux valeurs extremes |
+
+L'analyse produit egalement un score de diversite et de robustesse pour **chaque
+paire de langues** (en-fr, en-de, fr-it…), permettant d'identifier les couples
+linguistiques les plus differencies.
 
 ### LLM-as-a-Judge
 
@@ -316,8 +329,7 @@ Chaque run sauvegarde automatiquement dans `data/output/{run_id}/` :
 | `{lang}_{type}.jsonl` | Reponses du LLM pour chaque combinaison langue x type |
 | `submission.zip` | Archive prete a soumettre au challenge CLEF 2026 |
 | `analysis_quantitative.json` | Rapport d'analyse quantitative (si lance) |
-| `analysis_diversity.json` | Score de diversite semantique (si lance) |
-| `analysis_robustness.json` | Score de robustesse semantique (si lance) |
+| `analysis_semantic.json` | Scores de diversite et robustesse semantique (si lance) |
 | `analysis_llm_judge.json` | Evaluations LLM-as-a-Judge (si lance) |
 
 La configuration est egalement copiee dans `configs/runs/{run_id}/` pour un acces rapide.
@@ -341,3 +353,4 @@ pytest tests/test_lot_a.py -v
 | Variable | Obligatoire | Description |
 |---|---|---|
 | `GROQ_API_KEY` | Pour Groq et LLM Judge | Cle API Groq : https://console.groq.com/keys |
+

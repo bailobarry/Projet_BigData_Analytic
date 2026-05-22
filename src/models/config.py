@@ -71,6 +71,11 @@ class PipelineConfig(BaseModel):
         None,
         description="System prompt optionnel (None = baseline vanilla)",
     )
+    prompt_template: Optional[str] = Field(
+        None,
+        description="Template de reformulation (None = prompt brut). "
+                    "Utilisera {prompt} comme placeholder.",
+    )
 
 
 # ── Configuration principale ────────────────────────────────────────────────

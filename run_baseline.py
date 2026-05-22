@@ -3,7 +3,7 @@
 run_baseline.py – Script CLI pour lancer un run depuis un fichier de config.
 
 Usage :
-    # Baseline Groq Llama 3.3 70B (API cloud)
+    # Baseline Groq Llama 3.3 70B (API cloud, recommandé)
     python run_baseline.py
 
     # Baseline Gemma 3 12B via Ollama (local)

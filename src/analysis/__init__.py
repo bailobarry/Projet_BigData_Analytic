@@ -1,4 +1,4 @@
-# Analysis – analyse quantitative, sémantique et LLM-as-a-Judge (Lot D)
+# Analysis – analyse quantitative, sémantique, qualitative et LLM-as-a-Judge
 
 from src.analysis.quantitative import (
     load_run_results,
@@ -11,7 +11,15 @@ from src.analysis.semantic import (
     diversity_score,
     robustness_score,
     combined_score,
+    compare_runs_semantic,
     generate_report as generate_semantic_report,
+)
+from src.analysis.qualitative import (
+    select_extreme_cases,
+    detect_instruction_violations,
+    classify_errors,
+    analyze_by_category,
+    generate_qualitative_report,
 )
 from src.analysis.llm_judge import (
     LLMJudge,
@@ -31,7 +39,14 @@ __all__ = [
     "diversity_score",
     "robustness_score",
     "combined_score",
+    "compare_runs_semantic",
     "generate_semantic_report",
+    # Qualitatif
+    "select_extreme_cases",
+    "detect_instruction_violations",
+    "classify_errors",
+    "analyze_by_category",
+    "generate_qualitative_report",
     # LLM Judge
     "LLMJudge",
     "evaluate_diversity",

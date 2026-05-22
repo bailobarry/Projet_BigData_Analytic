@@ -109,7 +109,6 @@ def compute_basic_stats(
     Pour chaque fichier (langue × type) calcule :
     - Nombre total de réponses
     - Longueur moyenne en mots et en caractères
-    - Longueur min / max en mots
     - Taux de réponses vides (< 3 mots)
     - Taux d'erreurs pipeline ("ERROR: …")
 
@@ -125,8 +124,6 @@ def compute_basic_stats(
             "total": 101,
             "avg_words": 25.3,
             "avg_chars": 142.1,
-            "min_words": 5,
-            "max_words": 87,
             "empty_rate": 0.0,
             "error_rate": 0.02
         },
@@ -160,8 +157,6 @@ def compute_basic_stats(
             "total": n,
             "avg_words": round(sum(word_counts) / n, 2) if n else 0,
             "avg_chars": round(sum(char_counts) / n, 2) if n else 0,
-            "min_words": min(word_counts) if word_counts else 0,
-            "max_words": max(word_counts) if word_counts else 0,
             "empty_rate": round(empty_count / n, 4) if n else 0.0,
             "error_rate": round(error_count / n, 4) if n else 0.0,
         }
@@ -176,8 +171,6 @@ def compute_basic_stats(
         "total": total_all,
         "avg_words": round(sum(all_words) / total_all, 2) if total_all else 0,
         "avg_chars": round(sum(all_chars) / total_all, 2) if total_all else 0,
-        "min_words": min(all_words) if all_words else 0,
-        "max_words": max(all_words) if all_words else 0,
         "empty_rate": round(empty_all / total_all, 4) if total_all else 0.0,
         "error_rate": round(error_all / total_all, 4) if total_all else 0.0,
     }

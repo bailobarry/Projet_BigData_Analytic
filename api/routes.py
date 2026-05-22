@@ -44,6 +44,7 @@ class AnalysisRequest(BaseModel):
     methods: list[str] = ["quantitative", "semantic", "llm_judge"]
     sample_size: int = 10
     run_specific_id: Optional[str] = None
+    include_qualitative: bool = True   # analyse qualitative toujours incluse si semantic actif
 
 # ── Helpers SSE ───────────────────────────────────────────────────────────────
 
@@ -146,6 +147,7 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
             results["diversity"] = div_save
             _analysis_status[run_id]["steps_done"].append("semantic_diversity")
 
+
             # ── 2b. Sémantique – Robustesse ───────────────────────────────
             if _cancelled():
                 _mark_cancelled(); return
@@ -163,6 +165,30 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
                 _analysis_status[run_id]["steps_done"].append("semantic_robustness")
             except ValueError as exc:
                 results["robustness_error"] = str(exc)
+
+            # ── 2c. Analyse qualitative (cas extrêmes + typologies) ───────
+            if request.include_qualitative:
+                if _cancelled():
+                    _mark_cancelled(); return
+                _analysis_status[run_id]["current"] = "qualitative"
+                try:
+                    from src.analysis.qualitative import generate_qualitative_report as _qual
+                    div_pp = div.get("per_prompt") if "div" in dir() else None
+                    rob_pp = results.get("robustness", {}).get("per_prompt") if "rob" in dir() else None
+                    # rob contient per_prompt si on est dans le bon scope
+                    qual_report = _qual(
+                        run_id,
+                        diversity_per_prompt=div.get("per_prompt"),
+                        robustness_per_prompt=rob.get("per_prompt") if "rob" in dir() else None,
+                        save=True,
+                    )
+                    results["qualitative"] = {
+                        k: v for k, v in qual_report.items()
+                        if k != "error_typology" or True  # garder tout sauf per_prompt details
+                    }
+                    _analysis_status[run_id]["steps_done"].append("qualitative")
+                except Exception as exc_q:
+                    results["qualitative_error"] = str(exc_q)
 
         # ── 3. LLM Judge ─────────────────────────────────────────────────
         if "llm_judge" in request.methods:

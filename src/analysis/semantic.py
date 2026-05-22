@@ -117,6 +117,22 @@ def _pairwise_cosine_similarity(embeddings: np.ndarray) -> list[float]:
     return similarities
 
 
+def _pairwise_cosine_labeled(
+    embeddings: np.ndarray, labels: list[str]
+) -> dict[str, float]:
+    """
+    Retourne la similarité cosinus pour chaque paire de langues.
+    Clé : "lang_a-lang_b", valeur : similarité cosinus.
+    """
+    n = len(embeddings)
+    result: dict[str, float] = {}
+    for i in range(n):
+        for j in range(i + 1, n):
+            key = f"{labels[i]}-{labels[j]}"
+            result[key] = round(_cosine_similarity(embeddings[i], embeddings[j]), 4)
+    return result
+
+
 def _dispersion(similarities: list[float]) -> float:
     """
     Diversité = 1 - similarité_moyenne.
@@ -248,20 +264,35 @@ def diversity_score(
 
     per_prompt_scores: dict[str, dict] = {}
     all_scores: list[float] = []
+    # Accumulateur pour les scores par paire de langues
+    pair_sims_accum: dict[str, list[float]] = {}
 
     for prompt_id in common_ids_sorted:
         texts = [data_by_lang[lang][prompt_id] for lang in available_langs]
         embeddings = model.encode(texts, convert_to_numpy=True)
         sims = _pairwise_cosine_similarity(embeddings)
         score = _dispersion(sims)
+        # Scores labellisés par paire
+        labeled = _pairwise_cosine_labeled(embeddings, available_langs)
         per_prompt_scores[prompt_id] = {
             "score": score,
             "languages": available_langs,
         }
         all_scores.append(score)
+        for pair_key, sim_val in labeled.items():
+            pair_sims_accum.setdefault(pair_key, []).append(sim_val)
 
-    global_score = round(float(np.mean(all_scores)), 4) if all_scores else 0.0
-    global_std = round(float(np.std(all_scores)), 4) if all_scores else 0.0
+    global_score  = round(float(np.mean(all_scores)), 4) if all_scores else 0.0
+    global_std    = round(float(np.std(all_scores)),  4) if all_scores else 0.0
+    global_min    = round(float(np.min(all_scores)),  4) if all_scores else 0.0
+    global_max    = round(float(np.max(all_scores)),  4) if all_scores else 0.0
+    global_median = round(float(np.median(all_scores)), 4) if all_scores else 0.0
+
+    # Moyenne de divergence par paire (1 - sim)  → paire la plus diverse en tête
+    per_language_pair = {
+        pair: round(1.0 - float(np.mean(vals)), 4)
+        for pair, vals in pair_sims_accum.items()
+    }
 
     return {
         "metric": "cultural_diversity",
@@ -269,9 +300,13 @@ def diversity_score(
         "model": model_name,
         "score": global_score,
         "score_std": global_std,
+        "score_min": global_min,
+        "score_max": global_max,
+        "score_median": global_median,
         "n_prompts": len(all_scores),
         "n_languages": len(available_langs),
         "languages": available_langs,
+        "per_language_pair_diversity": per_language_pair,
         "per_prompt": per_prompt_scores,
     }
 
@@ -345,20 +380,33 @@ def robustness_score(
 
     per_prompt_scores: dict[str, dict] = {}
     all_scores: list[float] = []
+    pair_sims_accum: dict[str, list[float]] = {}
 
     for prompt_id in common_ids_sorted:
         texts = [data_by_lang[lang][prompt_id] for lang in available_langs]
         embeddings = model.encode(texts, convert_to_numpy=True)
         sims = _pairwise_cosine_similarity(embeddings)
         score = _cohesion(sims)
+        labeled = _pairwise_cosine_labeled(embeddings, available_langs)
         per_prompt_scores[prompt_id] = {
             "score": score,
             "languages": available_langs,
         }
         all_scores.append(score)
+        for pair_key, sim_val in labeled.items():
+            pair_sims_accum.setdefault(pair_key, []).append(sim_val)
 
-    global_score = round(float(np.mean(all_scores)), 4) if all_scores else 0.0
-    global_std = round(float(np.std(all_scores)), 4) if all_scores else 0.0
+    global_score  = round(float(np.mean(all_scores)), 4) if all_scores else 0.0
+    global_std    = round(float(np.std(all_scores)),  4) if all_scores else 0.0
+    global_min    = round(float(np.min(all_scores)),  4) if all_scores else 0.0
+    global_max    = round(float(np.max(all_scores)),  4) if all_scores else 0.0
+    global_median = round(float(np.median(all_scores)), 4) if all_scores else 0.0
+
+    # Robustesse par paire = similarité moyenne entre les deux langues
+    per_language_pair = {
+        pair: round(float(np.mean(vals)), 4)
+        for pair, vals in pair_sims_accum.items()
+    }
 
     return {
         "metric": "cultural_robustness",
@@ -366,9 +414,13 @@ def robustness_score(
         "model": model_name,
         "score": global_score,
         "score_std": global_std,
+        "score_min": global_min,
+        "score_max": global_max,
+        "score_median": global_median,
         "n_prompts": len(all_scores),
         "n_languages": len(available_langs),
         "languages": available_langs,
+        "per_language_pair_robustness": per_language_pair,
         "per_prompt": per_prompt_scores,
     }
 
@@ -415,17 +467,18 @@ def combined_score(
     d = div["score"]
     r = rob["score"]
 
-    if d + r > 0:
-        harmonic = round(2 * d * r / (d + r), 4)
-    else:
-        harmonic = 0.0
+    # Score combiné officiel challenge : produit simple D × R
+    product = round(d * r, 4)
 
-    # Interprétation qualitative
-    if harmonic >= 0.60:
+    # Score harmonique (alternatif, pénalise les déséquilibres)
+    harmonic = round(2 * d * r / (d + r), 4) if (d + r) > 0 else 0.0
+
+    # Interprétation basée sur le produit (méthode officielle du challenge)
+    if product >= 0.36:
         interpretation = "Excellent : réponses très diversifiées culturellement et robustes."
-    elif harmonic >= 0.45:
+    elif product >= 0.20:
         interpretation = "Bon : bonne diversité culturelle avec une robustesse satisfaisante."
-    elif harmonic >= 0.30:
+    elif product >= 0.09:
         interpretation = "Moyen : des améliorations sont possibles sur la diversité ou la robustesse."
     else:
         interpretation = "Faible : les réponses manquent soit de diversité culturelle, soit de robustesse."
@@ -434,7 +487,8 @@ def combined_score(
         "run_id": run_id,
         "diversity": div,
         "robustness": rob,
-        "combined_score": harmonic,
+        "combined_score": product,          # méthode officielle challenge : D × R
+        "combined_score_harmonic": harmonic, # alternative : pénalise les déséquilibres
         "interpretation": interpretation,
     }
 
@@ -488,15 +542,27 @@ def generate_report(
             "run_id": report["run_id"],
             "analysis_type": "semantic",
             "model": model_name,
-            "diversity_score": report["diversity"]["score"],
-            "diversity_std": report["diversity"]["score_std"],
+            # Diversité
+            "diversity_score":    report["diversity"]["score"],
+            "diversity_std":      report["diversity"]["score_std"],
+            "diversity_min":      report["diversity"]["score_min"],
+            "diversity_max":      report["diversity"]["score_max"],
+            "diversity_median":   report["diversity"]["score_median"],
             "diversity_n_prompts": report["diversity"]["n_prompts"],
-            "robustness_score": report["robustness"]["score"],
-            "robustness_std": report["robustness"]["score_std"],
+            "diversity_per_language_pair": report["diversity"].get("per_language_pair_diversity", {}),
+            # Robustesse
+            "robustness_score":   report["robustness"]["score"],
+            "robustness_std":     report["robustness"]["score_std"],
+            "robustness_min":     report["robustness"]["score_min"],
+            "robustness_max":     report["robustness"]["score_max"],
+            "robustness_median":  report["robustness"]["score_median"],
             "robustness_n_prompts": report["robustness"]["n_prompts"],
-            "combined_score": report["combined_score"],
-            "interpretation": report["interpretation"],
-            "languages": report["diversity"]["languages"],
+            "robustness_per_language_pair": report["robustness"].get("per_language_pair_robustness", {}),
+            # Combiné
+            "combined_score":     report["combined_score"],
+            "combined_score_harmonic": report.get("combined_score_harmonic"),
+            "interpretation":     report["interpretation"],
+            "languages":          report["diversity"]["languages"],
         }
         report_path = Path(output_dir) / run_id / "analysis_semantic.json"
         report_path.write_text(
@@ -506,4 +572,143 @@ def generate_report(
         logger.info("Rapport sémantique sauvegardé : %s", report_path)
 
     return report
+
+
+
+
+# ─── Comparaison sémantique entre deux runs ──────────────────────────────────
+
+
+def compare_runs_semantic(
+    run_id_a: str,
+    run_id_b: str,
+    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    languages: Optional[list[str]] = None,
+    model_name: str = _DEFAULT_MODEL,
+    sample_size: Optional[int] = None,
+) -> dict:
+    """
+    Compare les scores sémantiques (diversité + robustesse) de deux runs.
+
+    Typiquement utilisé pour comparer une baseline avec une variante.
+    Calcule les scores pour chaque run, puis mesure les deltas.
+
+    Parameters
+    ----------
+    run_id_a : str
+        Run de référence (ex: baseline).
+    run_id_b : str
+        Run à comparer (ex: variante cultural_expert).
+    output_dir : str
+        Répertoire racine des résultats.
+    languages : list[str] | None
+        Langues à inclure.
+    model_name : str
+        Modèle d'embedding.
+    sample_size : int | None
+        Limite le nombre de prompts analysés.
+
+    Returns
+    -------
+    dict
+        {
+            "run_a": "run_xxxx",
+            "run_b": "run_yyyy",
+            "diversity": {
+                "score_a": 0.21, "score_b": 0.28,
+                "delta": +0.07, "improved": true
+            },
+            "robustness": {
+                "score_a": 0.74, "score_b": 0.71,
+                "delta": -0.03, "improved": false
+            },
+            "combined": {
+                "score_a": 0.155, "score_b": 0.199,
+                "delta": +0.044, "improved": true
+            },
+            "verdict": "B améliore la diversité mais dégrade légèrement la robustesse."
+        }
+    """
+    if languages is None:
+        languages = _SUPPORTED_LANGUAGES
+
+    logger.info("Comparaison sémantique : %s vs %s", run_id_a, run_id_b)
+
+    # ── Diversité (unspecific) ────────────────────────────────────────────
+    try:
+        div_a = diversity_score(run_id_a, output_dir, languages, model_name, sample_size)
+        da = div_a["score"]
+    except ValueError:
+        da = None
+
+    try:
+        div_b = diversity_score(run_id_b, output_dir, languages, model_name, sample_size)
+        db = div_b["score"]
+    except ValueError:
+        db = None
+
+    # ── Robustesse (specific) ─────────────────────────────────────────────
+    try:
+        rob_a = robustness_score(run_id_a, output_dir, languages, model_name, sample_size)
+        ra = rob_a["score"]
+    except ValueError:
+        ra = None
+
+    try:
+        rob_b = robustness_score(run_id_b, output_dir, languages, model_name, sample_size)
+        rb = rob_b["score"]
+    except ValueError:
+        rb = None
+
+    # ── Scores combinés ───────────────────────────────────────────────────
+    ca = round(da * ra, 4) if (da is not None and ra is not None) else None
+    cb = round(db * rb, 4) if (db is not None and rb is not None) else None
+
+    def _delta(a, b):
+        if a is None or b is None:
+            return None
+        return round(b - a, 4)
+
+    delta_div = _delta(da, db)
+    delta_rob = _delta(ra, rb)
+    delta_com = _delta(ca, cb)
+
+    # ── Verdict textuel ───────────────────────────────────────────────────
+    parts = []
+    if delta_div is not None:
+        parts.append(
+            f"diversité {'améliorée' if delta_div > 0 else 'dégradée'} "
+            f"({'+'if delta_div>0 else ''}{delta_div:.4f})"
+        )
+    if delta_rob is not None:
+        parts.append(
+            f"robustesse {'améliorée' if delta_rob > 0 else 'dégradée'} "
+            f"({'+'if delta_rob>0 else ''}{delta_rob:.4f})"
+        )
+    verdict = f"Run B vs A : {', '.join(parts)}." if parts else "Comparaison incomplète."
+
+    return {
+        "run_a": run_id_a,
+        "run_b": run_id_b,
+        "diversity": {
+            "score_a": da,
+            "score_b": db,
+            "delta": delta_div,
+            "improved": (delta_div > 0) if delta_div is not None else None,
+        },
+        "robustness": {
+            "score_a": ra,
+            "score_b": rb,
+            "delta": delta_rob,
+            "improved": (delta_rob > 0) if delta_rob is not None else None,
+        },
+        "combined": {
+            "score_a": ca,
+            "score_b": cb,
+            "delta": delta_com,
+            "improved": (delta_com > 0) if delta_com is not None else None,
+        },
+        "verdict": verdict,
+    }
+
 
