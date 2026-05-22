@@ -31,6 +31,10 @@
     {
       "name": "short_form",
       "description": "Contrainte stricte de format"
+    },
+    {
+      "name": "empathetic_synthesis",
+      "description": "Conseiller empathique et bienveillant"
     }
   ]
 }
