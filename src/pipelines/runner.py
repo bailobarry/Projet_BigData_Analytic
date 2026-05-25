@@ -56,16 +56,80 @@ def _load_prompts(filepath: str) -> list[PromptItem]:
     return items
 
 
+def _repair_jsonl_file(output_file: Path) -> int:
+    """
+    Répare un fichier JSONL potentiellement corrompu après une interruption.
+
+    Stratégie :
+    - Lit chaque ligne brute du fichier.
+    - Tente de la parser en JSON.
+    - Conserve uniquement les lignes valides.
+    - Réécrit le fichier avec seulement ces lignes valides.
+
+    Returns
+    -------
+    int
+        Nombre de lignes corrompues supprimées.
+    """
+    if not output_file.exists():
+        return 0
+
+    valid_lines: list[str] = []
+    removed = 0
+
+    with open(str(output_file), "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\n\r")
+            if not line.strip():
+                continue  # Ignorer les lignes vides
+            try:
+                json.loads(line)
+                valid_lines.append(line)
+            except json.JSONDecodeError:
+                removed += 1
+                logger.warning(
+                    "Ligne JSONL corrompue ignorée (reprise) : %s…", line[:80]
+                )
+
+    if removed > 0:
+        # Réécrire le fichier avec uniquement les lignes valides
+        with open(str(output_file), "w", encoding="utf-8") as f:
+            for line in valid_lines:
+                f.write(line + "\n")
+        logger.info(
+            "Fichier réparé : %d ligne(s) corrompue(s) supprimée(s) dans %s",
+            removed,
+            output_file.name,
+        )
+
+    return removed
+
+
 def _already_processed_ids(output_file: Path) -> set[str]:
     """
     Retourne les IDs déjà traités dans le fichier de sortie (reprise).
-    Permet de reprendre un run interrompu sans tout recommencer.
+    Répare automatiquement le fichier s'il contient des lignes corrompues
+    (interruption brutale en cours d'écriture).
     """
     done: set[str] = set()
-    if output_file.exists():
-        with jsonlines.open(str(output_file), mode="r") as reader:
-            for obj in reader:
+    if not output_file.exists():
+        return done
+
+    # Réparer d'abord les éventuelles lignes corrompues
+    _repair_jsonl_file(output_file)
+
+    # Lecture sécurisée ligne par ligne
+    with open(str(output_file), "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
                 done.add(obj.get("id", ""))
+            except json.JSONDecodeError:
+                pass  # Ne devrait pas arriver après la réparation, précaution défensive
+
     return done
 
 

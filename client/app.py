@@ -1057,30 +1057,30 @@ if stream_analysis_data:
 
     st.session_state.pop("stream_analysis_data", None)
 
-    # Résultats affichés EN DESSOUS de la progression
+    # Sauvegarder les résultats dans la session pour affichage persistant
     if final_results:
-        st.markdown("---")
-        st.subheader("Résultats de l'analyse")
-        display_analysis(final_results)
-        # Sauvegarder pour que les graphiques restent accessibles après rerun
         st.session_state["last_analysis_results"] = final_results
+        st.session_state["show_charts"] = False  # revenir aux résultats textuels par défaut
 
 # Message d'annulation (affiché sous le formulaire)
 if st.session_state.pop("show_cancelled_analysis", False):
     st.warning("Analyse arrêtée par l'utilisateur.")
 
-# ── Bouton "Générer les graphiques" (persiste après l'analyse) ────────────────
+# ── Résultats + bouton "Générer / Masquer les graphiques" ────────────────────
 
 _last_results = st.session_state.get("last_analysis_results")
 if _last_results:
     st.markdown("---")
+    st.subheader("Résultats de l'analyse")
+
+    # ── Boutons toujours visibles ─────────────────────────────────────────
     col_btn, col_clear = st.columns([2, 1])
     with col_btn:
-        _charts_label = "Masquer les graphiques" if st.session_state.get("show_charts") \
-                        else "Générer les graphiques"
+        _show_charts = st.session_state.get("show_charts", False)
+        _charts_label = "Masquer les graphiques" if _show_charts else "Générer les graphiques"
         if st.button(_charts_label, type="primary", key="btn_show_charts",
                      use_container_width=True):
-            st.session_state["show_charts"] = not st.session_state.get("show_charts", False)
+            st.session_state["show_charts"] = not _show_charts
             st.rerun()
     with col_clear:
         if st.button("Effacer les résultats", type="secondary", key="btn_clear_results",
@@ -1089,6 +1089,10 @@ if _last_results:
             st.session_state.pop("show_charts", None)
             st.rerun()
 
-    if st.session_state.get("show_charts"):
-        st.subheader("Visualisations")
+    st.markdown("")  # espace visuel
+
+    # ── Affichage : graphiques OU résultats textuels (pas les deux) ───────
+    if st.session_state.get("show_charts", False):
         display_charts(_last_results)
+    else:
+        display_analysis(_last_results)
