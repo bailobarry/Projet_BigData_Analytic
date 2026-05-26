@@ -115,3 +115,22 @@ def cancel_analysis(run_id: str) -> dict:
     response = httpx.post(f"{API_URL}/runs/{run_id}/analyse/cancel", timeout=5)
     response.raise_for_status()
     return response.json()
+
+
+def compare_runs(
+        run_id_a: str,
+        run_id_b: str,
+        methods: list[str],
+        sample_size: int = 10,
+) -> dict:
+    """POST /runs/compare — compare deux runs (baseline vs variante)."""
+    payload = {
+        "run_id_a": run_id_a,
+        "run_id_b": run_id_b,
+        "methods": methods,
+        "sample_size": sample_size,
+    }
+    response = httpx.post(f"{API_URL}/runs/compare", json=payload, timeout=600)
+    response.raise_for_status()
+    return response.json()
+

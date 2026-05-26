@@ -41,10 +41,16 @@ class RunStatusResponse(BaseModel):
 
 
 class AnalysisRequest(BaseModel):
-    methods: list[str] = ["quantitative", "semantic", "llm_judge"]
+    methods: list[str] = ["quantitative", "semantic", "qualitative", "llm_judge"]
     sample_size: int = 10
     run_specific_id: Optional[str] = None
-    include_qualitative: bool = True   # analyse qualitative toujours incluse si semantic actif
+
+
+class CompareRequest(BaseModel):
+    run_id_a: str
+    run_id_b: str
+    methods: list[str] = ["quantitative", "semantic"]
+    sample_size: int = 10
 
 # ── Helpers SSE ───────────────────────────────────────────────────────────────
 
@@ -122,6 +128,9 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
 
     try:
         results: dict = {}
+        # Références aux per_prompt pour que le qualitative en bénéficie si semantic tourne aussi
+        _div_per_prompt = None
+        _rob_per_prompt = None
 
         # ── 1. Quantitatif ────────────────────────────────────────────────
         if "quantitative" in request.methods:
@@ -140,13 +149,13 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
             _analysis_status[run_id]["current"] = "semantic_diversity"
             from src.analysis.semantic import diversity_score as _div
             div = _div(run_id, sample_size=request.sample_size)
+            _div_per_prompt = div.get("per_prompt")
             div_save = {k: v for k, v in div.items() if k != "per_prompt"}
             (_P("data/output") / run_id / "analysis_diversity.json").write_text(
                 _json.dumps(div_save, indent=2, ensure_ascii=False), encoding="utf-8"
             )
             results["diversity"] = div_save
             _analysis_status[run_id]["steps_done"].append("semantic_diversity")
-
 
             # ── 2b. Sémantique – Robustesse ───────────────────────────────
             if _cancelled():
@@ -156,6 +165,7 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
             try:
                 from src.analysis.semantic import robustness_score as _rob
                 rob = _rob(rob_run, sample_size=request.sample_size)
+                _rob_per_prompt = rob.get("per_prompt")
                 rob_save = {k: v for k, v in rob.items() if k != "per_prompt"}
                 (_P("data/output") / rob_run / "analysis_robustness.json").write_text(
                     _json.dumps(rob_save, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -166,31 +176,25 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
             except ValueError as exc:
                 results["robustness_error"] = str(exc)
 
-            # ── 2c. Analyse qualitative (cas extrêmes + typologies) ───────
-            if request.include_qualitative:
-                if _cancelled():
-                    _mark_cancelled(); return
-                _analysis_status[run_id]["current"] = "qualitative"
-                try:
-                    from src.analysis.qualitative import generate_qualitative_report as _qual
-                    div_pp = div.get("per_prompt") if "div" in dir() else None
-                    rob_pp = results.get("robustness", {}).get("per_prompt") if "rob" in dir() else None
-                    # rob contient per_prompt si on est dans le bon scope
-                    qual_report = _qual(
-                        run_id,
-                        diversity_per_prompt=div.get("per_prompt"),
-                        robustness_per_prompt=rob.get("per_prompt") if "rob" in dir() else None,
-                        save=True,
-                    )
-                    results["qualitative"] = {
-                        k: v for k, v in qual_report.items()
-                        if k != "error_typology" or True  # garder tout sauf per_prompt details
-                    }
-                    _analysis_status[run_id]["steps_done"].append("qualitative")
-                except Exception as exc_q:
-                    results["qualitative_error"] = str(exc_q)
+        # ── 3. Analyse qualitative (cas extrêmes + typologies) ────────────
+        if "qualitative" in request.methods:
+            if _cancelled():
+                _mark_cancelled(); return
+            _analysis_status[run_id]["current"] = "qualitative"
+            try:
+                from src.analysis.qualitative import generate_qualitative_report as _qual
+                qual_report = _qual(
+                    run_id,
+                    diversity_per_prompt=_div_per_prompt,
+                    robustness_per_prompt=_rob_per_prompt,
+                    save=True,
+                )
+                results["qualitative"] = qual_report
+                _analysis_status[run_id]["steps_done"].append("qualitative")
+            except Exception as exc_q:
+                results["qualitative_error"] = str(exc_q)
 
-        # ── 3. LLM Judge ─────────────────────────────────────────────────
+        # ── 5. LLM Judge ─────────────────────────────────────────────────
         if "llm_judge" in request.methods:
             if _cancelled():
                 _mark_cancelled(); return
@@ -434,6 +438,52 @@ async def get_run_results(run_id: str, filename: str):
     if not result_file.exists():
         raise HTTPException(status_code=404, detail=f"Fichier '{filename}' introuvable.")
     return FileResponse(path=result_file, filename=filename, media_type="application/octet-stream")
+
+
+# ── Endpoint : comparaison de deux runs ──────────────────────────────────────
+
+@router.post("/runs/compare")
+async def compare_two_runs(request: CompareRequest):
+    """
+    Compare deux runs (baseline vs variante) sur les métriques quantitatives et/ou sémantiques.
+
+    Retourne les deltas de longueur, taux d'erreurs, diversité, robustesse et score combiné.
+    """
+    output_dir = "data/output"
+
+    for rid in [request.run_id_a, request.run_id_b]:
+        if not (Path(output_dir) / rid).exists():
+            raise HTTPException(status_code=404, detail=f"Run '{rid}' introuvable dans data/output.")
+
+    result: dict = {
+        "run_a": request.run_id_a,
+        "run_b": request.run_id_b,
+    }
+
+    # ── Quantitatif ──────────────────────────────────────────────────────────
+    if "quantitative" in request.methods:
+        try:
+            from src.analysis.quantitative import compare_runs as _cmp_quant
+            result["quantitative"] = _cmp_quant(
+                request.run_id_a, request.run_id_b, output_dir
+            )
+        except Exception as exc:
+            result["quantitative_error"] = str(exc)
+
+    # ── Sémantique ────────────────────────────────────────────────────────────
+    if "semantic" in request.methods:
+        try:
+            from src.analysis.semantic import compare_runs_semantic as _cmp_sem
+            result["semantic"] = _cmp_sem(
+                request.run_id_a,
+                request.run_id_b,
+                output_dir,
+                sample_size=request.sample_size,
+            )
+        except Exception as exc:
+            result["semantic_error"] = str(exc)
+
+    return result
 
 # ── Endpoints : config ────────────────────────────────────────────────────────
 

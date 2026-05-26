@@ -76,6 +76,47 @@ def display_results(run_id: str, results: dict):
     download_submission_zip_button(zip_bytes)
 
 
+def _auto_df(data, max_height: int = 600, min_row_height: int = 36, **kwargs):
+    """
+    Affiche un tableau Streamlit dont la hauteur s'adapte automatiquement
+    au nombre de lignes, et dont les colonnes de texte long se réajustent.
+
+    Parameters
+    ----------
+    data : list[dict] | pd.DataFrame
+        Données à afficher.
+    max_height : int
+        Hauteur maximale en pixels (défaut 600).
+    min_row_height : int
+        Hauteur estimée par ligne en pixels (défaut 36).
+    """
+    import pandas as pd
+
+    df = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
+
+    # Hauteur auto : header (38px) + n lignes * hauteur_ligne, plafonné à max_height
+    n_rows = len(df)
+    height = min(38 + n_rows * min_row_height, max_height)
+
+    # Colonnes de texte long → largeur "large" pour éviter le découpage
+    _wide_cols = {"answer", "reason", "Réponse", "Raison", "Fichier",
+                  "strongest_contrast", "weakest_contrast",
+                  "best_response_lang", "worst_response_lang"}
+    col_config = {}
+    for col in df.columns:
+        if col in _wide_cols or df[col].dtype == object and df[col].str.len().mean() > 40:
+            col_config[col] = st.column_config.TextColumn(col, width="large")
+
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        height=height,
+        column_config=col_config if col_config else None,
+        **kwargs,
+    )
+
+
 def display_analysis(results: dict):
     """Affiche les résultats des 3 méthodes d'analyse."""
     quant    = results.get("quantitative")
@@ -109,7 +150,7 @@ def display_analysis(results: dict):
             for k, s in stats.items() if k != "global"
         ]
         if rows:
-            st.dataframe(rows, use_container_width=True)
+            _auto_df(rows)
 
     # ── Sémantique ────────────────────────────────────────────────────────
     if div_data or rob_data:
@@ -165,7 +206,7 @@ def display_analysis(results: dict):
                         row["Robustesse"] = f"{pair_rob.get(pair, 0):.4f}"
                     pair_rows.append(row)
                 if pair_rows:
-                    st.dataframe(pair_rows, use_container_width=True)
+                    _auto_df(pair_rows)
 
     # ── Analyse qualitative ───────────────────────────────────────────────
     if qual:
@@ -199,7 +240,7 @@ def display_analysis(results: dict):
                     {"Type": k, "Nombre": v, "Taux": f"{v/total:.1%}"}
                     for k, v in dist.items()
                 ]
-                st.dataframe(rows, use_container_width=True)
+                _auto_df(rows)
 
         # Cas extrêmes par catégorie (diversité)
         div_cat = qual.get("diversity_by_category")
@@ -217,12 +258,12 @@ def display_analysis(results: dict):
                         row["Robustesse moy."] = f"{rob_cat[cat]['avg']:.4f}"
                     cat_rows.append(row)
                 if cat_rows:
-                    st.dataframe(cat_rows, use_container_width=True)
+                    _auto_df(cat_rows)
 
         # Exemples problématiques
         if typology and typology.get("problematic_examples"):
             with st.expander("Exemples problématiques (non-conformité, généricité)", expanded=False):
-                st.dataframe(typology["problematic_examples"], use_container_width=True)
+                _auto_df(typology["problematic_examples"], min_row_height=64)
 
     # ── LLM Judge ─────────────────────────────────────────────────────────
     if llm_div or llm_rob:
@@ -246,10 +287,10 @@ def display_analysis(results: dict):
                 st.metric("Score global", f"{g_avg:.2f} / 5")
         if llm_div and llm_div.get("evaluations"):
             with st.expander("Détail évaluations Diversité", expanded=False):
-                st.dataframe(llm_div["evaluations"], use_container_width=True)
+                _auto_df(llm_div["evaluations"], min_row_height=52)
         if llm_rob and llm_rob.get("evaluations"):
             with st.expander("Détail évaluations Robustesse", expanded=False):
-                st.dataframe(llm_rob["evaluations"], use_container_width=True)
+                _auto_df(llm_rob["evaluations"], min_row_height=52)
 
 
 def display_charts(results: dict):
@@ -701,6 +742,7 @@ def show_analysis_form(preselected_run_id: str | None = None):
             st.markdown("**Méthodes d'analyse :**")
             do_quant    = st.checkbox("Analyse quantitative", value=True,  help="Statistiques de base — rapide")
             do_semantic = st.checkbox("Analyse sémantique",   value=True,  help="Embeddings — quelques dizaines de secondes")
+            do_qual     = st.checkbox("Analyse qualitative",  value=True,  help="Cas extrêmes, typologie d'erreurs, scores par catégorie")
             do_judge    = st.checkbox("LLM-as-a-Judge",       value=False, help="Groq/Llama — consomme des crédits API")
         with col_b:
             _help_sample = (
@@ -735,6 +777,7 @@ def show_analysis_form(preselected_run_id: str | None = None):
         methods = []
         if do_quant:    methods.append("quantitative")
         if do_semantic: methods.append("semantic")
+        if do_qual:     methods.append("qualitative")
         if do_judge:    methods.append("llm_judge")
 
         if not methods:
@@ -1096,3 +1139,243 @@ if _last_results:
         display_charts(_last_results)
     else:
         display_analysis(_last_results)
+
+
+# ── Section Comparaison ───────────────────────────────────────────────────────
+
+st.markdown("---")
+st.header("Comparer deux runs")
+st.caption(
+    "Sélectionnez deux runs pour comparer leurs statistiques quantitatives "
+    "(longueur, taux d'erreurs) et/ou leurs scores sémantiques (diversité, robustesse, combiné)."
+)
+
+try:
+    _all_runs_cmp = utils.list_runs()
+    _done_runs_cmp = [r for r in _all_runs_cmp if r.get("status") == "completed"]
+except Exception:
+    _done_runs_cmp = []
+
+if len(_done_runs_cmp) < 2:
+    st.info("Il faut au moins 2 runs terminés pour effectuer une comparaison.")
+else:
+    _run_ids_cmp = [r["run_id"] for r in _done_runs_cmp]
+
+    def _run_label(rid: str) -> str:
+        r = next((x for x in _done_runs_cmp if x["run_id"] == rid), {})
+        desc = r.get("description") or "(sans description)"
+        model = r.get("model") or "?"
+        variant = r.get("summary", {}) or {}
+        return f"{rid[:26]}… | {model} | {desc}"
+
+    col_run_a, col_run_b = st.columns(2)
+    with col_run_a:
+        _cmp_run_a = st.selectbox(
+            "Run A (référence / baseline) :",
+            _run_ids_cmp,
+            format_func=_run_label,
+            key="cmp_run_a",
+        )
+    with col_run_b:
+        _cmp_run_b = st.selectbox(
+            "Run B (variante à comparer) :",
+            _run_ids_cmp,
+            format_func=_run_label,
+            index=min(1, len(_run_ids_cmp) - 1),
+            key="cmp_run_b",
+        )
+
+    with st.form("form_compare"):
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            _cmp_do_quant = st.checkbox("Quantitatif", value=True,
+                                        help="Longueur, taux d'erreurs — rapide")
+        with col_m2:
+            _cmp_do_sem = st.checkbox("Sémantique", value=True,
+                                      help="Diversité & robustesse par embeddings")
+        with col_m3:
+            _cmp_sample = st.number_input(
+                "Échantillon sémantique :", min_value=3, max_value=4140,
+                value=10, step=1,
+                help="Nombre de prompts pour le calcul sémantique",
+                key="cmp_sample",
+            )
+        _cmp_submit = st.form_submit_button("Comparer", type="primary")
+
+    if _cmp_submit:
+        if _cmp_run_a == _cmp_run_b:
+            st.warning("Choisissez deux runs différents.")
+        else:
+            _cmp_methods = []
+            if _cmp_do_quant:
+                _cmp_methods.append("quantitative")
+            if _cmp_do_sem:
+                _cmp_methods.append("semantic")
+
+            if not _cmp_methods:
+                st.warning("Sélectionnez au moins une méthode de comparaison.")
+            else:
+                with st.spinner("Comparaison en cours…", show_time=True):
+                    try:
+                        _cmp_result = utils.compare_runs(
+                            _cmp_run_a, _cmp_run_b,
+                            methods=_cmp_methods,
+                            sample_size=int(_cmp_sample),
+                        )
+                        st.session_state["last_compare_result"] = _cmp_result
+                    except Exception as _e:
+                        st.error(f"Erreur lors de la comparaison : {_e}")
+
+# Affichage des résultats de comparaison (persistant)
+_cmp_res = st.session_state.get("last_compare_result")
+if _cmp_res:
+    _cmp_a = _cmp_res.get("run_a", "A")
+    _cmp_b = _cmp_res.get("run_b", "B")
+
+    col_clr, _ = st.columns([1, 3])
+    with col_clr:
+        if st.button("Effacer la comparaison", key="btn_clear_cmp", type="secondary"):
+            st.session_state.pop("last_compare_result", None)
+            st.rerun()
+
+    st.subheader(f"Résultats : `{_cmp_a[:20]}…` vs `{_cmp_b[:20]}…`")
+
+    # ── Comparaison Quantitative ──────────────────────────────────────────
+    _cmp_quant = _cmp_res.get("quantitative")
+    if _cmp_quant and not _cmp_res.get("quantitative_error"):
+        st.markdown("#### Comparaison quantitative")
+        _files_cmp = _cmp_quant.get("files", {})
+        if _files_cmp:
+            _rows_cmp = []
+            for _fk, _fv in sorted(_files_cmp.items()):
+                _delta_w = _fv.get("delta_avg_words", 0)
+                _delta_e = _fv.get("delta_error_rate", 0)
+                _rows_cmp.append({
+                    "Fichier":             _fk,
+                    "Moy. mots A":         _fv.get("avg_words_a"),
+                    "Moy. mots B":         _fv.get("avg_words_b"),
+                    "delta mots":              f"{'+'if _delta_w>=0 else ''}{_delta_w:.1f}",
+                    "Taux erreurs A":      f"{_fv.get('error_rate_a', 0):.1%}",
+                    "Taux erreurs B":      f"{_fv.get('error_rate_b', 0):.1%}",
+                    "delta erreurs":           f"{'+'if _delta_e>=0 else ''}{_delta_e:.2%}",
+                    "IDs communs":         _fv.get("common_ids"),
+                })
+            _auto_df(_rows_cmp)
+
+            # Graphique : delta mots par fichier
+            import plotly.graph_objects as go
+            _fnames = [r["Fichier"] for r in _rows_cmp]
+            _deltas_w = [_files_cmp[f]["delta_avg_words"] for f in _fnames]
+            _colors_delta = ["#52b788" if d >= 0 else "#e63946" for d in _deltas_w]
+            _fig_delta = go.Figure(go.Bar(
+                x=_fnames, y=_deltas_w,
+                marker_color=_colors_delta,
+                text=[f"{'+'if d>=0 else ''}{d:.1f}" for d in _deltas_w],
+                textposition="outside",
+            ))
+            _fig_delta.add_hline(y=0, line_color="gray", line_dash="dot")
+            _fig_delta.update_layout(
+                title="delta Longueur moyenne (B − A) par fichier",
+                yaxis_title="delta mots",
+                xaxis_title="Fichier (langue_type)",
+                height=380,
+                showlegend=False,
+            )
+            st.plotly_chart(_fig_delta, use_container_width=True)
+
+    elif _cmp_res.get("quantitative_error"):
+        st.warning(f"Comparaison quantitative échouée : {_cmp_res['quantitative_error']}")
+
+    # ── Comparaison Sémantique ────────────────────────────────────────────
+    _cmp_sem = _cmp_res.get("semantic")
+    if _cmp_sem and not _cmp_res.get("semantic_error"):
+        st.markdown("#### Comparaison sémantique (embeddings)")
+
+        _div_cmp  = _cmp_sem.get("diversity", {})
+        _rob_cmp  = _cmp_sem.get("robustness", {})
+        _comb_cmp = _cmp_sem.get("combined", {})
+
+        _cols_sem = st.columns(3)
+        with _cols_sem[0]:
+            _da = _div_cmp.get("score_a")
+            _db = _div_cmp.get("score_b")
+            _dd = _div_cmp.get("delta")
+            if _da is not None and _db is not None:
+                st.metric(
+                    "Diversité (unspecific)",
+                    f"B = {_db:.4f}",
+                    delta=f"{_dd:+.4f}" if _dd is not None else None,
+                    help=f"A (référence) = {_da:.4f}"
+                )
+        with _cols_sem[1]:
+            _ra = _rob_cmp.get("score_a")
+            _rb = _rob_cmp.get("score_b")
+            _rd = _rob_cmp.get("delta")
+            if _ra is not None and _rb is not None:
+                st.metric(
+                    "Robustesse (specific)",
+                    f"B = {_rb:.4f}",
+                    delta=f"{_rd:+.4f}" if _rd is not None else None,
+                    help=f"A (référence) = {_ra:.4f}"
+                )
+        with _cols_sem[2]:
+            _ca = _comb_cmp.get("score_a")
+            _cb = _comb_cmp.get("score_b")
+            _cd = _comb_cmp.get("delta")
+            if _ca is not None and _cb is not None:
+                st.metric(
+                    "Score combiné D×R",
+                    f"B = {_cb:.4f}",
+                    delta=f"{_cd:+.4f}" if _cd is not None else None,
+                    help=f"A (référence) = {_ca:.4f}"
+                )
+
+        st.info(f" **Resultats :** {_cmp_sem.get('Resultat', '–')}")
+
+        # Graphique : barres comparatives A vs B
+        if any(x is not None for x in [_da, _ra]):
+            import plotly.graph_objects as go
+            _metrics_lbl = []
+            _scores_a_list = []
+            _scores_b_list = []
+            if _da is not None and _db is not None:
+                _metrics_lbl.append("Diversité")
+                _scores_a_list.append(_da)
+                _scores_b_list.append(_db)
+            if _ra is not None and _rb is not None:
+                _metrics_lbl.append("Robustesse")
+                _scores_a_list.append(_ra)
+                _scores_b_list.append(_rb)
+            if _ca is not None and _cb is not None:
+                _metrics_lbl.append("Combiné D×R")
+                _scores_a_list.append(_ca)
+                _scores_b_list.append(_cb)
+
+            _fig_cmp_sem = go.Figure()
+            _fig_cmp_sem.add_trace(go.Bar(
+                name=f"Run A (baseline)",
+                x=_metrics_lbl, y=_scores_a_list,
+                marker_color="#457b9d",
+                text=[f"{v:.4f}" for v in _scores_a_list],
+                textposition="outside",
+            ))
+            _fig_cmp_sem.add_trace(go.Bar(
+                name=f"Run B (variante)",
+                x=_metrics_lbl, y=_scores_b_list,
+                marker_color="#e76f51",
+                text=[f"{v:.4f}" for v in _scores_b_list],
+                textposition="outside",
+            ))
+            _fig_cmp_sem.update_layout(
+                title="Comparaison sémantique : Run A vs Run B",
+                barmode="group",
+                yaxis=dict(title="Score", range=[0, 1.1]),
+                height=380,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            )
+            st.plotly_chart(_fig_cmp_sem, use_container_width=True)
+
+    elif _cmp_res.get("semantic_error"):
+        st.warning(f"Comparaison sémantique échouée : {_cmp_res['semantic_error']}")
+
+
