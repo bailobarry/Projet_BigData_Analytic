@@ -1063,9 +1063,8 @@ if stream_analysis_data:
     _steps_labels = {
         "quantitative":              "Analyse quantitative",
         "semantic_diversity":        "Calcul embeddings — diversité",
-        "semantic_diversity_kmeans": "Calcul diversité K-means (méthode officielle)",
         "semantic_robustness":       "Calcul embeddings — robustesse",
-        "qualitative":               "Analyse qualitative — cas extrêmes & typologies",
+        "qualitative":               "Analyse qualitatives",
         "llm_judge_diversity":       "LLM Judge — diversité",
         "llm_judge_robustness":      "LLM Judge — robustesse",
     }
