@@ -7,7 +7,7 @@ Usage :
     python run_baseline.py
 
     # Baseline Gemma 3 12B via Ollama (local)
-    python run_baseline.py --config configs/baseline_ollama.json
+    python run_baseline.py --config configs/baseline_gemma.json
 
     # Seulement les fichiers unspecific (test rapide)
     python run_baseline.py --types unspecific

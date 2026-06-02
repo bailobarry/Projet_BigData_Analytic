@@ -20,6 +20,28 @@ complémentaires et en arrêter l'execution a tout moment.
 
 ---
 
+## Configuration
+
+### Fichiers de configuration JSON
+
+Le projet utilise deux types de fichiers JSON pour configurer les runs :
+
+#### **Baseline** (configurations de référence)
+- `baseline_groq.json` - Groq Llama 3.3 70B (API cloud)
+- `baseline_gemma.json` - Google Gemma 3 12B (local via Ollama)
+- Contiennent : aucun system prompt, temperature=0, seed=42 (déterministe)
+- Utilisés par : **CLI et Streamlit**
+
+#### **Variantes / stratégies**
+- Les stratégies disponibles sont : `none`, `neutral`, `cultural_expert`, `empathetic_synthesis`.
+- La liste affichée dans l'interface Streamlit vient de `configs/providers.json` (via `GET /api/providers`).
+- Le contenu réel des stratégies (system/prefix/suffix multilingues) est défini dans `src/promptings/system_prompt.py` et appliqué au moment du run.
+
+#### **Catalogue providers**
+- `providers.json` - Définit les providers, modèles, langues et variations disponibles, utilisé par Streamlit
+
+---
+
 ## Architecture du projet
 
 ```
@@ -31,14 +53,11 @@ Projet_BigData_Analytic/
 +-- .env                       # Clés API (non versionné)
 +-- .env.example               # Template des variables d'environnement
 |
-+-- configs/
-|   +-- baseline_groq.json          # Config baseline – Groq / Llama 3.3 70B
-|   +-- baseline_ollama.json        # Config baseline – Gemma 3 12B (local)
-|   +-- variant_expert_ollama.json  # Variante : rôle d'expert culturel
-|   +-- variant_neutral_ollama.json # Variante : réponse neutre et factuelle
-|   +-- variant_short_ollama.json   # Variante : réponse courte
-|   +-- providers.json              # Catalogue providers / langues / variantes
-|   +-- runs/                       # Configs sauvegardées automatiquement par run
+| +-- configs/
+| |   +-- baseline_groq.json          # Config baseline – Groq / Llama 3.3 70B (pour CLI)
+| |   +-- baseline_gemma.json         # Config baseline – Gemma 3 12B local via Ollama (pour CLI)
+| |   +-- providers.json              # Catalogue providers, langues, variations (pour Streamlit)
+| |   +-- runs/                       # Configs sauvegardées automatiquement par run
 |
 +-- data/
 |   +-- input/                 # 10 fichiers JSONL (5 langues x 2 types)
@@ -129,6 +148,12 @@ Puis editer `.env` :
 ```dotenv
 # Cle API Groq (gratuit) : https://console.groq.com/keys
 GROQ_API_KEY=ta_cle_groq_ici
+
+# Option multi-cles (prioritaire si renseignee)
+# GROQ_API_KEYS=cle_compte_1,cle_compte_2,cle_compte_3
+
+# Limite locale en req/min par cle (provider run)
+GROQ_RPM_PER_KEY=1500
 ```
 
 ### 4. (Optionnel) Installer Ollama pour le modèle local
@@ -143,7 +168,7 @@ ollama pull gemma3:12b
 
 ## Utilisation
 
-### Demarrer le backend et l'interface
+### Option 1 : Interface Streamlit (Recommandé)
 
 **Etape 1 – Lancer l'API FastAPI :**
 
@@ -162,6 +187,10 @@ streamlit run app.py
 
 L'interface est alors accessible sur `http://localhost:8501`.
 
+### Option 2 : Ligne de commande (CLI)
+
+Pour les utilisateurs préférant la ligne de commande ou pour les tests automatisés.
+
 ### Interface Streamlit
 
 L'interface permet de :
@@ -170,30 +199,44 @@ L'interface permet de :
 - **Arreter une experience** : un bouton d'arret apparait dans la barre laterale, sous le formulaire de configuration, pendant l'execution.
 - **Reprendre une experience interrompue** : reprend automatiquement la ou le run s'etait arrete.
 - **Analyser les resultats** : lancer une ou plusieurs methodes d'analyse sur un run termine, avec suivi de la progression.
-- **Arreter une analyse** : un bouton d'arret est disponible dans la section d'analyse, au-dessus de la barre de progression.
+- **Comparer deux runs** : comparer une baseline avec une variante pour evaluer l'impact des strategies de prompting.
 
-### Utilisation en ligne de commande (CLI)
+### Ligne de commande (CLI)
+
+#### Lancer un run depuis un fichier de configuration
+
+Les fichiers JSON dans `configs/` définissent des configurations complètes (provider, modèle, langues, dataset, stratégie de prompting).
 
 **Lancer une baseline :**
 
 ```bash
-# Baseline Groq – Llama 3.3 70B
+# Baseline Groq – Llama 3.3 70B (par défaut)
 python run_baseline.py
 
 # Baseline Gemma 3 12B via Ollama (local)
-python run_baseline.py --config configs/baseline_ollama.json
+python run_baseline.py --config configs/baseline_gemma.json
+```
 
+> Pour tester une stratégie en CLI, dupliquez un fichier baseline puis définissez
+> `pipeline.system_prompt` avec `neutral`, `cultural_expert` ou `empathetic_synthesis`.
+
+#### Personnaliser un run
+
+```bash
 # Test rapide : seulement le francais, fichiers unspecific
 python run_baseline.py --languages fr --types unspecific
 
 # Plusieurs langues et les deux types de questions
 python run_baseline.py --languages fr en de --types specific unspecific
+
+# Avec un identifiant personnalisé
+python run_baseline.py --run-id my_custom_experiment
 ```
 
-> Reprise automatique : si un run est interrompu, relancer la meme commande avec le meme
-> `--run-id` reprend la ou il s'est arrete sans retraiter les prompts deja faits.
+> **Reprise automatique** : si un run est interrompu, relancer la meme commande reprend la ou il s'est arrete 
+> sans retraiter les prompts deja faits.
 
-**Lancer les analyses sans interface :**
+#### Lancer les analyses sans interface
 
 ```bash
 # Analyse complete (quantitative + semantique + LLM Judge)
@@ -281,22 +324,30 @@ sur une echelle de 1 a 5. Necessite une cle `GROQ_API_KEY` valide.
 | RAM necessaire | 0 (cloud) | ~8 Go |
 | Limite | 30 req/min, 14 400 req/jour | Illimite |
 | Cout | Gratuit | Gratuit |
-| Config | `configs/baseline_groq.json` | `configs/baseline_ollama.json` |
+| Config | `configs/baseline_groq.json` | `configs/baseline_gemma.json` |
 
 ---
 
 ## Strategies de prompting
 
-Quatre strategies sont disponibles :
+Quatre strategies sont disponibles pour structurer les réponses du modèle :
 
-| Strategie | Cle config | Description |
-|---|---|---|
-| Baseline | `null` | Aucun system prompt, prompt brut |
-| Expert culturel | `"cultural_expert"` | Role d'expert en culture locale et traditions |
-| Neutre et factuel | `"neutral"` | Reponses objectives sans opinion ni biais |
-| Conseiller empathique | `"empathetic_synthesis"` | Conseiller attentif a l'humain derriere la question |
+| Strategie | Cle config | Description | Streamlit | CLI |
+|---|---|---|---|---|
+| **Baseline** | `null` (ou `"none"`) | Aucun system prompt, prompt brut | ✓ | ✓ |
+| **Expert culturel** | `"cultural_expert"` | Role d'expert en culture locale et traditions | ✓ | ✓ |
+| **Neutre et factuel** | `"neutral"` | Reponses objectives sans opinion ni biais | ✓ | ✓ |
+| **Conseiller empathique** | `"empathetic_synthesis"` | Conseiller attentif a l'humain derriere la question | ✓ | ✓ |
 
-Chaque strategie est declinee dans les 5 langues (EN, FR, DE, ES, IT).
+Chaque strategie est declinee dans les 5 langues (EN, FR, DE, ES, IT) dans `src/promptings/system_prompt.py`.
+
+### Configuration en interface vs CLI
+
+- **Interface Streamlit** : les stratégies affichées viennent de `configs/providers.json` (via `GET /api/providers`).
+  L'UI ne lit pas directement `src/promptings/system_prompt.py`.
+
+- **CLI (Ligne de commande)** : les strategies sont définies dans le fichier JSON de run (`pipeline.system_prompt`).
+- **Pipeline backend** : les textes des stratégies sont définis dans `src/promptings/system_prompt.py` et appliqués selon la langue.
 
 ---
 
@@ -353,4 +404,6 @@ pytest tests/test_lot_a.py -v
 | Variable | Obligatoire | Description |
 |---|---|---|
 | `GROQ_API_KEY` | Pour Groq et LLM Judge | Cle API Groq : https://console.groq.com/keys |
+| `GROQ_API_KEYS` | Optionnel | Liste de cles Groq (``,``, `;` ou newline). Utilisee en rotation pour le provider API et le LLM judge. |
+| `GROQ_RPM_PER_KEY` | Optionnel | Limite locale en req/min appliquee par cle cote provider Groq (defaut: `30`). |
 

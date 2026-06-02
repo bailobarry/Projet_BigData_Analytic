@@ -307,7 +307,7 @@ requests.post("http://localhost:8000/api/runs", json=config)
 Point d'entrée CLI simple :
 ```bash
 python run_baseline.py                                    # Gemini (défaut)
-python run_baseline.py --config configs/baseline_ollama.json  # Mistral-Nemo
+python run_baseline.py --config configs/baseline_gemma.json  # Mistral-Nemo
 python run_baseline.py --languages fr --types unspecific   # Test rapide
 ```
 

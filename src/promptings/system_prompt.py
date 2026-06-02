@@ -3,10 +3,6 @@ from typing import Optional
 
 # ── Registre des stratégies complètes (Lot C) ───────────────────────────
 
-# Dictionnaire contenant les 3 variantes de test :
-# 1. cultural_expert : Favorise la diversité culturelle.
-# 2. neutral         : Favorise la robustesse et l'impartialité.
-# 3. logic_cot       : Force un raisonnement étape par étape (Chain of Thought).
 _STRATEGIES: dict[str, dict[str, dict[str, str]]] = {
     "cultural_expert": {
         "fr": {

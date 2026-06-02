@@ -1,24 +1,22 @@
-"""
-Provider **Groq – Llama 3.3 70B Versatile** – via l'endpoint compatible OpenAI.
+"""Provider Groq (OpenAI-compatible) avec rotation multi-cles.
 
-Llama 3.3 70B Versatile (Meta, via Groq) :
-- 70 milliards de paramètres, excellent multilingue (EN, FR, DE, ES, IT)
-- Inférence ultra-rapide grâce aux puces LPU de Groq
-- Gratuit via Groq Cloud (30 req/min, 14 400 req/jour)
+Variables supportees:
+- GROQ_API_KEY: une cle unique
+- GROQ_API_KEYS: liste de cles (prioritaire si renseignee)
+- GROQ_RPM_PER_KEY: limite locale req/min appliquee par cle
 
-Clé API  : https://console.groq.com/keys
-Endpoint : https://api.groq.com/openai/v1
-
-Gestion des quotas :
-- Délai fixe de 60/30 = 2s entre chaque requête pour respecter la limite de 30 req/min
-- Retry automatique avec backoff exponentiel sur erreur 429 résiduelle
+Comportement:
+- rotation round-robin entre les cles
+- limitation locale par cle
+- cooldown progressif d'une cle en cas de 429
 """
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 import time
+from dataclasses import dataclass
 from typing import Optional
 
 import openai as _openai_pkg
@@ -29,44 +27,70 @@ from src.providers.base import LLMProvider
 
 logger = logging.getLogger(__name__)
 
-# Délai fixe entre chaque requête : 60s / 30 req = 2.0s
-_REQUESTS_PER_MINUTE = 30
-_DELAY = 60 / _REQUESTS_PER_MINUTE  # 2.0 secondes
+
+@dataclass
+class _KeySlot:
+    api_key: str
+    client: _openai_pkg.OpenAI
+    last_used_at: float = 0.0
+    cooldown_until: float = 0.0
+    consecutive_429: int = 0
+
+
+def _parse_groq_keys() -> list[str]:
+    """Parse GROQ_API_KEYS (priority) or fallback to GROQ_API_KEY."""
+    raw_multi = os.environ.get("GROQ_API_KEYS", "").strip()
+    if raw_multi:
+        chunks = raw_multi.replace(";", ",").replace("\n", ",").split(",")
+        keys = [c.strip() for c in chunks if c.strip()]
+        if keys:
+            return keys
+
+    single = os.environ.get("GROQ_API_KEY", "").strip()
+    return [single] if single else []
+
+
+def _mask_key(value: str) -> str:
+    if len(value) < 10:
+        return "****"
+    return f"{value[:4]}...{value[-4:]}"
 
 
 class GroqProvider(LLMProvider):
-    """
-    Fournisseur LLM pour Groq (Llama 3.3 70B), via le SDK ``openai``
-    et l'endpoint compatible OpenAI Chat Completions de Groq.
-
-    Gestion du rate-limit :
-      - Délai fixe de 2s après chaque requête (= 30 req/min max)
-      - Retry avec backoff exponentiel si erreur 429 malgré le délai
-    """
+    """Provider Groq avec rotation multi-cles et cooldown sur 429."""
 
     def __init__(self, config: RunConfig) -> None:
-        api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key:
+        keys = _parse_groq_keys()
+        if not keys:
             raise ValueError(
-                "Variable d'environnement 'GROQ_API_KEY' non définie. "
-                "Ajoutez-la dans votre fichier .env. "
-                "Obtenez une clé gratuite sur : https://console.groq.com/keys"
+                "Aucune cle Groq definie. Configurez GROQ_API_KEY (1 cle) "
+                "ou GROQ_API_KEYS (liste de cles)."
             )
 
+        rpm_env = os.environ.get("GROQ_RPM_PER_KEY", "30").strip()
+        try:
+            self._rpm_per_key = max(float(rpm_env), 1.0)
+        except ValueError:
+            self._rpm_per_key = 30.0
+        self._min_interval = 60.0 / self._rpm_per_key
+
         self._model = config.provider.model
-        self._client = _openai_pkg.OpenAI(
-            api_key=api_key,
-            base_url="https://api.groq.com/openai/v1",
-        )
+        self._slots: list[_KeySlot] = [
+            _KeySlot(
+                api_key=key,
+                client=_openai_pkg.OpenAI(api_key=key, base_url="https://api.groq.com/openai/v1"),
+            )
+            for key in keys
+        ]
+        self._next_idx = 0
 
         logger.info(
-            "GroqProvider initialisé : model=%s | délai=%gs entre requêtes (%d req/min)",
+            "GroqProvider initialise : model=%s | cles=%d | rpm/cle=%.0f",
             self._model,
-            _DELAY,
-            _REQUESTS_PER_MINUTE,
+            len(self._slots),
+            self._rpm_per_key,
         )
-
-    # ── Propriétés ──────────────────────────────────────────────────────
+        logger.debug("Cles chargees: %s", ", ".join(_mask_key(s.api_key) for s in self._slots))
 
     @property
     def provider_name(self) -> str:
@@ -76,7 +100,26 @@ class GroqProvider(LLMProvider):
     def model_id(self) -> str:
         return self._model
 
-    # ── Génération ──────────────────────────────────────────────────────
+    def _pick_slot_idx(self) -> int:
+        now = time.monotonic()
+        n = len(self._slots)
+
+        earliest_idx = 0
+        earliest_cooldown = float("inf")
+
+        for off in range(n):
+            idx = (self._next_idx + off) % n
+            slot = self._slots[idx]
+            if slot.cooldown_until <= now:
+                return idx
+            if slot.cooldown_until < earliest_cooldown:
+                earliest_cooldown = slot.cooldown_until
+                earliest_idx = idx
+
+        sleep_for = max(earliest_cooldown - now, 0.0)
+        if sleep_for > 0:
+            time.sleep(sleep_for)
+        return earliest_idx
 
     def generate(
         self,
@@ -84,55 +127,53 @@ class GroqProvider(LLMProvider):
         generation: GenerationConfig,
         system_prompt: Optional[str] = None,
     ) -> str:
-        """
-        Appelle l'API Groq et retourne la réponse texte.
-
-        Après chaque requête réussie, attend _DELAY secondes pour
-        respecter la limite de 30 req/min du free tier.
-        En cas de 429, retry avec backoff exponentiel (sécurité).
-        """
-
-        # Construction des messages
         messages: list[dict] = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        kwargs: dict = dict(
-            model=self._model,
-            messages=messages,
-            temperature=generation.temperature,
-            max_tokens=generation.max_tokens,
-            top_p=generation.top_p,
-        )
+        kwargs: dict = {
+            "model": self._model,
+            "messages": messages,
+            "temperature": generation.temperature,
+            "max_tokens": generation.max_tokens,
+            "top_p": generation.top_p,
+        }
 
-        # Retry avec backoff exponentiel sur erreur 429
-        retry_delay = 30.0  # délai initial si 429 : 30s → 60s → 120s
-        max_retries = 3
+        max_attempts = max(3, len(self._slots) * 3)
+        last_429: Optional[RateLimitError] = None
 
-        for attempt in range(1, max_retries + 1):
+        for _ in range(max_attempts):
+            idx = self._pick_slot_idx()
+            slot = self._slots[idx]
+
+            now = time.monotonic()
+            wait_interval = (slot.last_used_at + self._min_interval) - now
+            if wait_interval > 0:
+                time.sleep(wait_interval)
+
             try:
-                response = self._client.chat.completions.create(**kwargs)
-                content: str = response.choices[0].message.content or ""
-
-                # Délai fixe après chaque requête réussie : 60 / 30 = 2s
-                time.sleep(_DELAY)
-
-                return content.strip()
+                response = slot.client.chat.completions.create(**kwargs)
+                slot.last_used_at = time.monotonic()
+                slot.consecutive_429 = 0
+                slot.cooldown_until = 0.0
+                self._next_idx = (idx + 1) % len(self._slots)
+                return (response.choices[0].message.content or "").strip()
 
             except RateLimitError as exc:
-                if attempt == max_retries:
-                    raise
+                last_429 = exc
+                slot.last_used_at = time.monotonic()
+                slot.consecutive_429 += 1
+                cooldown = min(120.0, float(2 ** slot.consecutive_429))
+                slot.cooldown_until = time.monotonic() + cooldown
+                self._next_idx = (idx + 1) % len(self._slots)
                 logger.warning(
-                    "Erreur 429 (tentative %d/%d). Attente de %.0fs… (erreur : %s)",
-                    attempt,
-                    max_retries,
-                    retry_delay,
-                    exc,
+                    "429 sur cle %s -> cooldown %.0fs (consecutive_429=%d)",
+                    _mask_key(slot.api_key),
+                    cooldown,
+                    slot.consecutive_429,
                 )
-                time.sleep(retry_delay)
-                retry_delay *= 2  # backoff : 30s → 60s → 120s
 
-        # Ce point est théoriquement inatteignable (la boucle raise au dernier essai)
-        raise RuntimeError("generate() : toutes les tentatives ont échoué sans exception.")
-
+        if last_429 is not None:
+            raise last_429
+        raise RuntimeError("Generation Groq echouee sans erreur exploitable.")

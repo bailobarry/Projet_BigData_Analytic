@@ -240,7 +240,7 @@ class TestBaselineConfig:
             assert config.pipeline.system_prompt is None
 
     def test_load_baseline_ollama(self):
-        baseline = Path("configs/baseline_ollama.json")
+        baseline = Path("configs/baseline_gemma.json")
         if baseline.exists():
             config = RunConfig.from_file(baseline)
             assert config.provider.type == "ollama"

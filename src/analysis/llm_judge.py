@@ -42,6 +42,7 @@ import logging
 import os
 import re
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -115,35 +116,36 @@ Return ONLY a JSON object in this exact format:
 }}"""
 
 
-# ─── Classe LLMJudge ─────────────────────────────────────────────────────────
+@dataclass
+class _JudgeClientSlot:
+    api_key: str
+    client: object
+
+
+def _parse_groq_keys(single_key: Optional[str] = None) -> list[str]:
+    """Resolve keys from explicit argument, GROQ_API_KEYS, then GROQ_API_KEY."""
+    if single_key:
+        return [single_key.strip()]
+
+    raw_multi = os.environ.get("GROQ_API_KEYS", "").strip()
+    if raw_multi:
+        chunks = raw_multi.replace(";", ",").replace("\n", ",").split(",")
+        keys = [c.strip() for c in chunks if c.strip()]
+        if keys:
+            return keys
+
+    single = os.environ.get("GROQ_API_KEY", "").strip()
+    return [single] if single else []
+
+
+def _mask_key(value: str) -> str:
+    if len(value) < 10:
+        return "****"
+    return f"{value[:4]}...{value[-4:]}"
 
 
 class LLMJudge:
-    """
-    Évaluateur LLM-as-a-Judge utilisant l'API Groq (Qwen3-32B par défaut).
-
-    Le modèle Qwen3-32B est utilisé avec une température basse (0.1)
-    pour des évaluations reproductibles. Le mode "thinking" est désactivé
-    par défaut pour réduire la latence et la consommation de tokens.
-
-    Parameters
-    ----------
-    model : str
-        Nom du modèle Groq à utiliser (défaut: ``qwen/qwen3-32b``).
-    api_key : str | None
-        Clé API Groq. Si None, utilise la variable d'env ``GROQ_API_KEY``.
-    request_delay : float
-        Délai en secondes entre chaque requête (défaut: 2.1s pour 30 req/min).
-    enable_thinking : bool
-        Active le mode raisonnement Qwen3 (balises ändig).
-        Défaut False : réponse directe, plus rapide, moins de tokens.
-        Mettre True pour une évaluation plus approfondie (~3× plus lent).
-
-    Raises
-    ------
-    ValueError
-        Si la clé API Groq n'est pas disponible.
-    """
+    """LLM-as-a-Judge via Groq avec rotation de cles API."""
 
     def __init__(
         self,
@@ -154,29 +156,275 @@ class LLMJudge:
     ) -> None:
         import openai as _openai_pkg
 
-        resolved_key = api_key or os.environ.get("GROQ_API_KEY")
-        if not resolved_key:
+        keys = _parse_groq_keys(api_key)
+        if not keys:
             raise ValueError(
-                "Clé API Groq manquante. Définissez GROQ_API_KEY dans votre .env "
-                "ou passez-la via le paramètre api_key."
+                "Cle API Groq manquante. Configurez GROQ_API_KEY (1 cle) "
+                "ou GROQ_API_KEYS (plusieurs cles)."
             )
 
-        self._model           = model
-        self._delay           = request_delay
+        self._model = model
+        self._delay = request_delay
         self._enable_thinking = enable_thinking
-        self._client = _openai_pkg.OpenAI(
-            api_key=resolved_key,
-            base_url=_GROQ_BASE_URL,
-        )
-        logger.info(
-            "LLMJudge initialisé – modèle: %s | thinking: %s",
-            model, "activé" if enable_thinking else "désactivé",
-        )
+        self._slots: list[_JudgeClientSlot] = [
+            _JudgeClientSlot(
+                api_key=key,
+                client=_openai_pkg.OpenAI(api_key=key, base_url=_GROQ_BASE_URL),
+            )
+            for key in keys
+        ]
+        self._next_client_idx = 0
 
-    # ── Méthode de bas niveau ────────────────────────────────────────────────
+        logger.info(
+            "LLMJudge initialise : model=%s | cles=%d | thinking=%s",
+            model,
+            len(self._slots),
+            "on" if enable_thinking else "off",
+        )
+        logger.debug("Cles juge chargees: %s", ", ".join(_mask_key(s.api_key) for s in self._slots))
+
+    def _next_client(self) -> object:
+        slot = self._slots[self._next_client_idx]
+        self._next_client_idx = (self._next_client_idx + 1) % len(self._slots)
+        return slot.client
 
     def _call_judge(self, user_prompt: str) -> dict:
-        """
-        Appelle le LLM juge et parse la réponse JSON.
+        """Call judge API, parse JSON, and rotate keys on failures."""
+        from openai import RateLimitError
+        from openai.types.chat import ChatCompletionMessageParam
 
-        Gère automatiquement les balises ändig...
+        messages: list[ChatCompletionMessageParam] = [
+            {"role": "system", "content": _JUDGE_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        max_attempts = max(3, len(self._slots) * 2)
+        last_error: Optional[Exception] = None
+
+        for attempt in range(1, max_attempts + 1):
+            client = self._next_client()
+            try:
+                response = client.chat.completions.create(
+                    model=self._model,
+                    messages=messages,
+                    temperature=0.1,
+                    max_tokens=256,
+                    top_p=1.0,
+                )
+                raw = response.choices[0].message.content or ""
+                time.sleep(self._delay)
+
+                json_match = re.search(r"\{.*\}", raw, re.DOTALL)
+                if json_match:
+                    return json.loads(json_match.group())
+                logger.warning("Judge response without valid JSON: %s", raw[:200])
+                return {"score": 0, "reason": f"Parsing failed: {raw[:100]}"}
+
+            except RateLimitError as exc:
+                last_error = exc
+                logger.warning("Rate limit judge (attempt %d/%d): %s", attempt, max_attempts, exc)
+                time.sleep(min(8.0, float(attempt)))
+                continue
+            except Exception as exc:
+                last_error = exc
+                logger.error("Judge API error (attempt %d/%d): %s", attempt, max_attempts, exc)
+                time.sleep(self._delay)
+                continue
+
+        return {
+            "score": 0,
+            "reason": f"API error: {type(last_error).__name__}: {last_error}" if last_error else "API error",
+        }
+
+    def score_diversity(self, prompt_id: str, answers_by_lang: dict[str, str]) -> dict:
+        langs = list(answers_by_lang.keys())
+        responses_block = "\n\n".join(f"[{lang.upper()}]\n{answers_by_lang[lang]}" for lang in langs)
+
+        prompt = _DIVERSITY_EVALUATION_PROMPT.format(
+            n_languages=len(langs),
+            languages=", ".join(langs),
+            responses_block=responses_block,
+        )
+
+        result = self._call_judge(prompt)
+        result["prompt_id"] = prompt_id
+        result["languages_evaluated"] = langs
+        return result
+
+    def score_robustness(self, prompt_id: str, answers_by_lang: dict[str, str]) -> dict:
+        langs = list(answers_by_lang.keys())
+        responses_block = "\n\n".join(f"[{lang.upper()}]\n{answers_by_lang[lang]}" for lang in langs)
+
+        prompt = _ROBUSTNESS_EVALUATION_PROMPT.format(
+            n_languages=len(langs),
+            languages=", ".join(langs),
+            responses_block=responses_block,
+        )
+
+        result = self._call_judge(prompt)
+        result["prompt_id"] = prompt_id
+        result["languages_evaluated"] = langs
+        return result
+
+
+def _load_results_by_language(
+    run_id: str,
+    dataset_type: str,
+    output_dir: str,
+    languages: list[str],
+) -> dict[str, dict[str, str]]:
+    data: dict[str, dict[str, str]] = {}
+    run_path = Path(output_dir) / run_id
+
+    for lang in languages:
+        filepath = run_path / f"{lang}_{dataset_type}.jsonl"
+        if not filepath.exists():
+            logger.warning("Missing file: %s", filepath)
+            continue
+
+        lang_data: dict[str, str] = {}
+        with jsonlines.open(str(filepath), mode="r") as reader:
+            for obj in reader:
+                answer = obj.get("answer", "")
+                if answer.strip() and not answer.strip().startswith("ERROR:"):
+                    lang_data[obj["id"]] = answer
+        data[lang] = lang_data
+
+    return data
+
+
+def evaluate_diversity(
+    run_id: str,
+    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    languages: Optional[list[str]] = None,
+    sample_size: int = 10,
+    judge: Optional[LLMJudge] = None,
+) -> dict:
+    if languages is None:
+        languages = _SUPPORTED_LANGUAGES
+
+    if judge is None:
+        judge = LLMJudge()
+
+    data_by_lang = _load_results_by_language(run_id, "unspecific", output_dir, languages)
+    if not data_by_lang:
+        raise ValueError(f"No unspecific files found for run: {run_id}")
+
+    available_langs = list(data_by_lang.keys())
+    common_ids = sorted(set.intersection(*[set(data_by_lang[l].keys()) for l in available_langs]))
+    sample_ids = common_ids[:sample_size]
+
+    evaluations: list[dict] = []
+    valid_scores: list[int] = []
+
+    for prompt_id in sample_ids:
+        answers = {lang: data_by_lang[lang][prompt_id] for lang in available_langs}
+        result = judge.score_diversity(prompt_id, answers)
+        evaluations.append(result)
+        score = result.get("score", 0)
+        if isinstance(score, int) and 1 <= score <= 5:
+            valid_scores.append(score)
+
+    distribution = {str(s): sum(1 for x in valid_scores if x == s) for s in range(1, 6)}
+    avg_score = round(sum(valid_scores) / len(valid_scores), 2) if valid_scores else 0.0
+
+    return {
+        "metric": "llm_judge_diversity",
+        "run_id": run_id,
+        "sample_size": len(sample_ids),
+        "n_valid_scores": len(valid_scores),
+        "avg_score": avg_score,
+        "score_distribution": distribution,
+        "languages_evaluated": available_langs,
+        "evaluations": evaluations,
+    }
+
+
+def evaluate_robustness(
+    run_id: str,
+    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    languages: Optional[list[str]] = None,
+    sample_size: int = 10,
+    judge: Optional[LLMJudge] = None,
+) -> dict:
+    if languages is None:
+        languages = _SUPPORTED_LANGUAGES
+
+    if judge is None:
+        judge = LLMJudge()
+
+    data_by_lang = _load_results_by_language(run_id, "specific", output_dir, languages)
+    if not data_by_lang:
+        raise ValueError(f"No specific files found for run: {run_id}")
+
+    available_langs = list(data_by_lang.keys())
+    common_ids = sorted(set.intersection(*[set(data_by_lang[l].keys()) for l in available_langs]))
+    sample_ids = common_ids[:sample_size]
+
+    evaluations: list[dict] = []
+    valid_scores: list[int] = []
+
+    for prompt_id in sample_ids:
+        answers = {lang: data_by_lang[lang][prompt_id] for lang in available_langs}
+        result = judge.score_robustness(prompt_id, answers)
+        evaluations.append(result)
+        score = result.get("score", 0)
+        if isinstance(score, int) and 1 <= score <= 5:
+            valid_scores.append(score)
+
+    distribution = {str(s): sum(1 for x in valid_scores if x == s) for s in range(1, 6)}
+    avg_score = round(sum(valid_scores) / len(valid_scores), 2) if valid_scores else 0.0
+
+    return {
+        "metric": "llm_judge_robustness",
+        "run_id": run_id,
+        "sample_size": len(sample_ids),
+        "n_valid_scores": len(valid_scores),
+        "avg_score": avg_score,
+        "score_distribution": distribution,
+        "languages_evaluated": available_langs,
+        "evaluations": evaluations,
+    }
+
+
+def generate_report(
+    run_id: str,
+    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    languages: Optional[list[str]] = None,
+    sample_size: int = 10,
+    save: bool = True,
+) -> dict:
+    judge = LLMJudge()
+    div_result = evaluate_diversity(run_id, output_dir, languages, sample_size, judge=judge)
+    rob_result = evaluate_robustness(run_id, output_dir, languages, sample_size, judge=judge)
+
+    avg_div = div_result["avg_score"]
+    avg_rob = rob_result["avg_score"]
+    global_avg = round((avg_div + avg_rob) / 2, 2) if (avg_div + avg_rob) > 0 else 0.0
+
+    if global_avg >= 4.0:
+        interpretation = "Excellent: strong diversity and robustness."
+    elif global_avg >= 3.0:
+        interpretation = "Satisfactory: good global performance with room for improvement."
+    elif global_avg >= 2.0:
+        interpretation = "Insufficient: issues on diversity or robustness."
+    else:
+        interpretation = "Very weak: culturally inadequate or inconsistent responses."
+
+    report = {
+        "run_id": run_id,
+        "analysis_type": "llm_judge",
+        "judge_model": judge._model,
+        "sample_size_per_dimension": sample_size,
+        "diversity": div_result,
+        "robustness": rob_result,
+        "global_avg_score": global_avg,
+        "interpretation": interpretation,
+    }
+
+    if save:
+        report_path = Path(output_dir) / run_id / "analysis_llm_judge.json"
+        report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+        logger.info("LLM Judge report saved: %s", report_path)
+
+    return report

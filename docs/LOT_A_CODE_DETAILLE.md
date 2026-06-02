@@ -926,7 +926,7 @@ C'est l'**implémentation concrète** du contrat `LLMProvider` pour Mistral-Nemo
 
 ```python
 # Créé par la factory :
-config = RunConfig.from_file("configs/baseline_ollama.json")
+config = RunConfig.from_file("configs/baseline_gemma.json")
 provider = create_provider(config)  # → MistralNemoProvider
 
 # Utilisé par le pipeline (identique à Gemini !) :
@@ -1935,13 +1935,13 @@ python run_baseline.py
 python run_baseline.py
 
 # Utiliser Mistral-Nemo (local)
-python run_baseline.py --config configs/baseline_ollama.json
+python run_baseline.py --config configs/baseline_gemma.json
 
 # Test rapide : seulement français, seulement unspecific
 python run_baseline.py --languages fr --types unspecific
 
 # Combiner les options
-python run_baseline.py --config configs/baseline_ollama.json --languages fr de --types unspecific --run-id mon_test
+python run_baseline.py --config configs/baseline_gemma.json --languages fr de --types unspecific --run-id mon_test
 ```
 
 ### Ce qui s'affiche
