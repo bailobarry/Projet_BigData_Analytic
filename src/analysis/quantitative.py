@@ -266,6 +266,79 @@ def compare_runs(
     return comparison
 
 
+# ── Fusion de deux rapports quantitatifs ────────────────────────────────────
+
+
+def merge_stats(stats_a: dict, stats_b: dict) -> dict:
+    """
+    Fusionne les statistiques de deux runs en un seul dict.
+
+    Les clés ``"lang_type"`` des deux dicts sont combinées.
+    La clé ``"global"`` est recalculée à partir de l'ensemble des fichiers.
+
+    Utilisé pour afficher à la fois les fichiers *unspecific* et *specific*
+    lorsque les deux types sont répartis sur deux runs distincts.
+
+    Parameters
+    ----------
+    stats_a : dict
+        Résultat de ``compute_basic_stats()`` pour le run principal.
+    stats_b : dict
+        Résultat de ``compute_basic_stats()`` pour le run secondaire.
+
+    Returns
+    -------
+    dict
+        Stats fusionnées avec ``"global"`` recalculé.
+    """
+    merged: dict[str, dict] = {}
+
+    # Fusionner toutes les clés sauf "global"
+    for key, val in stats_a.items():
+        if key != "global":
+            merged[key] = val
+    for key, val in stats_b.items():
+        if key != "global" and key not in merged:
+            merged[key] = val
+
+    # Recalculer "global" à partir de l'ensemble des fichiers fusionnés
+    total_all  = 0
+    sum_words  = 0.0
+    sum_chars  = 0.0
+    min_words  = None
+    max_words  = None
+    empty_all  = 0
+    error_all  = 0
+
+    for s in merged.values():
+        n = s.get("total", 0)
+        if n == 0:
+            continue
+        total_all  += n
+        sum_words  += s.get("avg_words", 0) * n
+        sum_chars  += s.get("avg_chars", 0) * n
+        empty_all  += round(s.get("empty_rate", 0) * n)
+        error_all  += round(s.get("error_rate", 0) * n)
+        fw = s.get("min_words", 0)
+        lw = s.get("max_words", 0)
+        if min_words is None or fw < min_words:
+            min_words = fw
+        if max_words is None or lw > max_words:
+            max_words = lw
+
+    merged["global"] = {
+        "total":      total_all,
+        "avg_words":  round(sum_words / total_all, 2) if total_all else 0,
+        "avg_chars":  round(sum_chars / total_all, 2) if total_all else 0,
+        "min_words":  min_words or 0,
+        "max_words":  max_words or 0,
+        "empty_rate": round(empty_all / total_all, 4) if total_all else 0.0,
+        "error_rate": round(error_all / total_all, 4) if total_all else 0.0,
+    }
+
+    return merged
+
+
 # ── Rapport complet ──────────────────────────────────────────────────────────
 
 

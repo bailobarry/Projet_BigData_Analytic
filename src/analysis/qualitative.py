@@ -46,8 +46,8 @@ _SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
 
 # Seuils pour la classification
 _GENERIC_THRESHOLD_WORDS = 4      # Moins de 4 mots → générique
-_NON_COMPLIANT_SENTENCES = 3      # Plus de 3 phrases → non-respect de la consigne
-_REPETITION_SIM_THRESHOLD = 0.97  # Similarité cosinus > 0.97 → répétition
+_NON_COMPLIANT_SENTENCES = 2      # Plus de 2 phrases → non-respect de la consigne
+_REPETITION_SIM_THRESHOLD = 0.90  # Similarité cosinus > 0.97 → répétition
 
 
 # ─── Chargement des données ──────────────────────────────────────────────────
@@ -389,31 +389,123 @@ def classify_errors(
 
 # ─── Analyse par catégorie thématique ────────────────────────────────────────
 
-# Mapping manuel des IDs (1–101) vers les catégories thématiques du challenge.
-# Basé sur les questions en anglais (en_unspecific.jsonl).
-# Catégories : food, social_life, work_education, family, social_norms
-_CATEGORY_MAP: dict[str, list[int]] = {
-    "food": [1, 10, 11, 24, 25, 86, 87],
-    "family": [2, 3, 4, 5, 29, 83, 88],
-    "social_life": [7, 8, 9, 12, 13, 14, 15, 23, 26, 27, 28, 30, 84, 95, 96, 101],
-    "work_education": [6, 22, 85, 89, 90, 93, 94],
-    "social_norms": [
-        16, 17, 18, 19, 20, 21, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,
-        57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72,
-        73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 91, 92, 97, 98, 99, 100,
-    ],
+# Descriptions sémantiques des catégories.
+# Le transformer encode ces phrases pour les comparer aux prompts.
+# Aucune liste de mots-clés à maintenir : seul le sens compte.
+_CATEGORY_DESCRIPTIONS: dict[str, str] = {
+    "food":           "Questions about food, meals, cooking, diet, eating habits, and nutrition.",
+    "family":         "Questions about family, children, parents, marriage, babies, and birthdays.",
+    "social_life":    "Questions about friendships, dating, relationships, sexuality, and social interactions.",
+    "work_education": "Questions about work, jobs, careers, education, and professional development.",
+    "social_norms":   "Questions about cultural norms, traditions, religion, gender roles, and societal behaviors.",
 }
 
+# Cache : prompts lus depuis le fichier de référence { base_id → prompt_text }
+_prompt_text_cache: dict[str, str] = {}
 
-def get_category(prompt_id: str) -> str:
-    """Retourne la catégorie thématique d'une question à partir de son ID."""
-    # Les IDs specific sont du type "1-5" → base = "1"
-    base_id = int(prompt_id.split("-")[0])
-    for category, ids in _CATEGORY_MAP.items():
-        if base_id in ids:
-            return category
-    return "other"
+# Cache : résultats de classification { base_id → category }
+# Évite de recalculer les embeddings à chaque appel
+_category_result_cache: dict[str, str] = {}
+
+# Modèle d'embedding (chargé une seule fois)
+_embed_model = None
+_category_embeddings = None   # embeddings des descriptions de catégories
+
+
+def _get_embed_model():
+    """Charge le modèle d'embedding (paresseux – une seule fois)."""
+    global _embed_model
+    if _embed_model is None:
+        from sentence_transformers import SentenceTransformer
+        _embed_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        logger.debug("Modèle d'embedding chargé pour la classification des catégories.")
+    return _embed_model
+
+
+def _get_category_embeddings():
+    """Calcule (une seule fois) les embeddings des descriptions de catégories."""
+    global _category_embeddings
+    if _category_embeddings is None:
+        import numpy as np
+        model = _get_embed_model()
+        labels = list(_CATEGORY_DESCRIPTIONS.keys())
+        descs  = list(_CATEGORY_DESCRIPTIONS.values())
+        vecs   = model.encode(descs, convert_to_numpy=True, show_progress_bar=False)
+        # Normalisation L2 pour cosinus rapide via produit scalaire
+        norms  = np.linalg.norm(vecs, axis=1, keepdims=True)
+        _category_embeddings = {"labels": labels, "vecs": vecs / norms}
+    return _category_embeddings
+
+
+def _build_prompt_cache(
+    input_dir: str = "data/input",
+    reference_lang: str = "en",
+) -> None:
+    """
+    Remplit ``_prompt_text_cache`` depuis ``{reference_lang}_unspecific.jsonl``.
+    Ne fait rien si le cache est déjà rempli ou si le fichier est introuvable.
+    """
+    global _prompt_text_cache
+    if _prompt_text_cache:
+        return
+
+    ref_file = Path(input_dir) / f"{reference_lang}_unspecific.jsonl"
+    if not ref_file.exists():
+        logger.debug("Fichier de référence introuvable : %s", ref_file)
+        return
+
+    with jsonlines.open(str(ref_file), mode="r") as reader:
+        for obj in reader:
+            base_id = str(obj.get("id", "")).split("-")[0]
+            _prompt_text_cache[base_id] = obj.get("prompt", "")
+
+    logger.debug("Cache prompts chargé : %d entrées", len(_prompt_text_cache))
+
+
+def get_category(
+    prompt_id: str,
+    input_dir: str = "data/input",
+) -> str:
+    """
+    Retourne la catégorie thématique d'une question via similarité sémantique.
+
+    Aucune liste de mots-clés : le texte du prompt est encodé par le même
+    modèle d'embedding que l'analyse sémantique, puis comparé aux descriptions
+    des catégories via cosinus. La catégorie la plus proche est retournée.
+
+    Les IDs *specific* (ex: ``"1-5"``) utilisent la base ``"1"``.
+    """
+    import numpy as np
+
+    base_id = str(prompt_id).split("-")[0]
+
+    # Résultat déjà calculé ?
+    if base_id in _category_result_cache:
+        return _category_result_cache[base_id]
+
+    _build_prompt_cache(input_dir)
+    prompt_text = _prompt_text_cache.get(base_id, "")
+
+    if not prompt_text:
+        return "other"
+
+    # Encoder le prompt
+    model       = _get_embed_model()
+    cat_data    = _get_category_embeddings()
+    prompt_vec  = model.encode([prompt_text], convert_to_numpy=True, show_progress_bar=False)[0]
+    prompt_norm = np.linalg.norm(prompt_vec)
+    if prompt_norm == 0:
+        return "other"
+
+    prompt_vec /= prompt_norm
+
+    # Similarité cosinus avec chaque catégorie → choisir la plus haute
+    similarities   = cat_data["vecs"] @ prompt_vec   # produit scalaire sur vecteurs normalisés
+    best_idx       = int(np.argmax(similarities))
+    best_category  = cat_data["labels"][best_idx]
+
+    _category_result_cache[base_id] = best_category
+    return best_category
 
 
 def analyze_by_category(
@@ -445,7 +537,7 @@ def analyze_by_category(
     """
     import numpy as np
 
-    categories: dict[str, list[float]] = {k: [] for k in _CATEGORY_MAP}
+    categories: dict[str, list[float]] = {k: [] for k in _CATEGORY_DESCRIPTIONS}
     categories["other"] = []
 
     for prompt_id, data in per_prompt_scores.items():

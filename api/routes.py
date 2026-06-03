@@ -137,8 +137,29 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
             if _cancelled():
                 _mark_cancelled(); return
             _analysis_status[run_id]["current"] = "quantitative"
-            from src.analysis.quantitative import generate_report as _quant
+            from src.analysis.quantitative import generate_report as _quant, merge_stats as _merge_stats
+
+            # Run principal
             report = _quant(run_id, save=True)
+
+            # Run secondaire (specific) – fusionner si différent du run principal
+            spec_run = request.run_specific_id
+            if spec_run and spec_run != run_id:
+                try:
+                    spec_report = _quant(spec_run, save=True)
+                    merged = _merge_stats(
+                        report["stats_by_file"],
+                        spec_report["stats_by_file"],
+                    )
+                    report = {
+                        "run_id":        f"{run_id} + {spec_run}",
+                        "analysis_type": "quantitative",
+                        "stats_by_file": merged,
+                    }
+                except Exception as _exc_q:
+                    # Si le run spécifique échoue, on garde au moins le principal
+                    report["quantitative_merge_error"] = str(_exc_q)
+
             results["quantitative"] = report
             _analysis_status[run_id]["steps_done"].append("quantitative")
 
