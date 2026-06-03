@@ -10,10 +10,10 @@ Lance les 3 méthodes d'analyse sur les meilleurs runs disponibles :
 
 Runs utilisés
 -------------
-- run_20260506_182505_ad8456 : 5 langues *unspecific* (EN, FR, DE, ES, IT)
+- llama_empathetic_unspecific : 5 langues *unspecific* (EN, FR, DE, ES, IT)
   → Idéal pour : stats quantitatives + diversité sémantique + juge diversité
 
-- run_20260505_050801_83bc70 : 3 langues *specific* (DE, EN, FR)
+- gemma_baseline_specifique : 3 langues *specific* (DE, EN, FR)
   → Idéal pour : robustesse sémantique + juge robustesse
 
 Usage
@@ -42,8 +42,8 @@ logger = logging.getLogger("run_analysis")
 
 # ── Constantes ────────────────────────────────────────────────────────────────
 
-RUN_UNSPECIFIC = "run_20260506_182505_ad8456"   # 5 langues unspecific
-RUN_SPECIFIC   = "run_20260505_050801_83bc70"   # 3 langues specific
+RUN_UNSPECIFIC = "llama_empathetic_unspecific"   # 5 langues unspecific
+RUN_SPECIFIC   = "gemma_baseline_specifique"   # 3 langues specific
 OUTPUT_DIR     = "data/output"
 
 SEPARATOR = "=" * 70
@@ -370,6 +370,8 @@ def main() -> None:
 
     # ── 1. Quantitatif ────────────────────────────────────────────────────────
     run_quantitative(args.run_unspecific)
+    if args.run_specific != args.run_unspecific:
+        run_quantitative(args.run_specific)
 
     # ── 2. Sémantique ─────────────────────────────────────────────────────────
     run_semantic(
@@ -389,6 +391,9 @@ def main() -> None:
     # ── Résumé final ──────────────────────────────────────────────────────────
     _print_section("RÉSUMÉ FINAL")
     print(f"  ✔ Analyse quantitative  : data/output/{args.run_unspecific}/analysis_quantitative.json")
+    if args.run_specific != args.run_unspecific:
+        print(f"                            data/output/{args.run_specific}/analysis_quantitative.json")
+    print(f"  ✔ Analyse sémantique    : data/output/{args.run_unspecific}/analysis_diversity.json")
     print(f"  ✔ Analyse sémantique    : data/output/{args.run_unspecific}/analysis_diversity.json")
     print(f"                            data/output/{args.run_specific}/analysis_robustness.json")
     if not args.no_judge:

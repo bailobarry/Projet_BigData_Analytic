@@ -21,10 +21,6 @@
       "description": "Aucune modification"
     },
     {
-      "name": "neutral",
-      "description": "Consigne de neutralité"
-    },
-    {
       "name": "cultural_expert",
       "description": "Rôle d'expert"
     },

@@ -245,50 +245,141 @@ async def create_run(config: RunConfig, background_tasks: BackgroundTasks):
 
 @router.get("/runs", response_model=list[dict])
 async def list_runs():
-    """Liste tous les runs passés (depuis configs/runs/) avec leur statut."""
-    runs_dir = Path("configs/runs")
+    """
+    Liste tous les runs passés avec leur statut.
+
+    Deux sources sont fusionnées :
+    1. ``configs/runs/``  – runs déclarés (avec config.json)
+    2. ``data/output/``   – tous les répertoires contenant des JSONL,
+       qu'ils aient ou non un nom commençant par ``run_``.
+    """
+    runs_dir  = Path("configs/runs")
+    output_root = Path("data/output")
     runs: list[dict] = []
+    seen_run_ids: set[str] = set()
+
+    # ── 1. Runs déclarés dans configs/runs/ ───────────────────────────────
     if runs_dir.exists():
         for run_dir in sorted(runs_dir.iterdir(), reverse=True):
             config_file = run_dir / "config.json" if run_dir.is_dir() else None
-            if config_file and config_file.exists():
-                data = json.loads(config_file.read_text(encoding="utf-8"))
-                rid = data.get("run_id", "")
-                output_dir = Path("data/output") / rid
-                summary_file = output_dir / "run_summary.json"
-                summary = None
-                if summary_file.exists():
+            if not (config_file and config_file.exists()):
+                continue
+            data = json.loads(config_file.read_text(encoding="utf-8"))
+            rid = data.get("run_id", "")
+            if not rid:
+                continue
+            seen_run_ids.add(rid)
+
+            out_dir      = output_root / rid
+            summary_file = out_dir / "run_summary.json"
+            summary = None
+            if summary_file.exists():
+                try:
                     summary = json.loads(summary_file.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
 
-                # Statut
-                if summary:
-                    status = "completed"
-                elif rid in _run_status:
-                    status = _run_status[rid].get("status", "running")
-                else:
-                    status = "interrupted"
+            if summary:
+                status = "completed"
+            elif rid in _run_status:
+                status = _run_status[rid].get("status", "running")
+            else:
+                status = "interrupted"
 
-                # Compte de prompts déjà traités
-                prompts_done = 0
-                if output_dir.exists():
-                    for f in output_dir.glob("*.jsonl"):
-                        try:
-                            prompts_done += sum(1 for _ in open(f, encoding="utf-8"))
-                        except Exception:
-                            pass
+            prompts_done = 0
+            if out_dir.exists():
+                for f in out_dir.glob("*.jsonl"):
+                    try:
+                        prompts_done += sum(1 for _ in open(f, encoding="utf-8"))
+                    except Exception:
+                        pass
 
-                runs.append({
-                    "run_id": rid,
-                    "description": data.get("description", ""),
-                    "provider": data.get("provider", {}).get("type"),
-                    "model": data.get("provider", {}).get("model"),
-                    "languages": data.get("pipeline", {}).get("languages", []),
-                    "dataset_types": data.get("pipeline", {}).get("dataset_types", []),
-                    "created_at": data.get("created_at"),
-                    "status": status,
-                    "prompts_done": prompts_done,
-                    "summary": summary,
-                })
+            runs.append({
+                "run_id":        rid,
+                "description":   data.get("description", ""),
+                "provider":      data.get("provider", {}).get("type"),
+                "model":         data.get("provider", {}).get("model"),
+                "languages":     data.get("pipeline", {}).get("languages", []),
+                "dataset_types": data.get("pipeline", {}).get("dataset_types", []),
+                "created_at":    data.get("created_at"),
+                "status":        status,
+                "prompts_done":  prompts_done,
+                "summary":       summary,
+            })
+
+    # ── 2. Runs orphelins dans data/output/ (sans config dans configs/runs/) ─
+    if output_root.exists():
+        for out_dir in sorted(output_root.iterdir(), reverse=True):
+            if not out_dir.is_dir():
+                continue
+            rid = out_dir.name
+            if rid in seen_run_ids:
+                continue   # déjà inclus
+
+            # Un répertoire est considéré comme un run s'il contient des JSONL
+            jsonl_files = list(out_dir.glob("*.jsonl"))
+            if not jsonl_files:
+                continue
+
+            seen_run_ids.add(rid)
+
+            summary_file = out_dir / "run_summary.json"
+            summary = None
+            if summary_file.exists():
+                try:
+                    summary = json.loads(summary_file.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+
+            # Essayer de charger la config locale (data/output/{rid}/config.json)
+            config_data: dict = {}
+            local_config = out_dir / "config.json"
+            if local_config.exists():
+                try:
+                    config_data = json.loads(local_config.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+
+            if summary:
+                status = "completed"
+            elif rid in _run_status:
+                status = _run_status[rid].get("status", "running")
+            else:
+                # Pas de run_summary.json, mais des JSONL présents → considéré terminé
+                status = "completed"
+
+            prompts_done = 0
+            for f in jsonl_files:
+                try:
+                    prompts_done += sum(1 for _ in open(f, encoding="utf-8"))
+                except Exception:
+                    pass
+
+            # Déduire langues et types depuis les noms des fichiers JSONL
+            languages_found: set[str] = set()
+            types_found: set[str]     = set()
+            for f in jsonl_files:
+                parts = f.stem.split("_", 1)   # "fr_unspecific" → ["fr", "unspecific"]
+                if len(parts) == 2:
+                    lang, dtype = parts
+                    if len(lang) == 2:
+                        languages_found.add(lang)
+                    if dtype in ("specific", "unspecific"):
+                        types_found.add(dtype)
+
+            runs.append({
+                "run_id":        rid,
+                "description":   config_data.get("description", ""),
+                "provider":      (config_data.get("provider") or {}).get("type", ""),
+                "model":         (config_data.get("provider") or {}).get("model", ""),
+                "languages":     (config_data.get("pipeline") or {}).get("languages") or sorted(languages_found),
+                "dataset_types": (config_data.get("pipeline") or {}).get("dataset_types") or sorted(types_found),
+                "created_at":    config_data.get("created_at", ""),
+                "status":        status,
+                "prompts_done":  prompts_done,
+                "summary":       summary,
+            })
+
     return runs
 
 

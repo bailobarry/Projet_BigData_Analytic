@@ -154,9 +154,11 @@ def compute_basic_stats(
 
         n = len(items)
         stats[key] = {
-            "total": n,
-            "avg_words": round(sum(word_counts) / n, 2) if n else 0,
-            "avg_chars": round(sum(char_counts) / n, 2) if n else 0,
+            "total":      n,
+            "avg_words":  round(sum(word_counts) / n, 2) if n else 0,
+            "avg_chars":  round(sum(char_counts) / n, 2) if n else 0,
+            "min_words":  min(word_counts) if word_counts else 0,
+            "max_words":  max(word_counts) if word_counts else 0,
             "empty_rate": round(empty_count / n, 4) if n else 0.0,
             "error_rate": round(error_count / n, 4) if n else 0.0,
         }
@@ -168,9 +170,11 @@ def compute_basic_stats(
         error_all += error_count
 
     stats["global"] = {
-        "total": total_all,
-        "avg_words": round(sum(all_words) / total_all, 2) if total_all else 0,
-        "avg_chars": round(sum(all_chars) / total_all, 2) if total_all else 0,
+        "total":      total_all,
+        "avg_words":  round(sum(all_words) / total_all, 2) if total_all else 0,
+        "avg_chars":  round(sum(all_chars) / total_all, 2) if total_all else 0,
+        "min_words":  min(all_words) if all_words else 0,
+        "max_words":  max(all_words) if all_words else 0,
         "empty_rate": round(empty_all / total_all, 4) if total_all else 0.0,
         "error_rate": round(error_all / total_all, 4) if total_all else 0.0,
     }

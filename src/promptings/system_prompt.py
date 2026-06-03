@@ -31,33 +31,6 @@ _STRATEGIES: dict[str, dict[str, dict[str, str]]] = {
             "suffix": "Rispondi basandoti esclusivamente sulle usanze locali."
         }
     },
-    "neutral": {
-        "fr": {
-            "system": "Vous êtes un assistant utile, neutre et factuel.",
-            "prefix": "Voici une question pour laquelle j'ai besoin d'une réponse objective :",
-            "suffix": "Fournissez une réponse sans opinion personnelle ni biais."
-        },
-        "en": {
-            "system": "You are a helpful, neutral, and factual assistant.",
-            "prefix": "Here is a question for which I need an objective answer:",
-            "suffix": "Provide an answer without personal opinion or bias."
-        },
-        "de": {
-            "system": "Sie sind ein hilfreicher, neutraler und sachlicher Assistent.",
-            "prefix": "Hier ist eine Frage, auf die ich eine objektive Antwort benötige:",
-            "suffix": "Geben Sie eine Antwort ohne persönliche Meinung oder Voreingenommenheit."
-        },
-        "es": {
-            "system": "Eres un asistente útil, neutral y factual.",
-            "prefix": "Aquí hay una pregunta para la cual necesito una respuesta objetiva:",
-            "suffix": "Proporcione una respuesta sin opiniones personales ni sesgos."
-        },
-        "it": {
-            "system": "Sei un assistente utile, neutrale e fattuale.",
-            "prefix": "Ecco una domanda per la quale ho bisogno di una risposta obiettiva:",
-            "suffix": "Fornisci una risposta senza opinioni personali o pregiudizi."
-        }
-    },
     "empathetic_synthesis": {
         "fr": {
             "system": "Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.",
