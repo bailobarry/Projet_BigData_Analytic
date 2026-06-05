@@ -274,13 +274,13 @@ def display_analysis(results: dict):
                 avg = llm_div.get("avg_score", 0)
                 st.metric("Diversité", f"{avg:.2f} / 5")
                 dist = llm_div.get("score_distribution", {})
-                st.caption("  ".join(f"★{k}:{v}" for k, v in dist.items()))
+                st.caption("  ".join(f"*{k}:{v}" for k, v in dist.items()))
         with c2:
             if llm_rob:
                 avg = llm_rob.get("avg_score", 0)
                 st.metric("Robustesse", f"{avg:.2f} / 5")
                 dist = llm_rob.get("score_distribution", {})
-                st.caption("  ".join(f"★{k}:{v}" for k, v in dist.items()))
+                st.caption("  ".join(f"*{k}:{v}" for k, v in dist.items()))
         with c3:
             if llm_div and llm_rob:
                 g_avg = round((llm_div.get("avg_score", 0) + llm_rob.get("avg_score", 0)) / 2, 2)
@@ -560,7 +560,7 @@ def display_charts(results: dict):
             col1, col2 = st.columns(2)
             if llm_div and llm_div.get("score_distribution"):
                 dist = llm_div["score_distribution"]
-                labels_d = [f"★{k}" for k in dist]
+                labels_d = [f"{k}" for k in dist]
                 values_d = list(dist.values())
                 fig_pie_d = go.Figure(go.Pie(
                     labels=labels_d, values=values_d,
@@ -577,7 +577,7 @@ def display_charts(results: dict):
 
             if llm_rob and llm_rob.get("score_distribution"):
                 dist = llm_rob["score_distribution"]
-                labels_r = [f"★{k}" for k in dist]
+                labels_r = [f"{k}" for k in dist]
                 values_r = list(dist.values())
                 fig_pie_r = go.Figure(go.Pie(
                     labels=labels_r, values=values_r,
@@ -1146,7 +1146,7 @@ st.markdown("---")
 st.header("Comparer deux runs")
 st.caption(
     "Sélectionnez deux runs pour comparer leurs statistiques quantitatives "
-    "(longueur, taux d'erreurs) et/ou leurs scores sémantiques (diversité, robustesse, combiné)."
+    "et/ou leurs scores sémantiques."
 )
 
 try:
@@ -1167,25 +1167,29 @@ else:
         variant = r.get("summary", {}) or {}
         return f"{rid[:26]}… | {model} | {desc}"
 
-    col_run_a, col_run_b = st.columns(2)
-    with col_run_a:
-        _cmp_run_a = st.selectbox(
-            "Run A (référence / baseline) :",
-            _run_ids_cmp,
-            format_func=_run_label,
-            key="cmp_run_a",
-        )
-    with col_run_b:
-        _cmp_run_b = st.selectbox(
-            "Run B (variante à comparer) :",
-            _run_ids_cmp,
-            format_func=_run_label,
-            index=min(1, len(_run_ids_cmp) - 1),
-            key="cmp_run_b",
-        )
-
     with st.form("form_compare"):
-        col_m1, col_m2, col_m3 = st.columns(3)
+        # Sélection des runs à comparer
+        col_run_a, col_run_b = st.columns(2)
+        with col_run_a:
+            _cmp_run_a = st.selectbox(
+                "Run A (premier run à comparer) :",
+                _run_ids_cmp,
+                format_func=_run_label,
+                key="cmp_run_a",
+            )
+        with col_run_b:
+            _cmp_run_b = st.selectbox(
+                "Run B (second run à comparer) :",
+                _run_ids_cmp,
+                format_func=_run_label,
+                index=min(1, len(_run_ids_cmp) - 1),
+                key="cmp_run_b",
+            )
+        
+        st.markdown("---")
+        
+        # Méthodes de comparaison
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         with col_m1:
             _cmp_do_quant = st.checkbox("Quantitatif", value=True,
                                         help="Longueur, taux d'erreurs — rapide")
@@ -1193,10 +1197,13 @@ else:
             _cmp_do_sem = st.checkbox("Sémantique", value=True,
                                       help="Diversité & robustesse par embeddings")
         with col_m3:
+            _cmp_do_judge = st.checkbox("LLM Judge", value=False,
+                                        help="Comparaison avec Groq/Qwens")
+        with col_m4:
             _cmp_sample = st.number_input(
-                "Échantillon sémantique :", min_value=3, max_value=4140,
-                value=10, step=1,
-                help="Nombre de prompts pour le calcul sémantique",
+                "Échantillon :", min_value=10, max_value=4140,
+                value=15, step=1,
+                help="Nombre de prompts pour sémantique/judge ",
                 key="cmp_sample",
             )
         _cmp_submit = st.form_submit_button("Comparer", type="primary")
@@ -1210,6 +1217,8 @@ else:
                 _cmp_methods.append("quantitative")
             if _cmp_do_sem:
                 _cmp_methods.append("semantic")
+            if _cmp_do_judge:
+                _cmp_methods.append("llm_judge")
 
             if not _cmp_methods:
                 st.warning("Sélectionnez au moins une méthode de comparaison.")
@@ -1220,12 +1229,13 @@ else:
                             _cmp_run_a, _cmp_run_b,
                             methods=_cmp_methods,
                             sample_size=int(_cmp_sample),
+                            dataset_type=None,  # Auto-détection
                         )
                         st.session_state["last_compare_result"] = _cmp_result
                     except Exception as _e:
                         st.error(f"Erreur lors de la comparaison : {_e}")
 
-# Affichage des résultats de comparaison (persistant)
+# Affichage des résultats de comparaison
 _cmp_res = st.session_state.get("last_compare_result")
 if _cmp_res:
     _cmp_a = _cmp_res.get("run_a", "A")
@@ -1239,6 +1249,42 @@ if _cmp_res:
 
     st.subheader(f"Résultats : `{_cmp_a[:20]}…` vs `{_cmp_b[:20]}…`")
 
+    # ── Affichage de la détection des datasets ────────────────────────────
+    _datasets_info = _cmp_res.get("datasets_detection")
+    if _datasets_info:
+        with st.expander("Datasets disponibles pour cette comparaison", expanded=True):
+            col_d1, col_d2, col_d3 = st.columns(3)
+            
+            with col_d1:
+                if _datasets_info.get("has_unspecific"):
+                    st.success(f"**Unspecific**\n\n{len(_datasets_info.get('unspecific_langs', []))} langues communes")
+                else:
+                    st.warning("**Unspecific**\n\nNon disponible")
+            
+            with col_d2:
+                if _datasets_info.get("has_specific"):
+                    st.success(f"**Specific**\n\n{len(_datasets_info.get('specific_langs', []))} langues communes")
+                else:
+                    st.warning("**Specific**\n\nNon disponible")
+            
+            with col_d3:
+                _rec_type = _datasets_info.get("recommended_type")
+                if _rec_type:
+                    _rec_label = "Diversité" if _rec_type == "unspecific" else "Robustesse"
+                    st.info(f"**Recommandé**\n\n{_rec_label}")
+            
+            # Détails des langues
+            _details_parts = []
+            if _datasets_info.get("has_unspecific"):
+                _details_parts.append(f"**Unspecific** : {', '.join(_datasets_info.get('unspecific_langs', []))}")
+            if _datasets_info.get("has_specific"):
+                _details_parts.append(f"**Specific** : {', '.join(_datasets_info.get('specific_langs', []))}")
+            
+            if _details_parts:
+                st.caption(" | ".join(_details_parts))
+            
+            st.caption(f"{_datasets_info.get('summary', 'Détails de détection non disponibles')}")
+    
     # ── Comparaison Quantitative ──────────────────────────────────────────
     _cmp_quant = _cmp_res.get("quantitative")
     if _cmp_quant and not _cmp_res.get("quantitative_error"):
@@ -1329,8 +1375,6 @@ if _cmp_res:
                     help=f"A (référence) = {_ca:.4f}"
                 )
 
-        st.info(f" **Resultats :** {_cmp_sem.get('Resultat', '–')}")
-
         # Graphique : barres comparatives A vs B
         if any(x is not None for x in [_da, _ra]):
             import plotly.graph_objects as go
@@ -1352,14 +1396,14 @@ if _cmp_res:
 
             _fig_cmp_sem = go.Figure()
             _fig_cmp_sem.add_trace(go.Bar(
-                name=f"Run A (baseline)",
+                name=f"Run A (premier)",
                 x=_metrics_lbl, y=_scores_a_list,
                 marker_color="#457b9d",
                 text=[f"{v:.4f}" for v in _scores_a_list],
                 textposition="outside",
             ))
             _fig_cmp_sem.add_trace(go.Bar(
-                name=f"Run B (variante)",
+                name=f"Run B (second)",
                 x=_metrics_lbl, y=_scores_b_list,
                 marker_color="#e76f51",
                 text=[f"{v:.4f}" for v in _scores_b_list],
@@ -1376,5 +1420,90 @@ if _cmp_res:
 
     elif _cmp_res.get("semantic_error"):
         st.warning(f"Comparaison sémantique échouée : {_cmp_res['semantic_error']}")
+
+    # ── Comparaison LLM Judge ─────────────────────────────────────────────────
+    _cmp_judge = _cmp_res.get("llm_judge")
+    if _cmp_judge and not _cmp_res.get("llm_judge_error"):
+        st.markdown("#### Comparaison LLM Judge")
+        
+        _overall_winner = _cmp_judge.get("overall_winner", "TIE")
+        _winners_count = _cmp_judge.get("winners_count", {})
+        _avg_score = _cmp_judge.get("avg_score_diff", 0)
+        _summary = _cmp_judge.get("summary", "")
+        _dataset_type = _cmp_judge.get("dataset_type", "unknown")
+        
+        # Afficher le type de dataset utilisé (pas en "success" mais en caption)
+        _dataset_label = {
+            "unspecific": "Diversité culturelle",
+            "specific": "Robustesse culturelle",
+        }.get(_dataset_type, _dataset_type)
+        
+        st.caption(f"Type de dataset utilisé : **{_dataset_label}**")
+        
+        # Métriques principales
+        col_j1, col_j2, col_j3 = st.columns(3)
+        with col_j1:
+            if _overall_winner == "A":
+                st.metric("Gagnant", "Run A", help="Le juge préfère le premier run")
+            elif _overall_winner == "B":
+                st.metric("Gagnant", "Run B", help="Le juge préfère le second run")
+            else:
+                st.metric("Gagnant", "Égalité", help="Les deux runs sont équivalents selon le juge")
+        
+        with col_j2:
+            st.metric(
+                "Score moyen",
+                f"{_avg_score:+.2f}",
+                help="Score différentiel moyen (-3 = A beaucoup mieux, +3 = B beaucoup mieux)"
+            )
+        
+        with col_j3:
+            st.metric(
+                "Distribution",
+                f"A:{_winners_count.get('A', 0)} | B:{_winners_count.get('B', 0)} | T:{_winners_count.get('TIE', 0)}",
+                help="Nombre de victoires : A (premier run) | B (second run) | Égalités"
+            )
+        
+        # Résumé du juge
+        st.info(f"**Résumé du juge** : {_summary}")
+        
+        # Détail des comparaisons
+        _comparisons = _cmp_judge.get("comparisons", [])
+        if _comparisons:
+            with st.expander("Détail des comparaisons par prompt", expanded=False):
+                _judge_rows = []
+                for c in _comparisons:
+                    _judge_rows.append({
+                        "Prompt ID": c.get("prompt_id", ""),
+                        "Gagnant": c.get("winner", ""),
+                        "Score diff": c.get("score_diff", 0),
+                        "Dimension": c.get("dimension", ""),
+                        "Raison": c.get("reason", ""),
+                    })
+                _auto_df(_judge_rows, min_row_height=52)
+        
+        # Graphique : distribution des scores
+        import plotly.graph_objects as go
+        _score_diffs = [c.get("score_diff", 0) for c in _comparisons if isinstance(c.get("score_diff"), (int, float))]
+        if _score_diffs:
+            _fig_judge_dist = go.Figure(go.Histogram(
+                x=_score_diffs,
+                nbinsx=7,
+                marker_color="#457b9d",
+                text=[str(x) for x in _score_diffs],
+            ))
+            _fig_judge_dist.add_vline(x=0, line_dash="dash", line_color="gray",
+                                      annotation_text="Égalité", annotation_position="top")
+            _fig_judge_dist.update_layout(
+                title="Distribution des scores différentiels (LLM Judge)",
+                xaxis_title="Score différentiel (- = A mieux, + = B mieux)",
+                yaxis_title="Nombre de prompts",
+                xaxis=dict(range=[-3.5, 3.5], tickvals=[-3, -2, -1, 0, 1, 2, 3]),
+                height=360,
+            )
+            st.plotly_chart(_fig_judge_dist, use_container_width=True)
+    
+    elif _cmp_res.get("llm_judge_error"):
+        st.warning(f"Comparaison LLM Judge échouée : {_cmp_res['llm_judge_error']}")
 
 

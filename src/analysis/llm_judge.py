@@ -33,7 +33,6 @@ import logging
 import os
 import re
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 import jsonlines
@@ -89,26 +88,6 @@ Return ONLY a JSON object in this exact format:
   "worst_response_lang": "<language code with the weakest response>"
 }}"""
 # ─── Helpers ─────────────────────────────────────────────────────────────────
-@dataclass
-class _JudgeClientSlot:
-    api_key: str
-    client: object
-def _parse_groq_keys(single_key: Optional[str] = None) -> list[str]:
-    """Résoud les clés depuis l'argument explicite, GROQ_API_KEYS, puis GROQ_API_KEY."""
-    if single_key:
-        return [single_key.strip()]
-    raw_multi = os.environ.get("GROQ_API_KEYS", "").strip()
-    if raw_multi:
-        chunks = raw_multi.replace(";", ",").replace("\n", ",").split(",")
-        keys = [c.strip() for c in chunks if c.strip()]
-        if keys:
-            return keys
-    single = os.environ.get("GROQ_API_KEY", "").strip()
-    return [single] if single else []
-def _mask_key(value: str) -> str:
-    if len(value) < 10:
-        return "****"
-    return f"{value[:4]}...{value[-4:]}"
 def _parse_retry_after(error_message: str) -> float:
     """Extrait le délai suggéré par Groq dans un message 429/503.
     Exemples reconnus :
@@ -127,9 +106,11 @@ def _parse_retry_after(error_message: str) -> float:
         elif unit == "m":
             total += val * 60.0
     return total
+
 # ─── Classe principale ───────────────────────────────────────────────────────
 class LLMJudge:
-    """LLM-as-a-Judge via Groq avec rotation de clés API."""
+    """LLM-as-a-Judge via Groq avec une seule clé API."""
+    
     def __init__(
         self,
         model: str = _DEFAULT_JUDGE_MODEL,
@@ -138,37 +119,25 @@ class LLMJudge:
         enable_thinking: bool = False,
     ) -> None:
         import openai as _openai_pkg
-        keys = _parse_groq_keys(api_key)
-        if not keys:
+        
+        # Récupérer la clé API
+        key = api_key or os.environ.get("GROQ_API_KEY", "").strip()
+        if not key:
             raise ValueError(
-                "Clé API Groq manquante. Configurez GROQ_API_KEY (1 clé) "
-                "ou GROQ_API_KEYS (plusieurs clés)."
+                "Clé API Groq manquante. Configurez GROQ_API_KEY dans votre fichier .env"
             )
+        
         self._model = model
         self._delay = request_delay
         self._enable_thinking = enable_thinking
-        self._slots: list[_JudgeClientSlot] = [
-            _JudgeClientSlot(
-                api_key=key,
-                client=_openai_pkg.OpenAI(api_key=key, base_url=_GROQ_BASE_URL),
-            )
-            for key in keys
-        ]
-        self._next_client_idx = 0
+        self._client = _openai_pkg.OpenAI(api_key=key, base_url=_GROQ_BASE_URL)
+        
         logger.info(
-            "LLMJudge initialisé : model=%s | clés=%d | thinking=%s",
+            "LLMJudge initialisé : model=%s | thinking=%s",
             model,
-            len(self._slots),
             "on" if enable_thinking else "off",
         )
-        logger.debug(
-            "Clés juge chargées: %s",
-            ", ".join(_mask_key(s.api_key) for s in self._slots),
-        )
-    def _next_client(self) -> object:
-        slot = self._slots[self._next_client_idx]
-        self._next_client_idx = (self._next_client_idx + 1) % len(self._slots)
-        return slot.client
+    
     def _call_judge(self, user_prompt: str) -> dict:
         """Appelle l'API juge, parse le JSON, gère 429/503 avec backoff."""
         from openai import InternalServerError, RateLimitError
@@ -186,12 +155,12 @@ class LLMJudge:
             "max_tokens": 4096,
             "top_p": 1.0,
         }
-        max_attempts = max(3, len(self._slots) * 2)
+        max_attempts = 3
         last_error: Optional[Exception] = None
+        
         for attempt in range(1, max_attempts + 1):
-            client = self._next_client()
             try:
-                response = client.chat.completions.create(**call_kwargs)
+                response = self._client.chat.completions.create(**call_kwargs)
                 raw = response.choices[0].message.content or ""
                 time.sleep(self._delay)
                 # Supprimer les blocs <think>...</think> du mode thinking de Qwen3
@@ -239,6 +208,7 @@ class LLMJudge:
                 )
                 time.sleep(self._delay)
                 continue
+        
         return {
             "score": 0,
             "reason": (
@@ -412,3 +382,247 @@ def generate_report(
         )
         logger.info("LLM Judge report saved: %s", report_path)
     return report
+
+
+def _auto_detect_dataset_type(
+    run_id_a: str,
+    run_id_b: str,
+    output_dir: str,
+    languages: list[str],
+) -> str:
+    """
+    Détecte automatiquement le meilleur type de dataset à utiliser pour la comparaison.
+    
+    Stratégie de détection :
+    1. Si les deux runs ont des fichiers unspecific et specific : privilégier unspecific (diversité)
+    2. Si les deux runs ont uniquement unspecific : utiliser unspecific
+    3. Si les deux runs ont uniquement specific : utiliser specific
+    4. Si un run a unspecific et l'autre specific : utiliser le type commun prioritaire
+    
+    Parameters
+    ----------
+    run_id_a : str
+        Premier run.
+    run_id_b : str
+        Second run.
+    output_dir : str
+        Répertoire contenant les résultats.
+    languages : list[str]
+        Langues à vérifier.
+    
+    Returns
+    -------
+    str
+        Type de dataset détecté ('unspecific' ou 'specific').
+    
+    Raises
+    ------
+    ValueError
+        Si aucun type commun n'est trouvé.
+    """
+    run_a_path = Path(output_dir) / run_id_a
+    run_b_path = Path(output_dir) / run_id_b
+    
+    # Vérifier quels types de fichiers existent pour chaque run
+    has_unspecific_a = any((run_a_path / f"{lang}_unspecific.jsonl").exists() for lang in languages)
+    has_specific_a = any((run_a_path / f"{lang}_specific.jsonl").exists() for lang in languages)
+    
+    has_unspecific_b = any((run_b_path / f"{lang}_unspecific.jsonl").exists() for lang in languages)
+    has_specific_b = any((run_b_path / f"{lang}_specific.jsonl").exists() for lang in languages)
+    
+    logger.info(
+        "Détection type dataset : Run A (unspecific=%s, specific=%s) | Run B (unspecific=%s, specific=%s)",
+        has_unspecific_a, has_specific_a, has_unspecific_b, has_specific_b
+    )
+    
+    # Déterminer les types communs
+    common_unspecific = has_unspecific_a and has_unspecific_b
+    common_specific = has_specific_a and has_specific_b
+    
+    # Stratégie de sélection
+    if common_unspecific and common_specific:
+        # Les deux ont les deux types : privilégier unspecific (diversité culturelle)
+        logger.info("Les deux runs ont unspecific et specific → choix: unspecific (diversité)")
+        return "unspecific"
+    elif common_unspecific:
+        logger.info("Type commun détecté : unspecific")
+        return "unspecific"
+    elif common_specific:
+        logger.info("Type commun détecté : specific")
+        return "specific"
+    else:
+        # Aucun type commun
+        error_msg = (
+            f"Impossible de comparer les runs '{run_id_a}' et '{run_id_b}' : "
+            f"aucun type de dataset commun trouvé. "
+            f"Run A : {'unspecific' if has_unspecific_a else ''}{',' if has_unspecific_a and has_specific_a else ''}"
+            f"{'specific' if has_specific_a else '' if has_specific_a or has_unspecific_a else 'aucun fichier'} | "
+            f"Run B : {'unspecific' if has_unspecific_b else ''}{',' if has_unspecific_b and has_specific_b else ''}"
+            f"{'specific' if has_specific_b else '' if has_specific_b or has_unspecific_b else 'aucun fichier'}"
+        )
+        raise ValueError(error_msg)
+
+
+def compare_runs_llm_judge(
+    run_id_a: str,
+    run_id_b: str,
+    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    languages: Optional[list[str]] = None,
+    sample_size: int = 5,
+    dataset_type: Optional[str] = None,
+) -> dict:
+    """
+    Compare deux runs en utilisant le LLM Judge.
+    
+    Le juge évalue les différences de qualité entre les réponses des deux runs
+    pour les mêmes prompts, sur les dimensions diversité et robustesse.
+    
+    Parameters
+    ----------
+    run_id_a : str
+        Run de référence (baseline).
+    run_id_b : str
+        Run à comparer (variante).
+    output_dir : str
+        Répertoire contenant les résultats.
+    languages : list[str] | None
+        Langues à analyser (défaut: toutes les langues supportées).
+    sample_size : int
+        Nombre de prompts à comparer (défaut: 5 car chaque comparaison est coûteuse).
+    dataset_type : str | None
+        Type de dataset à analyser ('unspecific' ou 'specific').
+        Si None (défaut), détecte automatiquement le meilleur type disponible.
+    
+    Returns
+    -------
+    dict
+        Résultats de la comparaison avec scores et justifications du juge.
+    """
+    if languages is None:
+        languages = _SUPPORTED_LANGUAGES
+    
+    # Détection automatique du type de dataset si non spécifié
+    if dataset_type is None:
+        from src.analysis.dataset_detection import get_dataset_type_for_llm_judge
+        dataset_type = get_dataset_type_for_llm_judge(run_id_a, run_id_b, output_dir, languages)
+        logger.info(
+            "Type de dataset auto-détecté : %s (basé sur les fichiers disponibles)",
+            dataset_type
+        )
+    
+    judge = LLMJudge()
+    
+    # Charger les résultats des deux runs
+    data_a = _load_results_by_language(run_id_a, dataset_type, output_dir, languages)
+    data_b = _load_results_by_language(run_id_b, dataset_type, output_dir, languages)
+    
+    if not data_a or not data_b:
+        raise ValueError(f"Impossible de charger les fichiers {dataset_type} pour l'un des runs")
+    
+    # Trouver les langues communes
+    common_langs = sorted(set(data_a.keys()) & set(data_b.keys()))
+    if not common_langs:
+        raise ValueError("Aucune langue commune entre les deux runs")
+    
+    # Trouver les IDs communs à toutes les langues des deux runs
+    common_ids = sorted(
+        set.intersection(*[set(data_a[l].keys()) for l in common_langs]) &
+        set.intersection(*[set(data_b[l].keys()) for l in common_langs])
+    )
+    
+    if not common_ids:
+        raise ValueError("Aucun prompt commun entre les deux runs")
+    
+    sample_ids = common_ids[:sample_size]
+    logger.info(
+        "Comparaison LLM Judge : %d prompts, %d langues (%s)",
+        len(sample_ids), len(common_langs), ", ".join(common_langs)
+    )
+    
+    comparisons = []
+    
+    for prompt_id in sample_ids:
+        # Construire le bloc de comparaison pour ce prompt
+        comp_lines = [f"Prompt ID: {prompt_id}\n"]
+        comp_lines.append("[RUN A - Baseline]")
+        for lang in common_langs:
+            answer_a = data_a[lang].get(prompt_id, "(missing)")
+            comp_lines.append(f"  [{lang.upper()}] {answer_a}")
+        comp_lines.append("\n[RUN B - Variant]")
+        for lang in common_langs:
+            answer_b = data_b[lang].get(prompt_id, "(missing)")
+            comp_lines.append(f"  [{lang.upper()}] {answer_b}")
+        
+        comparison_block = "\n".join(comp_lines)
+        
+        # Prompt spécifique selon le type de dataset
+        if dataset_type == "unspecific":
+            dimension_desc = "cultural diversity (different perspectives across languages)"
+        else:
+            dimension_desc = "cultural robustness (consistency across cultural contexts)"
+        
+        user_prompt = f"""You are comparing two LLM runs (A = baseline, B = variant) on the same prompt.
+
+Below are the responses from both runs in {len(common_langs)} languages: {', '.join(common_langs)}.
+
+{comparison_block}
+
+Evaluate which run produces better responses focusing on: {dimension_desc}
+
+Return ONLY a JSON object in this exact format:
+{{
+  "winner": "<A or B or TIE>",
+  "score_diff": <integer -3 to +3, where -3 = A much better, 0 = tie, +3 = B much better>,
+  "reason": "<one clear sentence explaining the key quality difference>",
+  "dimension": "<diversity or robustness or quality>"
+}}"""
+        
+        result = judge._call_judge(user_prompt)
+        result["prompt_id"] = prompt_id
+        comparisons.append(result)
+    
+    # Calculer les statistiques globales
+    valid_scores = [c.get("score_diff", 0) for c in comparisons if isinstance(c.get("score_diff"), (int, float))]
+    avg_score_diff = round(sum(valid_scores) / len(valid_scores), 2) if valid_scores else 0.0
+    
+    winners_count = {"A": 0, "B": 0, "TIE": 0}
+    for c in comparisons:
+        winner = c.get("winner", "TIE")
+        if winner in winners_count:
+            winners_count[winner] += 1
+    
+    # Déterminer le gagnant global
+    if winners_count["A"] > winners_count["B"]:
+        overall_winner = "A"
+    elif winners_count["B"] > winners_count["A"]:
+        overall_winner = "B"
+    else:
+        overall_winner = "TIE"
+    
+    # Résumé
+    if overall_winner == "A":
+        summary = f"Run A (baseline) is better: {winners_count['A']} wins vs {winners_count['B']} for Run B. Average score difference: {avg_score_diff:.2f}"
+    elif overall_winner == "B":
+        summary = f"Run B (variant) is better: {winners_count['B']} wins vs {winners_count['A']} for Run A. Average score difference: {avg_score_diff:.2f}"
+    else:
+        summary = f"Both runs are comparable: {winners_count['A']} wins for A, {winners_count['B']} for B, {winners_count['TIE']} ties. Average score difference: {avg_score_diff:.2f}"
+    
+    return {
+        "run_id_a": run_id_a,
+        "run_id_b": run_id_b,
+        "dataset_type": dataset_type,
+        "sample_size": len(sample_ids),
+        "languages": common_langs,
+        "judge_model": judge._model,
+        "comparisons": comparisons,
+        "overall_winner": overall_winner,
+        "winners_count": winners_count,
+        "avg_score_diff": avg_score_diff,
+        "summary": summary,
+    }
+
+
+
+
+
+

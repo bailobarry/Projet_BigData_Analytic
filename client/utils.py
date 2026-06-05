@@ -15,7 +15,7 @@ def get_all_configs() -> dict:
 
 def list_runs() -> list[dict]:
     """GET /runs — retourne la liste de tous les runs avec statut."""
-    response = httpx.get(f"{API_URL}/runs", timeout=10)
+    response = httpx.get(f"{API_URL}/runs")
     response.raise_for_status()
     return response.json()
 
@@ -49,7 +49,7 @@ def run_experience(
 
 def resume_run(run_id: str) -> str:
     """POST /runs/{run_id}/resume — reprend un run interrompu."""
-    response = httpx.post(f"{API_URL}/runs/{run_id}/resume", timeout=10)
+    response = httpx.post(f"{API_URL}/runs/{run_id}/resume")
     response.raise_for_status()
     return response.json()["run_id"]
 
@@ -66,14 +66,14 @@ def start_analysis(
         "sample_size": sample_size,
         "run_specific_id": run_specific_id,
     }
-    response = httpx.post(f"{API_URL}/runs/{run_id}/analyse", json=payload, timeout=10)
+    response = httpx.post(f"{API_URL}/runs/{run_id}/analyse", json=payload)
     response.raise_for_status()
     return response.json()
 
 
 def get_analysis_results(run_id: str) -> dict:
     """GET /runs/{run_id}/analyse/results — retourne les JSON d'analyse sauvegardés."""
-    response = httpx.get(f"{API_URL}/runs/{run_id}/analyse/results", timeout=10)
+    response = httpx.get(f"{API_URL}/runs/{run_id}/analyse/results")
     response.raise_for_status()
     return response.json()
 
@@ -105,14 +105,14 @@ def download_submission_zip(run_id: str) -> bytes:
 
 def cancel_run(run_id: str) -> dict:
     """POST /runs/{run_id}/cancel — annule une expérience en cours."""
-    response = httpx.post(f"{API_URL}/runs/{run_id}/cancel", timeout=5)
+    response = httpx.post(f"{API_URL}/runs/{run_id}/cancel")
     response.raise_for_status()
     return response.json()
 
 
 def cancel_analysis(run_id: str) -> dict:
     """POST /runs/{run_id}/analyse/cancel — annule une analyse en cours."""
-    response = httpx.post(f"{API_URL}/runs/{run_id}/analyse/cancel", timeout=5)
+    response = httpx.post(f"{API_URL}/runs/{run_id}/analyse/cancel")
     response.raise_for_status()
     return response.json()
 
@@ -122,6 +122,7 @@ def compare_runs(
         run_id_b: str,
         methods: list[str],
         sample_size: int = 10,
+        dataset_type: str | None = None,
 ) -> dict:
     """POST /runs/compare — compare deux runs (baseline vs variante)."""
     payload = {
@@ -130,7 +131,9 @@ def compare_runs(
         "methods": methods,
         "sample_size": sample_size,
     }
-    response = httpx.post(f"{API_URL}/runs/compare", json=payload, timeout=600)
+    if dataset_type is not None:
+        payload["dataset_type"] = dataset_type
+    response = httpx.post(f"{API_URL}/runs/compare", json=payload)
     response.raise_for_status()
     return response.json()
 

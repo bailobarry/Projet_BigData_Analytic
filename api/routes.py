@@ -51,6 +51,7 @@ class CompareRequest(BaseModel):
     run_id_b: str
     methods: list[str] = ["quantitative", "semantic"]
     sample_size: int = 10
+    dataset_type: str | None = None  # None = auto-détection
 
 # ── Helpers SSE ───────────────────────────────────────────────────────────────
 
@@ -572,6 +573,18 @@ async def compare_two_runs(request: CompareRequest):
         "run_b": request.run_id_b,
     }
 
+    # ── Détection des datasets disponibles ───────────────────────────────────
+    try:
+        from src.analysis.dataset_detection import detect_available_datasets
+        datasets_info = detect_available_datasets(
+            request.run_id_a,
+            request.run_id_b,
+            output_dir
+        )
+        result["datasets_detection"] = datasets_info
+    except Exception as exc:
+        result["datasets_detection_error"] = str(exc)
+
     # ── Quantitatif ──────────────────────────────────────────────────────────
     if "quantitative" in request.methods:
         try:
@@ -594,6 +607,20 @@ async def compare_two_runs(request: CompareRequest):
             )
         except Exception as exc:
             result["semantic_error"] = str(exc)
+
+    # ── LLM Judge ─────────────────────────────────────────────────────────────
+    if "llm_judge" in request.methods:
+        try:
+            from src.analysis.llm_judge import compare_runs_llm_judge as _cmp_judge
+            result["llm_judge"] = _cmp_judge(
+                request.run_id_a,
+                request.run_id_b,
+                output_dir,
+                sample_size=request.sample_size,
+                dataset_type=request.dataset_type,  # None = auto-détection
+            )
+        except Exception as exc:
+            result["llm_judge_error"] = str(exc)
 
     return result
 

@@ -207,23 +207,33 @@ def run_semantic(run_unspecific: str, run_specific: str, sample_size: int | None
 def run_llm_judge(run_unspecific: str, run_specific: str, sample_size: int) -> None:
     _print_section(f"MÉTHODE 3 – LLM-as-a-Judge (Groq / Llama 3.3 70B)")
 
-    # Vérification clé API
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
+    # Vérification clé(s) API - supporte GROQ_API_KEY ou GROQ_API_KEYS
+    api_keys = os.environ.get("GROQ_API_KEYS", "").strip()
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    
+    if not api_keys and not api_key:
         # Tenter de charger depuis .env
         try:
             from dotenv import load_dotenv
             load_dotenv()
-            api_key = os.environ.get("GROQ_API_KEY")
+            api_keys = os.environ.get("GROQ_API_KEYS", "").strip()
+            api_key = os.environ.get("GROQ_API_KEY", "").strip()
         except ImportError:
             pass
 
-    if not api_key:
-        print("  ✘ Clé GROQ_API_KEY non trouvée. Ajoutez-la dans votre .env")
-        print("    Exemple : GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxx")
+    if not api_keys and not api_key:
+        print("  ✘ Clé API Groq non trouvée. Ajoutez-la dans votre .env")
+        print("    Exemple (une clé)       : GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxx")
+        print("    Exemple (plusieurs clés): GROQ_API_KEYS=gsk_xxx, gsk_yyy, gsk_zzz")
         return
 
-    print(f"  ✔ Clé API Groq détectée")
+    # Déterminer le nombre de clés configurées
+    num_keys = 1
+    if api_keys:
+        keys_list = [k.strip() for k in api_keys.replace(";", ",").split(",") if k.strip()]
+        num_keys = len(keys_list)
+    
+    print(f"  ✔ Clé(s) API Groq détectée(s) : {num_keys} clé(s)")
     print(f"  Échantillon : {sample_size} questions par dimension")
     print(f"  Attention   : {2 * sample_size} appels API (~{2 * sample_size * 2.5:.0f} secondes)")
     print()

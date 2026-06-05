@@ -5,10 +5,14 @@ Lancement :
     uvicorn api.main:app --reload --port 8000
 """
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 app = FastAPI(
     title="ELOQUENT – Cultural Robustness & Diversity",
@@ -32,5 +36,5 @@ app.include_router(router, prefix="/api")
 
 @app.get("/")
 async def root():
-    return {"message": "ELOQUENT Cultural Robustness & Diversity – API opérationnelle"}
+    return {"message": "ELOQUENT Cultural Robustness & Diversity"}
 
