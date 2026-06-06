@@ -11,7 +11,7 @@ import os
 import time
 from typing import Optional
 
-import openai as _openai_pkg
+import openai as openai_pkg
 from openai import RateLimitError
 
 from src.models.config import GenerationConfig, RunConfig
@@ -31,7 +31,7 @@ class GroqProvider(LLMProvider):
             )
 
         self._model = config.provider.model
-        self._client = _openai_pkg.OpenAI(
+        self._client = openai_pkg.OpenAI(
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1"
         )

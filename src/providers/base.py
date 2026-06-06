@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class LLMProvider(ABC):
     """Interface commune pour interroger un modèle de langage."""
 
-    # ── Propriétés ──────────────────────────────────────────────────────
+    # Propriétés
 
     @property
     @abstractmethod
@@ -31,7 +31,7 @@ class LLMProvider(ABC):
         """Identifiant du modèle utilisé (ex: 'llama-3.3-70b-versatile')."""
         ...
 
-    # ── Génération ──────────────────────────────────────────────────────
+    # Génération
 
     @abstractmethod
     def generate(
@@ -51,11 +51,6 @@ class LLMProvider(ABC):
             Paramètres de génération (température, max_tokens, …).
         system_prompt : str | None
             Consigne système optionnelle (``None`` pour la baseline).
-
-        Returns
-        -------
-        str
-            Le texte de la réponse du LLM.
         """
         ...
 

@@ -1,6 +1,5 @@
 """
-Point d'entrée de l'API FastAPI.
-
+API pour piloter des runs LLM sur les données du challenge ELOQUENT @ CLEF 2026.
 Lancement :
     uvicorn api.main:app --reload --port 8000
 """
@@ -23,7 +22,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Autoriser les requêtes depuis le frontend Streamlit (Lot B)
+# Autoriser les requêtes depuis le frontend Streamlit
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

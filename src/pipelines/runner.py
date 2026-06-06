@@ -47,7 +47,7 @@ Signature : callback(file_name, file_index, total_files, prompt_index, total_pro
 # ── Fonctions utilitaires ───────────────────────────────────────────────────
 
 
-def _load_prompts(filepath: str) -> list[PromptItem]:
+def load_prompts(filepath: str) -> list[PromptItem]:
     """Charge les prompts depuis un fichier JSONL."""
     items: list[PromptItem] = []
     with jsonlines.open(filepath, mode="r") as reader:
@@ -56,7 +56,7 @@ def _load_prompts(filepath: str) -> list[PromptItem]:
     return items
 
 
-def _repair_jsonl_file(output_file: Path) -> int:
+def repair_jsonl_file(output_file: Path) -> int:
     """
     Répare un fichier JSONL potentiellement corrompu après une interruption.
 
@@ -105,7 +105,7 @@ def _repair_jsonl_file(output_file: Path) -> int:
     return removed
 
 
-def _already_processed_ids(output_file: Path) -> set[str]:
+def already_processed_ids(output_file: Path) -> set[str]:
     """
     Retourne les IDs déjà traités dans le fichier de sortie (reprise).
     Répare automatiquement le fichier s'il contient des lignes corrompues
@@ -116,7 +116,7 @@ def _already_processed_ids(output_file: Path) -> set[str]:
         return done
 
     # Réparer d'abord les éventuelles lignes corrompues
-    _repair_jsonl_file(output_file)
+    repair_jsonl_file(output_file)
 
     # Lecture sécurisée ligne par ligne
     with open(str(output_file), "r", encoding="utf-8") as f:
@@ -211,12 +211,12 @@ def run_pipeline(
         run_logger.info("[%d/%d] Traitement de %s", file_idx, total_files, filename)
 
         # Charger les prompts
-        prompts = _load_prompts(input_file)
+        prompts = load_prompts(input_file)
         total_in_file = len(prompts)
         run_logger.info("  %d prompts chargés", total_in_file)
 
         # IDs déjà traités (reprise)
-        done_ids = _already_processed_ids(output_file)
+        done_ids = already_processed_ids(output_file)
         if done_ids:
             run_logger.info("  %d prompts déjà traités (reprise)", len(done_ids))
 

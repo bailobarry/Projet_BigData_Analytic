@@ -20,26 +20,6 @@ from pathlib import Path
 
 
 def setup_logging(run_id: str, output_dir: str = "data/output") -> logging.Logger:
-    """
-    Configure et retourne un logger **isolé par run**.
-
-    Chaque run reçoit un logger nommé ``pipeline.<run_id>`` :
-    - Deux runs simultanés n'interfèrent plus jamais entre eux.
-    - Chaque run écrit dans son propre fichier ``run.log``.
-
-    Parameters
-    ----------
-    run_id : str
-        Identifiant unique du run (utilisé comme suffixe du logger et
-        comme nom du sous-répertoire de sortie).
-    output_dir : str
-        Répertoire racine de sortie (défaut : ``data/output``).
-
-    Returns
-    -------
-    logging.Logger
-        Logger configuré nommé ``pipeline.<run_id>``.
-    """
     log_dir = Path(output_dir) / run_id
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "run.log"

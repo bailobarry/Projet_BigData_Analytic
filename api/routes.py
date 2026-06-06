@@ -1,11 +1,3 @@
-"""
-Routes de l'API – lancer des runs, lister les résultats, etc.
-
-Ces endpoints seront consommés par l'interface Streamlit (Lot B).
-"""
-
-from __future__ import annotations
-
 import asyncio
 import json
 from pathlib import Path
@@ -20,9 +12,9 @@ from src.pipelines.runner import run_pipeline
 
 router = APIRouter(tags=["runs"])
 
-_run_status:      dict[str, dict] = {}
-_analysis_status: dict[str, dict] = {}
-_cancel_flags:    dict[str, bool] = {}   # clés : run_id ou "analysis_<run_id>"
+run_status:      dict[str, dict] = {}
+analysis_status: dict[str, dict] = {}
+cancel_flags:    dict[str, bool] = {}   # clés : run_id ou "analysis_<run_id>"
 
 CONFIGS_DIR = Path(__file__).parent.parent / "configs"
 
@@ -55,29 +47,29 @@ class CompareRequest(BaseModel):
 
 # ── Helpers SSE ───────────────────────────────────────────────────────────────
 
-def _sse(data: dict) -> str:
+def sse(data: dict) -> str:
     """Formate un dict en événement SSE valide."""
     return f"data: {json.dumps(data)}\n\n"
 
 
-async def _wait_for_run(run_id: str) -> bool:
+async def wait_for_run(run_id: str) -> bool:
     """Attend que le run soit enregistré dans _run_status."""
-    for _ in range(20):
-        if run_id in _run_status:
+    for i in range(20):
+        if run_id in run_status:
             return True
         await asyncio.sleep(0.2)
     return False
 
 
-async def _wait_for_log_file(log_file: Path) -> None:
+async def wait_for_log_file(log_file: Path) -> None:
     """Attend que le fichier de log soit créé sur disque."""
-    for _ in range(50):
+    for i in range(50):
         if log_file.exists():
             return
         await asyncio.sleep(0.2)
 
 
-def _read_new_logs(log_file: Path, last_size: int) -> tuple[list[str], int]:
+def read_new_logs(log_file: Path, last_size: int) -> tuple[list[str], int]:
     """Lit les lignes ajoutées au fichier de log depuis la dernière lecture."""
     if not log_file.exists():
         return [], last_size
@@ -89,61 +81,57 @@ def _read_new_logs(log_file: Path, last_size: int) -> tuple[list[str], int]:
         new_logs = [l for l in f.read().splitlines() if l.strip()]
     return new_logs, current_size
 
-# ── Tâche d'arrière-plan – pipeline ─────────────────────────────────────────
 
-def _execute_run(config: RunConfig) -> None:
-    """Exécute le pipeline en arrière-plan."""
-    # Vérification cancel avant démarrage (run mis en file d'attente puis annulé)
-    if _cancel_flags.get(config.run_id):
-        _run_status[config.run_id] = {"status": "cancelled"}
+def execute_run(config: RunConfig) -> None:
+    """Exécute le pipeline complet d'un run en fonction de sa configuration."""
+
+    if cancel_flags.get(config.run_id):
+        run_status[config.run_id] = {"status": "cancelled"}
         return
-    _run_status[config.run_id] = {"status": "running"}
+    run_status[config.run_id] = {"status": "running"}
     try:
         summary = run_pipeline(config)
-        if _cancel_flags.get(config.run_id):
-            _run_status[config.run_id] = {"status": "cancelled"}
+        if cancel_flags.get(config.run_id):
+            run_status[config.run_id] = {"status": "cancelled"}
         else:
-            _run_status[config.run_id] = {"status": "completed", "summary": summary}
+            run_status[config.run_id] = {"status": "completed", "summary": summary}
     except Exception as exc:
-        _run_status[config.run_id] = {"status": "failed", "error": str(exc)}
+        run_status[config.run_id] = {"status": "failed", "error": str(exc)}
 
 
-# ── Tâche d'arrière-plan – analyse ───────────────────────────────────────────
-
-def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
-    """Exécute les analyses (quantitative / sémantique / LLM Judge) en arrière-plan."""
+def execute_analysis(run_id: str, request: AnalysisRequest) -> None:
+    """Exécute les analyses (quantitative / sémantique / qualitative / LLM Judge) en arrière-plan."""
     import json as _json
     from pathlib import Path as _P
 
     flag_key = f"analysis_{run_id}"
-    _analysis_status[run_id] = {"status": "running", "steps_done": [], "current": ""}
+    analysis_status[run_id] = {"status": "running", "steps_done": [], "current": ""}
 
-    def _cancelled() -> bool:
-        return _cancel_flags.get(flag_key, False)
+    def cancelled() -> bool:
+        return cancel_flags.get(flag_key, False)
 
-    def _mark_cancelled() -> None:
-        _analysis_status[run_id] = {
+    def markcancelled() -> None:
+        analysis_status[run_id] = {
             "status": "cancelled",
-            "steps_done": _analysis_status[run_id].get("steps_done", []),
+            "steps_done": analysis_status[run_id].get("steps_done", []),
         }
 
     try:
         results: dict = {}
-        # Références aux per_prompt pour que le qualitative en bénéficie si semantic tourne aussi
-        _div_per_prompt = None
-        _rob_per_prompt = None
+        div_per_prompt = None
+        rob_per_prompt = None
 
         # ── 1. Quantitatif ────────────────────────────────────────────────
         if "quantitative" in request.methods:
-            if _cancelled():
-                _mark_cancelled(); return
-            _analysis_status[run_id]["current"] = "quantitative"
+            if cancelled():
+                markcancelled(); return
+            analysis_status[run_id]["current"] = "quantitative"
             from src.analysis.quantitative import generate_report as _quant, merge_stats as _merge_stats
 
-            # Run principal
+            # Run unpecific
             report = _quant(run_id, save=True)
 
-            # Run secondaire (specific) – fusionner si différent du run principal
+            # Run secondaire (specific)
             spec_run = request.run_specific_id
             if spec_run and spec_run != run_id:
                 try:
@@ -158,106 +146,106 @@ def _execute_analysis(run_id: str, request: AnalysisRequest) -> None:
                         "stats_by_file": merged,
                     }
                 except Exception as _exc_q:
-                    # Si le run spécifique échoue, on garde au moins le principal
+                    # Si le run spécifique échoue, on garde au moins le run unspecific
                     report["quantitative_merge_error"] = str(_exc_q)
 
             results["quantitative"] = report
-            _analysis_status[run_id]["steps_done"].append("quantitative")
+            analysis_status[run_id]["steps_done"].append("quantitative")
 
         # ── 2. Sémantique – Diversité ─────────────────────────────────────
         if "semantic" in request.methods:
-            if _cancelled():
-                _mark_cancelled(); return
-            _analysis_status[run_id]["current"] = "semantic_diversity"
+            if cancelled():
+                markcancelled(); return
+            analysis_status[run_id]["current"] = "semantic_diversity"
             from src.analysis.semantic import diversity_score as _div
             div = _div(run_id, sample_size=request.sample_size)
-            _div_per_prompt = div.get("per_prompt")
+            div_per_prompt = div.get("per_prompt")
             div_save = {k: v for k, v in div.items() if k != "per_prompt"}
             (_P("data/output") / run_id / "analysis_diversity.json").write_text(
                 _json.dumps(div_save, indent=2, ensure_ascii=False), encoding="utf-8"
             )
             results["diversity"] = div_save
-            _analysis_status[run_id]["steps_done"].append("semantic_diversity")
+            analysis_status[run_id]["steps_done"].append("semantic_diversity")
 
             # ── 2b. Sémantique – Robustesse ───────────────────────────────
-            if _cancelled():
-                _mark_cancelled(); return
+            if cancelled():
+                markcancelled(); return
             rob_run = request.run_specific_id or run_id
-            _analysis_status[run_id]["current"] = "semantic_robustness"
+            analysis_status[run_id]["current"] = "semantic_robustness"
             try:
                 from src.analysis.semantic import robustness_score as _rob
                 rob = _rob(rob_run, sample_size=request.sample_size)
-                _rob_per_prompt = rob.get("per_prompt")
+                rob_per_prompt = rob.get("per_prompt")
                 rob_save = {k: v for k, v in rob.items() if k != "per_prompt"}
                 (_P("data/output") / rob_run / "analysis_robustness.json").write_text(
                     _json.dumps(rob_save, indent=2, ensure_ascii=False), encoding="utf-8"
                 )
                 results["robustness"] = rob_save
                 results["robustness_run_id"] = rob_run
-                _analysis_status[run_id]["steps_done"].append("semantic_robustness")
+                analysis_status[run_id]["steps_done"].append("semantic_robustness")
             except ValueError as exc:
                 results["robustness_error"] = str(exc)
 
-        # ── 3. Analyse qualitative (cas extrêmes + typologies) ────────────
+        # ── 3. Analyse qualitative
         if "qualitative" in request.methods:
-            if _cancelled():
-                _mark_cancelled(); return
-            _analysis_status[run_id]["current"] = "qualitative"
+            if cancelled():
+                markcancelled(); return
+            analysis_status[run_id]["current"] = "qualitative"
             try:
                 from src.analysis.qualitative import generate_qualitative_report as _qual
                 qual_report = _qual(
                     run_id,
-                    diversity_per_prompt=_div_per_prompt,
-                    robustness_per_prompt=_rob_per_prompt,
+                    diversity_per_prompt=div_per_prompt,
+                    robustness_per_prompt=rob_per_prompt,
                     save=True,
                 )
                 results["qualitative"] = qual_report
-                _analysis_status[run_id]["steps_done"].append("qualitative")
+                analysis_status[run_id]["steps_done"].append("qualitative")
             except Exception as exc_q:
                 results["qualitative_error"] = str(exc_q)
 
         # ── 5. LLM Judge ─────────────────────────────────────────────────
         if "llm_judge" in request.methods:
-            if _cancelled():
-                _mark_cancelled(); return
-            _analysis_status[run_id]["current"] = "llm_judge_diversity"
+            if cancelled():
+                markcancelled(); return
+            analysis_status[run_id]["current"] = "llm_judge_diversity"
             from src.analysis.llm_judge import LLMJudge, evaluate_diversity, evaluate_robustness
             judge = LLMJudge()
             div_r = evaluate_diversity(run_id, sample_size=request.sample_size, judge=judge)
             results["llm_judge_diversity"] = div_r
-            _analysis_status[run_id]["steps_done"].append("llm_judge_diversity")
+            analysis_status[run_id]["steps_done"].append("llm_judge_diversity")
 
-            if _cancelled():
-                _mark_cancelled(); return
+            if cancelled():
+                markcancelled(); return
             rob_run = request.run_specific_id or run_id
-            _analysis_status[run_id]["current"] = "llm_judge_robustness"
+            analysis_status[run_id]["current"] = "llm_judge_robustness"
             try:
                 rob_r = evaluate_robustness(rob_run, sample_size=request.sample_size, judge=judge)
                 results["llm_judge_robustness"] = rob_r
-                _analysis_status[run_id]["steps_done"].append("llm_judge_robustness")
+                analysis_status[run_id]["steps_done"].append("llm_judge_robustness")
             except Exception as exc:
                 results["llm_judge_robustness_error"] = str(exc)
 
-        _analysis_status[run_id] = {
+        analysis_status[run_id] = {
             "status": "completed",
-            "steps_done": _analysis_status[run_id]["steps_done"],
+            "steps_done": analysis_status[run_id]["steps_done"],
             "results": results,
         }
 
     except Exception as exc:
-        _analysis_status[run_id] = {
+        analysis_status[run_id] = {
             "status": "failed",
             "error": str(exc),
-            "steps_done": _analysis_status.get(run_id, {}).get("steps_done", []),
+            "steps_done": analysis_status.get(run_id, {}).get("steps_done", []),
         }
 
 # ── Endpoints : runs ──────────────────────────────────────────────────────────
 
 @router.post("/runs", response_model=RunResponse)
 async def create_run(config: RunConfig, background_tasks: BackgroundTasks):
-    """Lance un nouveau run en arrière-plan."""
-    _run_status[config.run_id] = {"status": "queued"}
-    background_tasks.add_task(_execute_run, config)
+    """Lance un nouveau run selon la configuration fournie."""
+    run_status[config.run_id] = {"status": "queued"}
+    background_tasks.add_task(execute_run, config)
     return RunResponse(
         run_id=config.run_id,
         status="queued",
@@ -269,18 +257,13 @@ async def create_run(config: RunConfig, background_tasks: BackgroundTasks):
 async def list_runs():
     """
     Liste tous les runs passés avec leur statut.
-
-    Deux sources sont fusionnées :
-    1. ``configs/runs/``  – runs déclarés (avec config.json)
-    2. ``data/output/``   – tous les répertoires contenant des JSONL,
-       qu'ils aient ou non un nom commençant par ``run_``.
     """
     runs_dir  = Path("configs/runs")
     output_root = Path("data/output")
     runs: list[dict] = []
     seen_run_ids: set[str] = set()
 
-    # ── 1. Runs déclarés dans configs/runs/ ───────────────────────────────
+    # 1. Runs déclarés dans configs/runs/
     if runs_dir.exists():
         for run_dir in sorted(runs_dir.iterdir(), reverse=True):
             config_file = run_dir / "config.json" if run_dir.is_dir() else None
@@ -303,8 +286,8 @@ async def list_runs():
 
             if summary:
                 status = "completed"
-            elif rid in _run_status:
-                status = _run_status[rid].get("status", "running")
+            elif rid in run_status:
+                status = run_status[rid].get("status", "running")
             else:
                 status = "interrupted"
 
@@ -329,7 +312,7 @@ async def list_runs():
                 "summary":       summary,
             })
 
-    # ── 2. Runs orphelins dans data/output/ (sans config dans configs/runs/) ─
+    # 2. Runs dans data/output/
     if output_root.exists():
         for out_dir in sorted(output_root.iterdir(), reverse=True):
             if not out_dir.is_dir():
@@ -353,7 +336,7 @@ async def list_runs():
                 except Exception:
                     pass
 
-            # Essayer de charger la config locale (data/output/{rid}/config.json)
+            # charger la config (data/output/{rid}/config.json)
             config_data: dict = {}
             local_config = out_dir / "config.json"
             if local_config.exists():
@@ -364,10 +347,10 @@ async def list_runs():
 
             if summary:
                 status = "completed"
-            elif rid in _run_status:
-                status = _run_status[rid].get("status", "running")
+            elif rid in run_status:
+                status = run_status[rid].get("status", "running")
             else:
-                # Pas de run_summary.json, mais des JSONL présents → considéré terminé
+                # Pas de run_summary.json, mais des JSONL présents -> considéré terminé
                 status = "completed"
 
             prompts_done = 0
@@ -381,7 +364,7 @@ async def list_runs():
             languages_found: set[str] = set()
             types_found: set[str]     = set()
             for f in jsonl_files:
-                parts = f.stem.split("_", 1)   # "fr_unspecific" → ["fr", "unspecific"]
+                parts = f.stem.split("_", 1)
                 if len(parts) == 2:
                     lang, dtype = parts
                     if len(lang) == 2:
@@ -408,8 +391,8 @@ async def list_runs():
 @router.get("/runs/{run_id}/status", response_model=RunStatusResponse)
 async def get_run_status(run_id: str):
     """Retourne le statut d'un run (en cours ou terminé)."""
-    if run_id in _run_status:
-        info = _run_status[run_id]
+    if run_id in run_status:
+        info = run_status[run_id]
         return RunStatusResponse(
             run_id=run_id,
             status=info.get("status", "unknown"),
@@ -430,25 +413,25 @@ async def stream_run_progress(run_id: str):
         log_file = Path("data/output") / run_id / "run.log"
         last_size = 0
 
-        if not await _wait_for_run(run_id):
-            yield _sse({"status": "error", "detail": f"Run '{run_id}' introuvable."})
+        if not await wait_for_run(run_id):
+            yield sse({"status": "error", "detail": f"Run '{run_id}' introuvable."})
             return
 
-        await _wait_for_log_file(log_file)
+        await wait_for_log_file(log_file)
 
         while True:
-            info = _run_status.get(run_id, {})
+            info = run_status.get(run_id, {})
             status = info.get("status", "unknown")
-            new_logs, last_size = _read_new_logs(log_file, last_size)
+            new_logs, last_size = read_new_logs(log_file, last_size)
 
             if status in ("completed", "failed", "cancelled"):
                 if new_logs:
-                    yield _sse({"status": "running", "new_logs": new_logs})
+                    yield sse({"status": "running", "new_logs": new_logs})
                     await asyncio.sleep(0)
-                yield _sse({"status": status, "summary": info.get("summary"), "error": info.get("error")})
+                yield sse({"status": status, "summary": info.get("summary"), "error": info.get("error")})
                 return
 
-            yield _sse({"status": status, "new_logs": new_logs})
+            yield sse({"status": status, "new_logs": new_logs})
             await asyncio.sleep(1)
 
     return StreamingResponse(
@@ -457,11 +440,10 @@ async def stream_run_progress(run_id: str):
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
-# ── Endpoints : fichiers ──────────────────────────────────────────────────────
-
 @router.post("/runs/{run_id}/resume", response_model=RunResponse)
 async def resume_run(run_id: str, background_tasks: BackgroundTasks):
     """Reprend un run interrompu depuis le point où il s'était arrêté."""
+
     # Chercher la config sauvegardée
     config_file = Path("data/output") / run_id / "config.json"
     if not config_file.exists():
@@ -472,23 +454,23 @@ async def resume_run(run_id: str, background_tasks: BackgroundTasks):
     data = json.loads(config_file.read_text(encoding="utf-8"))
     config = RunConfig(**data)
 
-    _run_status[run_id] = {"status": "queued"}
-    background_tasks.add_task(_execute_run, config)
+    run_status[run_id] = {"status": "queued"}
+    background_tasks.add_task(execute_run, config)
     return RunResponse(
         run_id=run_id,
         status="queued",
         message=f"Run '{run_id}' repris depuis le point d'arrêt.",
     )
 
-
 @router.post("/runs/{run_id}/analyse")
 async def start_analysis(run_id: str, request: AnalysisRequest, background_tasks: BackgroundTasks):
-    """Lance les analyses (quantitative / sémantique / LLM Judge) en arrière-plan."""
+    """Lance les analyses (quantitative / sémantique / qualitative / LLM Judge)"""
+
     output_dir = Path("data/output") / run_id
     if not output_dir.exists():
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' introuvable.")
-    _analysis_status[run_id] = {"status": "queued", "steps_done": [], "current": ""}
-    background_tasks.add_task(_execute_analysis, run_id, request)
+    analysis_status[run_id] = {"status": "queued", "steps_done": [], "current": ""}
+    background_tasks.add_task(execute_analysis, run_id, request)
     return {"run_id": run_id, "status": "queued", "methods": request.methods}
 
 
@@ -497,8 +479,8 @@ async def stream_analysis(run_id: str):
     """Stream SSE de la progression de l'analyse."""
 
     async def event_generator() -> AsyncGenerator[str, None]:
-        for _ in range(600):  # timeout 10 min max
-            info = _analysis_status.get(run_id, {"status": "waiting"})
+        for i in range(800):
+            info = analysis_status.get(run_id, {"status": "waiting"})
             status = info.get("status", "waiting")
             payload = {
                 "status": status,
@@ -508,7 +490,7 @@ async def stream_analysis(run_id: str):
             }
             if status in ("completed", "cancelled"):
                 payload["results"] = info.get("results", {})
-            yield _sse(payload)
+            yield sse(payload)
             if status in ("completed", "failed", "cancelled"):
                 return
             await asyncio.sleep(1)
@@ -523,6 +505,7 @@ async def stream_analysis(run_id: str):
 @router.get("/runs/{run_id}/analyse/results")
 async def get_analysis_results(run_id: str):
     """Retourne les résultats d'analyse sauvegardés pour un run."""
+
     output_dir = Path("data/output") / run_id
     if not output_dir.exists():
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' introuvable.")
@@ -534,6 +517,7 @@ async def get_analysis_results(run_id: str):
 @router.get("/runs/{run_id}/files")
 async def list_run_files(run_id: str):
     """Liste les fichiers de résultats disponibles pour un run."""
+
     output_dir = Path("data/output") / run_id
     if not output_dir.exists():
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' introuvable.")
@@ -553,13 +537,10 @@ async def get_run_results(run_id: str, filename: str):
     return FileResponse(path=result_file, filename=filename, media_type="application/octet-stream")
 
 
-# ── Endpoint : comparaison de deux runs ──────────────────────────────────────
-
 @router.post("/runs/compare")
 async def compare_two_runs(request: CompareRequest):
     """
     Compare deux runs (baseline vs variante) sur les métriques quantitatives et/ou sémantiques.
-
     Retourne les deltas de longueur, taux d'erreurs, diversité, robustesse et score combiné.
     """
     output_dir = "data/output"
@@ -573,7 +554,7 @@ async def compare_two_runs(request: CompareRequest):
         "run_b": request.run_id_b,
     }
 
-    # ── Détection des datasets disponibles ───────────────────────────────────
+    # Détection des datasets disponibles
     try:
         from src.analysis.dataset_detection import detect_available_datasets
         datasets_info = detect_available_datasets(
@@ -585,7 +566,7 @@ async def compare_two_runs(request: CompareRequest):
     except Exception as exc:
         result["datasets_detection_error"] = str(exc)
 
-    # ── Quantitatif ──────────────────────────────────────────────────────────
+    # Quantitatif
     if "quantitative" in request.methods:
         try:
             from src.analysis.quantitative import compare_runs as _cmp_quant
@@ -595,7 +576,7 @@ async def compare_two_runs(request: CompareRequest):
         except Exception as exc:
             result["quantitative_error"] = str(exc)
 
-    # ── Sémantique ────────────────────────────────────────────────────────────
+    # Sémantique
     if "semantic" in request.methods:
         try:
             from src.analysis.semantic import compare_runs_semantic as _cmp_sem
@@ -608,7 +589,7 @@ async def compare_two_runs(request: CompareRequest):
         except Exception as exc:
             result["semantic_error"] = str(exc)
 
-    # ── LLM Judge ─────────────────────────────────────────────────────────────
+    # LLM Judge
     if "llm_judge" in request.methods:
         try:
             from src.analysis.llm_judge import compare_runs_llm_judge as _cmp_judge
@@ -624,32 +605,32 @@ async def compare_two_runs(request: CompareRequest):
 
     return result
 
-# ── Endpoints : config ────────────────────────────────────────────────────────
 
 @router.get("/providers")
 async def list_providers():
     """Retourne les providers, modèles et autres éléments de configuration."""
+
     return json.loads((CONFIGS_DIR / "providers.json").read_text(encoding="utf-8"))
 
 
-# ── Endpoints : annulation ────────────────────────────────────────────────────
-
 @router.post("/runs/{run_id}/cancel")
 async def cancel_run(run_id: str):
-    """Annule une expérience en cours (queued ou running)."""
-    _cancel_flags[run_id] = True
-    if run_id in _run_status:
-        if _run_status[run_id].get("status") in ("running", "queued"):
-            _run_status[run_id]["status"] = "cancelled"
+    """Annule une expérience en cours."""
+
+    cancel_flags[run_id] = True
+    if run_id in run_status:
+        if run_status[run_id].get("status") in ("running", "queued"):
+            run_status[run_id]["status"] = "cancelled"
     return {"run_id": run_id, "status": "cancelled"}
 
 
 @router.post("/runs/{run_id}/analyse/cancel")
 async def cancel_analysis(run_id: str):
     """Annule une analyse en cours."""
-    _cancel_flags[f"analysis_{run_id}"] = True
-    if run_id in _analysis_status:
-        if _analysis_status[run_id].get("status") in ("running", "queued"):
-            _analysis_status[run_id]["status"] = "cancelled"
+
+    cancel_flags[f"analysis_{run_id}"] = True
+    if run_id in analysis_status:
+        if analysis_status[run_id].get("status") in ("running", "queued"):
+            analysis_status[run_id]["status"] = "cancelled"
     return {"run_id": run_id, "status": "cancelled"}
 

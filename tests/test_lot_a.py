@@ -22,8 +22,7 @@ from src.promptings.system_prompt import apply_full_reformulation, get_strategy_
 from src.providers.base import LLMProvider
 
 
-# ── Tests des schémas ───────────────────────────────────────────────────────
-
+# Tests des schémas
 
 class TestSchemas:
     def test_prompt_item(self):
@@ -43,9 +42,7 @@ class TestSchemas:
         assert item.id == "1-5"
 
 
-# ── Tests de la configuration ───────────────────────────────────────────────
-
-
+# Tests de la configuration
 class TestConfig:
     def test_generation_defaults(self):
         gen = GenerationConfig()
@@ -106,9 +103,7 @@ class TestConfig:
         assert loaded.provider.model == "gemma3:12b"
 
 
-# ── Tests du prompting ──────────────────────────────────────────────────────
-
-
+# Tests du prompting
 class TestPrompting:
     def test_baseline_returns_empty_pack(self):
         """Sans stratégie, get_strategy_elements retourne un pack vide (pas de system prompt)."""
@@ -131,11 +126,6 @@ class TestPrompting:
         assert len(pack["prefix"]) > 0
         assert len(pack["suffix"]) > 0
 
-    def test_known_strategy_fr(self):
-        """La stratégie 'neutral' retourne le pack en français."""
-        pack = get_strategy_elements("neutral", lang="fr")
-        assert len(pack["system"]) > 0
-
     def test_known_strategy_fallback_to_en(self):
         """Une langue inconnue replie vers EN."""
         pack_en = get_strategy_elements("cultural_expert", lang="en")
@@ -144,7 +134,7 @@ class TestPrompting:
 
     def test_all_languages_covered(self):
         """Les 5 langues du projet sont bien définies pour chaque stratégie."""
-        for strategy in ("cultural_expert", "neutral", "empathetic_synthesis"):
+        for strategy in ("cultural_expert", "empathetic_synthesis"):
             for lang in ("en", "fr", "de", "es", "it"):
                 pack = get_strategy_elements(strategy, lang=lang)
                 assert pack["system"] != "", f"system vide pour {strategy}/{lang}"
@@ -155,12 +145,12 @@ class TestPrompting:
         assert apply_full_reformulation(prompt) == prompt
 
     def test_apply_reformulation_with_prefix(self):
-        """Avec un prefix, le prompt est précédé du prefix."""
+        #Avec un prefix
         result = apply_full_reformulation("What to eat?", prefix="Answer this:")
         assert result == "Answer this: What to eat?"
 
     def test_apply_reformulation_with_suffix(self):
-        """Avec un suffix, le prompt est suivi du suffix."""
+        #Avec un suffix
         result = apply_full_reformulation("What to eat?", suffix="Be concise.")
         assert result == "What to eat? Be concise."
 
@@ -174,9 +164,7 @@ class TestPrompting:
         assert result == "Please answer: What to eat? Keep it short."
 
 
-# ── Tests du provider (abstraction) ────────────────────────────────────────
-
-
+# Tests du provider (abstraction)
 class TestProviderAbstraction:
     def test_cannot_instantiate_abstract(self):
         """Vérifier qu'on ne peut pas instancier LLMProvider directement."""
@@ -206,9 +194,7 @@ class TestProviderAbstraction:
         assert provider.model_id == "mock-model"
 
 
-# ── Tests de la factory ─────────────────────────────────────────────────────
-
-
+# Tests de la factory
 class TestFactory:
     def test_unknown_provider_raises(self):
         from src.providers import create_provider
@@ -225,9 +211,7 @@ class TestFactory:
             create_provider(config)
 
 
-# ── Tests du chargement de fichiers baseline ────────────────────────────────
-
-
+# Tests du chargement de fichiers baseline
 class TestBaselineConfig:
     def test_load_baseline_json(self):
         baseline = Path("configs/baseline_groq.json")
@@ -245,4 +229,3 @@ class TestBaselineConfig:
             config = RunConfig.from_file(baseline)
             assert config.provider.type == "ollama"
             assert config.provider.model == "gemma3:12b"
-

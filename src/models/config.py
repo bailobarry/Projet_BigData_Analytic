@@ -2,7 +2,7 @@
 Configuration centralisée d'un run.
 
 LLM retenus :
-  - Groq – Llama 3.3 70B Versatile (API cloud, gratuit)
+  - Groq – Llama 3.3 70B Versatile (API cloud)
   - Google Gemma 3 12B (Ollama local)
 """
 
@@ -16,14 +16,14 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 
-# ── Sous-modèles ────────────────────────────────────────────────────────────
+# Sous-modèles
 
 
 class ProviderConfig(BaseModel):
     """Paramètres de connexion au provider LLM.
 
     Deux providers supportés :
-      - type='groq'   → Groq Cloud, Llama 3.3 70B (nécessite GROQ_API_KEY)
+      - type='groq'   → Groq Cloud, Llama 3.3 70B Versatile via API
       - type='ollama' → Google Gemma 3 12B en local via Ollama
     """
 
@@ -78,9 +78,7 @@ class PipelineConfig(BaseModel):
     )
 
 
-# ── Configuration principale ────────────────────────────────────────────────
-
-
+# Configuration principale
 class RunConfig(BaseModel):
     """Configuration complète d'un run"""
 
@@ -100,7 +98,7 @@ class RunConfig(BaseModel):
     generation: GenerationConfig = Field(default_factory=GenerationConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
 
-    # ── Méthodes utilitaires ────────────────────────────────────────────
+    # Méthodes utilitaires
 
     def input_files(self) -> List[str]:
         """Retourne la liste des chemins de fichiers JSONL d'entrée."""

@@ -1,6 +1,3 @@
-import zipfile
-from io import BytesIO
-
 import httpx
 
 API_URL = "http://127.0.0.1:8000/api"
@@ -97,7 +94,7 @@ def get_run_results(run_id: str) -> dict[str, bytes]:
 
 
 def download_submission_zip(run_id: str) -> bytes:
-    """GET /runs/{run_id}/results/submission.zip — retourne le zip brut."""
+    """GET /runs/{run_id}/results/submission.zip — retourne le zip."""
     r = httpx.get(f"{API_URL}/runs/{run_id}/results/submission.zip")
     r.raise_for_status()
     return r.content
@@ -124,7 +121,7 @@ def compare_runs(
         sample_size: int = 10,
         dataset_type: str | None = None,
 ) -> dict:
-    """POST /runs/compare — compare deux runs (baseline vs variante)."""
+    """POST /runs/compare — compare deux runs."""
     payload = {
         "run_id_a": run_id_a,
         "run_id_b": run_id_b,

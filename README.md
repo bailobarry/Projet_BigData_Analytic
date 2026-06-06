@@ -33,7 +33,7 @@ Le projet utilise deux types de fichiers JSON pour configurer les runs :
 - Utilisés par : **CLI et Streamlit**
 
 #### **Variantes / stratégies**
-- Les stratégies disponibles sont : `none`, `neutral`, `cultural_expert`, `empathetic_synthesis`.
+- Les stratégies disponibles sont : `none`, `cultural_expert`, `empathetic_synthesis`.
 - La liste affichée dans l'interface Streamlit vient de `configs/providers.json` (via `GET /api/providers`).
 - Le contenu réel des stratégies (system/prefix/suffix multilingues) est défini dans `src/promptings/system_prompt.py` et appliqué au moment du run.
 
@@ -146,10 +146,13 @@ cp .env.example .env
 Puis editer `.env` :
 
 ```dotenv
-# Cle API Groq (gratuit) : https://console.groq.com/keys
+# Cle API Groq pour le provider (gratuit) : https://console.groq.com/keys
 GROQ_API_KEY=ta_cle_groq_ici
 
-# Option multi-cles (prioritaire si renseignee)
+# Cle API Groq pour le LLM Judge (OBLIGATOIRE si vous utilisez l'analyse LLM Judge)
+GROQ_JUDGE_API_KEY=ta_cle_groq_judge_ici
+
+# Option multi-cles pour le provider (prioritaire si renseignee)
 # GROQ_API_KEYS=cle_compte_1,cle_compte_2,cle_compte_3
 
 # Limite locale en req/min par cle (provider run)
@@ -218,7 +221,7 @@ python run_baseline.py --config configs/baseline_gemma.json
 ```
 
 > Pour tester une stratégie en CLI, dupliquez un fichier baseline puis définissez
-> `pipeline.system_prompt` avec `neutral`, `cultural_expert` ou `empathetic_synthesis`.
+> `pipeline.system_prompt` avec `cultural_expert` ou `empathetic_synthesis`.
 
 #### Personnaliser un run
 
@@ -309,8 +312,8 @@ linguistiques les plus differencies.
 
 ### LLM-as-a-Judge
 
-Utilise Groq / Llama 3.3 70B comme juge pour evaluer qualitativement les réponses
-sur une echelle de 1 a 5. Necessite une cle `GROQ_API_KEY` valide.
+Utilise Groq / Llama 3.3 70B Versatile comme juge pour evaluer qualitativement les réponses
+sur une echelle de 1 a 5. Necessite une cle `GROQ_JUDGE_API_KEY` valide (distincte de la clé utilisée pour le provider API).
 
 ---
 
@@ -333,11 +336,10 @@ sur une echelle de 1 a 5. Necessite une cle `GROQ_API_KEY` valide.
 Quatre strategies sont disponibles pour structurer les réponses du modèle :
 
 | Strategie | Cle config | Description | Streamlit | CLI |
-|---|---|---|---|---|
-| **Baseline** | `null` (ou `"none"`) | Aucun system prompt, prompt brut | ✓ | ✓ |
-| **Expert culturel** | `"cultural_expert"` | Role d'expert en culture locale et traditions | ✓ | ✓ |
-| **Neutre et factuel** | `"neutral"` | Reponses objectives sans opinion ni biais | ✓ | ✓ |
-| **Conseiller empathique** | `"empathetic_synthesis"` | Conseiller attentif a l'humain derriere la question | ✓ | ✓ |
+|---|---|---|-----------|-----|
+| **Baseline** | `null` (ou `"none"`) | Aucun system prompt, prompt brut | oui       | oui |
+| **Expert culturel** | `"cultural_expert"` | Role d'expert en culture locale et traditions | oui       | oui |
+| **Conseiller empathique** | `"empathetic_synthesis"` | Conseiller attentif a l'humain derriere la question | oui       | oui |
 
 Chaque strategie est declinee dans les 5 langues (EN, FR, DE, ES, IT) dans `src/promptings/system_prompt.py`.
 
@@ -403,7 +405,6 @@ pytest tests/test_lot_a.py -v
 
 | Variable | Obligatoire | Description |
 |---|---|---|
-| `GROQ_API_KEY` | Pour Groq et LLM Judge | Cle API Groq : https://console.groq.com/keys |
-| `GROQ_API_KEYS` | Optionnel | Liste de cles Groq (``,``, `;` ou newline). Utilisee en rotation pour le provider API et le LLM judge. |
-| `GROQ_RPM_PER_KEY` | Optionnel | Limite locale en req/min appliquee par cle cote provider Groq (defaut: `30`). |
+| `GROQ_API_KEY` | Pour Groq provider | Cle API Groq pour le provider API : https://console.groq.com/keys |
+| `GROQ_JUDGE_API_KEY` | Pour LLM Judge | Cle API Groq dédiée pour le LLM Judge (llama-3.3-70b-versatile). Doit être différente de GROQ_API_KEY. |
 

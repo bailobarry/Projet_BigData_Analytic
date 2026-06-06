@@ -17,14 +17,14 @@ import streamlit as st
 
 import utils
 
-# ── Page config ───────────────────────────────────────────────────────────────
+# Page config
 
 st.set_page_config(
     page_title="Cultural Robustness and Diversity",
     layout="wide",
 )
 
-# ── Data loading ──────────────────────────────────────────────────────────────
+# Data loading
 
 try:
     CONFIGS = utils.get_all_configs()
@@ -45,7 +45,6 @@ for provider in PROVIDERS:
         model_options.append(model)
         model_captions.append(f"via {provider}")
 
-# ── Helpers UI ────────────────────────────────────────────────────────────────
 
 @st.fragment
 def download_submission_zip_button(data_bytes):
@@ -76,19 +75,10 @@ def display_results(run_id: str, results: dict):
     download_submission_zip_button(zip_bytes)
 
 
-def _auto_df(data, max_height: int = 600, min_row_height: int = 36, **kwargs):
+def auto_df(data, max_height: int = 600, min_row_height: int = 36, **kwargs):
     """
     Affiche un tableau Streamlit dont la hauteur s'adapte automatiquement
     au nombre de lignes, et dont les colonnes de texte long se réajustent.
-
-    Parameters
-    ----------
-    data : list[dict] | pd.DataFrame
-        Données à afficher.
-    max_height : int
-        Hauteur maximale en pixels (défaut 600).
-    min_row_height : int
-        Hauteur estimée par ligne en pixels (défaut 36).
     """
     import pandas as pd
 
@@ -99,12 +89,12 @@ def _auto_df(data, max_height: int = 600, min_row_height: int = 36, **kwargs):
     height = min(38 + n_rows * min_row_height, max_height)
 
     # Colonnes de texte long → largeur "large" pour éviter le découpage
-    _wide_cols = {"answer", "reason", "Réponse", "Raison", "Fichier",
+    wide_cols = {"answer", "reason", "Réponse", "Raison", "Fichier",
                   "strongest_contrast", "weakest_contrast",
                   "best_response_lang", "worst_response_lang"}
     col_config = {}
     for col in df.columns:
-        if col in _wide_cols or df[col].dtype == object and df[col].str.len().mean() > 40:
+        if col in wide_cols or df[col].dtype == object and df[col].str.len().mean() > 40:
             col_config[col] = st.column_config.TextColumn(col, width="large")
 
     st.dataframe(
@@ -118,7 +108,7 @@ def _auto_df(data, max_height: int = 600, min_row_height: int = 36, **kwargs):
 
 
 def display_analysis(results: dict):
-    """Affiche les résultats des 3 méthodes d'analyse."""
+    """Affiche les résultats des méthodes d'analyse."""
     quant    = results.get("quantitative")
     div_data = results.get("diversity")
     rob_data = results.get("robustness")
@@ -126,7 +116,7 @@ def display_analysis(results: dict):
     llm_div  = results.get("llm_judge_diversity")
     llm_rob  = results.get("llm_judge_robustness")
 
-    # ── Quantitatif ──────────────────────────────────────────────────────
+    # Quantitatif
     if quant:
         st.subheader("Analyse quantitative")
         stats = quant.get("stats_by_file", {})
@@ -150,9 +140,9 @@ def display_analysis(results: dict):
             for k, s in stats.items() if k != "global"
         ]
         if rows:
-            _auto_df(rows)
+            auto_df(rows)
 
-    # ── Sémantique ────────────────────────────────────────────────────────
+    # Sémantique
     if div_data or rob_data:
         st.subheader("Analyse sémantique (Embeddings)")
         c1, c2, c3 = st.columns(3)
@@ -206,9 +196,9 @@ def display_analysis(results: dict):
                         row["Robustesse"] = f"{pair_rob.get(pair, 0):.4f}"
                     pair_rows.append(row)
                 if pair_rows:
-                    _auto_df(pair_rows)
+                    auto_df(pair_rows)
 
-    # ── Analyse qualitative ───────────────────────────────────────────────
+    # Analyse qualitative
     if qual:
         st.subheader("Analyse qualitative")
 
@@ -240,9 +230,9 @@ def display_analysis(results: dict):
                     {"Type": k, "Nombre": v, "Taux": f"{v/total:.1%}"}
                     for k, v in dist.items()
                 ]
-                _auto_df(rows)
+                auto_df(rows)
 
-        # Cas extrêmes par catégorie (diversité)
+        # par catégorie
         div_cat = qual.get("diversity_by_category")
         rob_cat = qual.get("robustness_by_category")
         if div_cat or rob_cat:
@@ -258,24 +248,26 @@ def display_analysis(results: dict):
                         row["Robustesse moy."] = f"{rob_cat[cat]['avg']:.4f}"
                     cat_rows.append(row)
                 if cat_rows:
-                    _auto_df(cat_rows)
+                    auto_df(cat_rows)
 
         # Exemples problématiques
         if typology and typology.get("problematic_examples"):
             with st.expander("Exemples problématiques (non-conformité, généricité)", expanded=False):
-                _auto_df(typology["problematic_examples"], min_row_height=64)
+                auto_df(typology["problematic_examples"], min_row_height=64)
 
-    # ── LLM Judge ─────────────────────────────────────────────────────────
+    # LLM Judge
     if llm_div or llm_rob:
         st.subheader("LLM-as-a-Judge (Llama 3.3 70B) — scores sur 5")
         c1, c2, c3 = st.columns(3)
         with c1:
+            # Diversité
             if llm_div:
                 avg = llm_div.get("avg_score", 0)
                 st.metric("Diversité", f"{avg:.2f} / 5")
                 dist = llm_div.get("score_distribution", {})
                 st.caption("  ".join(f"*{k}:{v}" for k, v in dist.items()))
         with c2:
+            # Robustesse
             if llm_rob:
                 avg = llm_rob.get("avg_score", 0)
                 st.metric("Robustesse", f"{avg:.2f} / 5")
@@ -287,10 +279,10 @@ def display_analysis(results: dict):
                 st.metric("Score global", f"{g_avg:.2f} / 5")
         if llm_div and llm_div.get("evaluations"):
             with st.expander("Détail évaluations Diversité", expanded=False):
-                _auto_df(llm_div["evaluations"], min_row_height=52)
+                auto_df(llm_div["evaluations"], min_row_height=52)
         if llm_rob and llm_rob.get("evaluations"):
             with st.expander("Détail évaluations Robustesse", expanded=False):
-                _auto_df(llm_rob["evaluations"], min_row_height=52)
+                auto_df(llm_rob["evaluations"], min_row_height=52)
 
 
 def display_charts(results: dict):
@@ -328,7 +320,7 @@ def display_charts(results: dict):
     tabs = st.tabs(tab_labels)
     tab_idx = 0
 
-    # ── Onglet Quantitative ───────────────────────────────────────────────
+    # Onglet Quantitative
     if quant and tab_idx < len(tabs):
         with tabs[tab_idx]:
             stats = quant.get("stats_by_file", {})
@@ -389,7 +381,7 @@ def display_charts(results: dict):
 
         tab_idx += 1
 
-    # ── Onglet Sémantique ─────────────────────────────────────────────────
+    # Onglet Sémantique
     if (div or rob) and tab_idx < len(tabs):
         with tabs[tab_idx]:
             d_score = div.get("score", 0) if div else 0
@@ -455,7 +447,7 @@ def display_charts(results: dict):
             st.plotly_chart(fig_gauge, use_container_width=True)
             st.caption("Zones : rouge < 0.09 | orange 0.09–0.20 | bleu 0.20–0.36 | vert > 0.36")
 
-            # Graphique 3 : radar par catégorie (si qualitative disponible)
+            # Graphique 3 : radar par catégorie
             if qual:
                 div_cat = qual.get("diversity_by_category", {})
                 rob_cat = qual.get("robustness_by_category", {})
@@ -519,7 +511,7 @@ def display_charts(results: dict):
 
         tab_idx += 1
 
-    # ── Onglet LLM Judge ──────────────────────────────────────────────────
+    # LLM Judge
     if (llm_div or llm_rob) and tab_idx < len(tabs):
         with tabs[tab_idx]:
             # Graphique 1 : scores moyens diversité vs robustesse
@@ -594,7 +586,7 @@ def display_charts(results: dict):
 
         tab_idx += 1
 
-    # ── Onglet Qualitative ────────────────────────────────────────────────
+    # Qualitative
     if qual and tab_idx < len(tabs):
         with tabs[tab_idx]:
             typology = qual.get("error_typology", {})
@@ -740,22 +732,22 @@ def show_analysis_form(preselected_run_id: str | None = None):
         col_a, col_b = st.columns(2)
         with col_a:
             st.markdown("**Méthodes d'analyse :**")
-            do_quant    = st.checkbox("Analyse quantitative", value=True,  help="Statistiques de base — rapide")
-            do_semantic = st.checkbox("Analyse sémantique",   value=True,  help="Embeddings — quelques dizaines de secondes")
+            do_quant    = st.checkbox("Analyse quantitative", value=True,  help="Statistiques de base")
+            do_semantic = st.checkbox("Analyse sémantique",   value=True,  help="Embeddings")
             do_qual     = st.checkbox("Analyse qualitative",  value=True,  help="Cas extrêmes, typologie d'erreurs, scores par catégorie")
-            do_judge    = st.checkbox("LLM-as-a-Judge",       value=False, help="Groq/Llama — consomme des crédits API")
+            do_judge    = st.checkbox("LLM-as-a-Judge",       value=False, help="Groq/Llama")
         with col_b:
-            _help_sample = (
+            help_sample = (
                 "Nombre de questions analysées.\n\n"
                 "• unspecific : max 101 questions/langue\n"
                 "• specific   : jusqu'à 4140 prompts au total\n\n"
                 "LLM Judge : chaque question = 1 appel API (~2s). "
                 "À 4140, comptez ~2h30 et beaucoup de crédits Groq."
             )
-            st.markdown("**Taille échantillon (sémantique & juge) :**", help=_help_sample)
-            _num_col, _slider_col = st.columns([1, 2])
-            with _num_col:
-                _sample_input = st.number_input(
+            st.markdown("**Taille échantillon (sémantique & juge) :**", help=help_sample)
+            num_col, _slider_col = st.columns([1, 2])
+            with num_col:
+                sample_input = st.number_input(
                     "Valeur",
                     min_value=3,
                     max_value=4140,
@@ -764,7 +756,7 @@ def show_analysis_form(preselected_run_id: str | None = None):
                     label_visibility="collapsed",
                     key="sample_size_num",
                 )
-            st.session_state["sample_size_val"] = _sample_input
+            st.session_state["sample_size_val"] = sample_input
             spec_options  = ["— Même run —"] + run_ids
             selected_spec = st.selectbox(
                 "Run secondaire pour la robustesse (fichiers *specific*) :",
@@ -789,7 +781,7 @@ def show_analysis_form(preselected_run_id: str | None = None):
             utils.start_analysis(
                 run_id=selected_main,
                 methods=methods,
-                sample_size=_sample_input,
+                sample_size=sample_input,
                 run_specific_id=spec_run,
             )
         except Exception as e:
@@ -800,28 +792,23 @@ def show_analysis_form(preselected_run_id: str | None = None):
         st.session_state["stream_analysis_data"] = {
             "run_id":          selected_main,
             "methods":         methods,
-            "sample_size":     _sample_input,
+            "sample_size":     sample_input,
             "run_specific_id": spec_run,
         }
         st.rerun()
 
-
-# ── Lecture de l'état de streaming AVANT le sidebar ──────────────────────────
-# (pour que les boutons d'arrêt soient rendus dès le début du script)
-
 stream_run_id       = st.session_state.get("stream_run_id")        # run en cours
 stream_analysis_data = st.session_state.get("stream_analysis_data")  # analyse en cours
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-
+# Sidebar
 resume_submitted = False
 resume_run_id    = None
 
 with st.sidebar:
 
-    st.title("Cultural Robustness and Diversity (ELOQUENT @ CLEF 2026)")
+    st.title("Cultural Diversity and Robustness (ELOQUENT @ CLEF 2026)")
 
-    # ── Lancer une expérience ─────────────────────────────────────────────
+    # Lancer une expérience
 
     st.header("Lancer une expérience :")
 
@@ -870,7 +857,7 @@ with st.sidebar:
 
         submitted = st.form_submit_button(label="Lancer l'expérience")
 
-    # ── Arrêt d'une expérience en cours (juste sous le formulaire) ────────
+    # Arrêt d'une expérience en cours
 
     if stream_run_id:
         st.warning(f"**Expérience en cours**\n\n`{stream_run_id}`")
@@ -884,7 +871,7 @@ with st.sidebar:
             stream_run_id = None
             st.session_state["show_cancelled_run"] = True
 
-    # ── Reprendre un run interrompu ───────────────────────────────────────
+    # Reprendre un run interrompu
 
     st.markdown("---")
     st.header("Reprendre une expérience")
@@ -917,14 +904,14 @@ with st.sidebar:
         resume_submitted = st.button("Reprendre ce run", use_container_width=True, type="primary")
 
 
-# ── Zone principale ───────────────────────────────────────────────────────────
+# Zone principale
 
 results_placeholder = st.empty()
 results_placeholder.info("Lancer une expérience pour que les résultats s'affichent ici.")
 
 last_run_id = None  # run_id du dernier run terminé (pour pré-sélectionner l'analyse)
 
-# ── Étape 1 – Nouveau run : lancement + rerun ─────────────────────────────────
+# Étape 1 – Nouveau run : lancement
 
 if submitted:
     results_placeholder.empty()
@@ -951,15 +938,15 @@ if submitted:
             st.stop()
 
         st.session_state["stream_run_id"] = run_id
-        st.rerun()  # → recharge la page : le bouton "Arrêter" apparaît dans le sidebar
+        st.rerun()  #
 
-# ── Étape 2 – Streaming du run (après le rerun) ───────────────────────────────
+# Étape 2 – Streaming du run
 
 elif stream_run_id:
     results_placeholder.empty()
     with results_placeholder.container():
 
-        def _stream_run_logs(run_id: str) -> str:
+        def stream_run_logs(run_id: str) -> str:
             """Affiche les logs SSE en temps réel. Retourne le statut final."""
             log_lines    = []
             log_box      = st.empty()
@@ -998,7 +985,7 @@ elif stream_run_id:
             return final_status
 
         with st.spinner("Expérience en cours...", show_time=True):
-            final_status = _stream_run_logs(stream_run_id)
+            final_status = stream_run_logs(stream_run_id)
 
         st.session_state.pop("stream_run_id", None)
 
@@ -1011,7 +998,7 @@ elif stream_run_id:
             display_results(stream_run_id, results)
             last_run_id = stream_run_id
 
-# ── Reprise d'un run interrompu : lancement + rerun ───────────────────────────
+# Reprise d'un run interrompu : lancement
 
 elif resume_submitted and resume_run_id:
     results_placeholder.empty()
@@ -1026,23 +1013,23 @@ elif resume_submitted and resume_run_id:
         st.session_state["stream_run_id"] = resume_run_id
         st.rerun()
 
-# ── Message d'annulation d'expérience ────────────────────────────────────────
+# Message d'annulation d'expérience
 
 elif st.session_state.pop("show_cancelled_run", False):
     results_placeholder.empty()
     with results_placeholder.container():
         st.warning("Expérience arrêtée")
 
-# ── Section Analyse – toujours visible ───────────────────────────────────────
+# Section Analyse
 
 st.markdown("---")
 st.header("Analyser les résultats")
 
-# ── 1. Formulaire de configuration (toujours affiché en PREMIER) ─────────────
+# 1. Formulaire de configuration
 
 show_analysis_form(preselected_run_id=last_run_id)
 
-# ── 2. Progression + bouton Arrêter + résultats (EN DESSOUS de la config) ────
+# 2. Progression + bouton Arrêter + résultats
 
 if stream_analysis_data:
     _analysis_run_id = stream_analysis_data.get("run_id", "")
@@ -1060,7 +1047,7 @@ if stream_analysis_data:
         st.session_state["show_cancelled_analysis"] = True
         st.rerun()
 
-    _steps_labels = {
+    steps_labels = {
         "quantitative":              "Analyse quantitative",
         "semantic_diversity":        "Calcul embeddings — diversité",
         "semantic_robustness":       "Calcul embeddings — robustesse",
@@ -1081,9 +1068,9 @@ if stream_analysis_data:
                 steps_done = event.get("steps_done", [])
                 current    = event.get("current", "")
 
-                lines_md = "\n".join(f"- {_steps_labels.get(s, s)}" for s in steps_done)
+                lines_md = "\n".join(f"- {steps_labels.get(s, s)}" for s in steps_done)
                 if current and status == "running":
-                    lines_md += f"\n- {_steps_labels.get(current, current)} *(en cours…)*"
+                    lines_md += f"\n- {steps_labels.get(current, current)} *(en cours…)*"
                 progress_box.markdown(lines_md or "*Démarrage…*")
 
                 if status == "completed":
@@ -1099,30 +1086,29 @@ if stream_analysis_data:
 
     st.session_state.pop("stream_analysis_data", None)
 
-    # Sauvegarder les résultats dans la session pour affichage persistant
+    # Sauvegarder les résultats dans la session pour affichage
     if final_results:
         st.session_state["last_analysis_results"] = final_results
         st.session_state["show_charts"] = False  # revenir aux résultats textuels par défaut
 
-# Message d'annulation (affiché sous le formulaire)
+# Message d'annulation
 if st.session_state.pop("show_cancelled_analysis", False):
     st.warning("Analyse arrêtée par l'utilisateur.")
 
-# ── Résultats + bouton "Générer / Masquer les graphiques" ────────────────────
+# Résultats + bouton "Générer / Masquer les graphiques"
 
 _last_results = st.session_state.get("last_analysis_results")
 if _last_results:
     st.markdown("---")
     st.subheader("Résultats de l'analyse")
 
-    # ── Boutons toujours visibles ─────────────────────────────────────────
     col_btn, col_clear = st.columns([2, 1])
     with col_btn:
-        _show_charts = st.session_state.get("show_charts", False)
-        _charts_label = "Masquer les graphiques" if _show_charts else "Générer les graphiques"
-        if st.button(_charts_label, type="primary", key="btn_show_charts",
+        show_charts = st.session_state.get("show_charts", False)
+        charts_label = "Masquer les graphiques" if show_charts else "Générer les graphiques"
+        if st.button(charts_label, type="primary", key="btn_show_charts",
                      use_container_width=True):
-            st.session_state["show_charts"] = not _show_charts
+            st.session_state["show_charts"] = not show_charts
             st.rerun()
     with col_clear:
         if st.button("Effacer les résultats", type="secondary", key="btn_clear_results",
@@ -1131,16 +1117,16 @@ if _last_results:
             st.session_state.pop("show_charts", None)
             st.rerun()
 
-    st.markdown("")  # espace visuel
+    st.markdown("")
 
-    # ── Affichage : graphiques OU résultats textuels (pas les deux) ───────
+    # Affichage : graphiques OU résultats textuels
     if st.session_state.get("show_charts", False):
         display_charts(_last_results)
     else:
         display_analysis(_last_results)
 
 
-# ── Section Comparaison ───────────────────────────────────────────────────────
+# Section Comparaison
 
 st.markdown("---")
 st.header("Comparer deux runs")
@@ -1150,18 +1136,18 @@ st.caption(
 )
 
 try:
-    _all_runs_cmp = utils.list_runs()
-    _done_runs_cmp = [r for r in _all_runs_cmp if r.get("status") == "completed"]
+    all_runs_cmp = utils.list_runs()
+    done_runs_cmp = [r for r in all_runs_cmp if r.get("status") == "completed"]
 except Exception:
-    _done_runs_cmp = []
+    done_runs_cmp = []
 
-if len(_done_runs_cmp) < 2:
+if len(done_runs_cmp) < 2:
     st.info("Il faut au moins 2 runs terminés pour effectuer une comparaison.")
 else:
-    _run_ids_cmp = [r["run_id"] for r in _done_runs_cmp]
+    run_ids_cmp = [r["run_id"] for r in done_runs_cmp]
 
-    def _run_label(rid: str) -> str:
-        r = next((x for x in _done_runs_cmp if x["run_id"] == rid), {})
+    def run_label(rid: str) -> str:
+        r = next((x for x in done_runs_cmp if x["run_id"] == rid), {})
         desc = r.get("description") or "(sans description)"
         model = r.get("model") or "?"
         variant = r.get("summary", {}) or {}
@@ -1171,18 +1157,18 @@ else:
         # Sélection des runs à comparer
         col_run_a, col_run_b = st.columns(2)
         with col_run_a:
-            _cmp_run_a = st.selectbox(
+            cmp_run_a = st.selectbox(
                 "Run A (premier run à comparer) :",
-                _run_ids_cmp,
-                format_func=_run_label,
+                run_ids_cmp,
+                format_func=run_label,
                 key="cmp_run_a",
             )
         with col_run_b:
-            _cmp_run_b = st.selectbox(
+            cmp_run_b = st.selectbox(
                 "Run B (second run à comparer) :",
-                _run_ids_cmp,
-                format_func=_run_label,
-                index=min(1, len(_run_ids_cmp) - 1),
+                run_ids_cmp,
+                format_func=run_label,
+                index=min(1, len(run_ids_cmp) - 1),
                 key="cmp_run_b",
             )
         
@@ -1191,319 +1177,312 @@ else:
         # Méthodes de comparaison
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         with col_m1:
-            _cmp_do_quant = st.checkbox("Quantitatif", value=True,
-                                        help="Longueur, taux d'erreurs — rapide")
+            cmp_do_quant = st.checkbox("Quantitatif", value=True,
+                                        help="Longueur, taux d'erreurs")
         with col_m2:
-            _cmp_do_sem = st.checkbox("Sémantique", value=True,
+            cmp_do_sem = st.checkbox("Sémantique", value=True,
                                       help="Diversité & robustesse par embeddings")
         with col_m3:
-            _cmp_do_judge = st.checkbox("LLM Judge", value=False,
-                                        help="Comparaison avec Groq/Qwens")
+            cmp_do_judge = st.checkbox("LLM Judge", value=False,
+                                        help="Comparaison avec Groq/Llama-3.3-70B")
         with col_m4:
-            _cmp_sample = st.number_input(
+            cmp_sample = st.number_input(
                 "Échantillon :", min_value=10, max_value=4140,
                 value=15, step=1,
                 help="Nombre de prompts pour sémantique/judge ",
                 key="cmp_sample",
             )
-        _cmp_submit = st.form_submit_button("Comparer", type="primary")
+        cmp_submit = st.form_submit_button("Comparer", type="primary")
 
-    if _cmp_submit:
-        if _cmp_run_a == _cmp_run_b:
+    if cmp_submit:
+        if cmp_run_a == cmp_run_b:
             st.warning("Choisissez deux runs différents.")
         else:
-            _cmp_methods = []
-            if _cmp_do_quant:
-                _cmp_methods.append("quantitative")
-            if _cmp_do_sem:
-                _cmp_methods.append("semantic")
-            if _cmp_do_judge:
-                _cmp_methods.append("llm_judge")
+            cmp_methods = []
+            if cmp_do_quant:
+                cmp_methods.append("quantitative")
+            if cmp_do_sem:
+                cmp_methods.append("semantic")
+            if cmp_do_judge:
+                cmp_methods.append("llm_judge")
 
-            if not _cmp_methods:
+            if not cmp_methods:
                 st.warning("Sélectionnez au moins une méthode de comparaison.")
             else:
                 with st.spinner("Comparaison en cours…", show_time=True):
                     try:
-                        _cmp_result = utils.compare_runs(
-                            _cmp_run_a, _cmp_run_b,
-                            methods=_cmp_methods,
-                            sample_size=int(_cmp_sample),
+                        cmp_result = utils.compare_runs(
+                            cmp_run_a, cmp_run_b,
+                            methods=cmp_methods,
+                            sample_size=int(cmp_sample),
                             dataset_type=None,  # Auto-détection
                         )
-                        st.session_state["last_compare_result"] = _cmp_result
+                        st.session_state["last_compare_result"] = cmp_result
                     except Exception as _e:
                         st.error(f"Erreur lors de la comparaison : {_e}")
 
 # Affichage des résultats de comparaison
-_cmp_res = st.session_state.get("last_compare_result")
-if _cmp_res:
-    _cmp_a = _cmp_res.get("run_a", "A")
-    _cmp_b = _cmp_res.get("run_b", "B")
+cmp_res = st.session_state.get("last_compare_result")
+if cmp_res:
+    cmp_a = cmp_res.get("run_a", "A")
+    cmp_b = cmp_res.get("run_b", "B")
 
-    col_clr, _ = st.columns([1, 3])
+    col_clr, i = st.columns([1, 3])
     with col_clr:
         if st.button("Effacer la comparaison", key="btn_clear_cmp", type="secondary"):
             st.session_state.pop("last_compare_result", None)
             st.rerun()
 
-    st.subheader(f"Résultats : `{_cmp_a[:20]}…` vs `{_cmp_b[:20]}…`")
+    st.subheader(f"Résultats : `{cmp_a[:20]}…` vs `{cmp_b[:20]}…`")
 
-    # ── Affichage de la détection des datasets ────────────────────────────
-    _datasets_info = _cmp_res.get("datasets_detection")
-    if _datasets_info:
+    # Affichage de la détection des datasets disponibles pour la comparaison
+    datasets_info = cmp_res.get("datasets_detection")
+    if datasets_info:
         with st.expander("Datasets disponibles pour cette comparaison", expanded=True):
             col_d1, col_d2, col_d3 = st.columns(3)
             
             with col_d1:
-                if _datasets_info.get("has_unspecific"):
-                    st.success(f"**Unspecific**\n\n{len(_datasets_info.get('unspecific_langs', []))} langues communes")
+                if datasets_info.get("has_unspecific"):
+                    st.success(f"**Unspecific**\n\n{len(datasets_info.get('unspecific_langs', []))} langues communes")
                 else:
                     st.warning("**Unspecific**\n\nNon disponible")
             
             with col_d2:
-                if _datasets_info.get("has_specific"):
-                    st.success(f"**Specific**\n\n{len(_datasets_info.get('specific_langs', []))} langues communes")
+                if datasets_info.get("has_specific"):
+                    st.success(f"**Specific**\n\n{len(datasets_info.get('specific_langs', []))} langues communes")
                 else:
                     st.warning("**Specific**\n\nNon disponible")
-            
-            with col_d3:
-                _rec_type = _datasets_info.get("recommended_type")
-                if _rec_type:
-                    _rec_label = "Diversité" if _rec_type == "unspecific" else "Robustesse"
-                    st.info(f"**Recommandé**\n\n{_rec_label}")
+
             
             # Détails des langues
-            _details_parts = []
-            if _datasets_info.get("has_unspecific"):
-                _details_parts.append(f"**Unspecific** : {', '.join(_datasets_info.get('unspecific_langs', []))}")
-            if _datasets_info.get("has_specific"):
-                _details_parts.append(f"**Specific** : {', '.join(_datasets_info.get('specific_langs', []))}")
+            details_parts = []
+            if datasets_info.get("has_unspecific"):
+                details_parts.append(f"**Unspecific** : {', '.join(datasets_info.get('unspecific_langs', []))}")
+            if datasets_info.get("has_specific"):
+                details_parts.append(f"**Specific** : {', '.join(datasets_info.get('specific_langs', []))}")
             
-            if _details_parts:
-                st.caption(" | ".join(_details_parts))
+            if details_parts:
+                st.caption(" | ".join(details_parts))
             
-            st.caption(f"{_datasets_info.get('summary', 'Détails de détection non disponibles')}")
+            st.caption(f"{datasets_info.get('summary', 'Détails de détection non disponibles')}")
     
-    # ── Comparaison Quantitative ──────────────────────────────────────────
-    _cmp_quant = _cmp_res.get("quantitative")
-    if _cmp_quant and not _cmp_res.get("quantitative_error"):
+    # Comparaison Quantitative
+    cmp_quant = cmp_res.get("quantitative")
+    if cmp_quant and not cmp_res.get("quantitative_error"):
         st.markdown("#### Comparaison quantitative")
-        _files_cmp = _cmp_quant.get("files", {})
-        if _files_cmp:
-            _rows_cmp = []
-            for _fk, _fv in sorted(_files_cmp.items()):
-                _delta_w = _fv.get("delta_avg_words", 0)
-                _delta_e = _fv.get("delta_error_rate", 0)
-                _rows_cmp.append({
-                    "Fichier":             _fk,
-                    "Moy. mots A":         _fv.get("avg_words_a"),
-                    "Moy. mots B":         _fv.get("avg_words_b"),
-                    "delta mots":              f"{'+'if _delta_w>=0 else ''}{_delta_w:.1f}",
-                    "Taux erreurs A":      f"{_fv.get('error_rate_a', 0):.1%}",
-                    "Taux erreurs B":      f"{_fv.get('error_rate_b', 0):.1%}",
-                    "delta erreurs":           f"{'+'if _delta_e>=0 else ''}{_delta_e:.2%}",
-                    "IDs communs":         _fv.get("common_ids"),
+        files_cmp = cmp_quant.get("files", {})
+        if files_cmp:
+            rows_cmp = []
+            for fk, fv in sorted(files_cmp.items()):
+                delta_w = fv.get("delta_avg_words", 0)
+                delta_e = fv.get("delta_error_rate", 0)
+                rows_cmp.append({
+                    "Fichier":             fk,
+                    "Moy. mots A":         fv.get("avg_words_a"),
+                    "Moy. mots B":         fv.get("avg_words_b"),
+                    "delta mots":              f"{'+'if delta_w>=0 else ''}{delta_w:.1f}",
+                    "Taux erreurs A":      f"{fv.get('error_rate_a', 0):.1%}",
+                    "Taux erreurs B":      f"{fv.get('error_rate_b', 0):.1%}",
+                    "delta erreurs":           f"{'+'if delta_e>=0 else ''}{delta_e:.2%}",
+                    "IDs communs":         fv.get("common_ids"),
                 })
-            _auto_df(_rows_cmp)
+            auto_df(rows_cmp)
 
             # Graphique : delta mots par fichier
             import plotly.graph_objects as go
-            _fnames = [r["Fichier"] for r in _rows_cmp]
-            _deltas_w = [_files_cmp[f]["delta_avg_words"] for f in _fnames]
-            _colors_delta = ["#52b788" if d >= 0 else "#e63946" for d in _deltas_w]
-            _fig_delta = go.Figure(go.Bar(
-                x=_fnames, y=_deltas_w,
-                marker_color=_colors_delta,
-                text=[f"{'+'if d>=0 else ''}{d:.1f}" for d in _deltas_w],
+            fnames = [r["Fichier"] for r in rows_cmp]
+            deltas_w = [files_cmp[f]["delta_avg_words"] for f in fnames]
+            colors_delta = ["#52b788" if d >= 0 else "#e63946" for d in deltas_w]
+            fig_delta = go.Figure(go.Bar(
+                x=fnames, y=deltas_w,
+                marker_color=colors_delta,
+                text=[f"{'+'if d>=0 else ''}{d:.1f}" for d in deltas_w],
                 textposition="outside",
             ))
-            _fig_delta.add_hline(y=0, line_color="gray", line_dash="dot")
-            _fig_delta.update_layout(
+            fig_delta.add_hline(y=0, line_color="gray", line_dash="dot")
+            fig_delta.update_layout(
                 title="delta Longueur moyenne (B − A) par fichier",
                 yaxis_title="delta mots",
                 xaxis_title="Fichier (langue_type)",
                 height=380,
                 showlegend=False,
             )
-            st.plotly_chart(_fig_delta, use_container_width=True)
+            st.plotly_chart(fig_delta, use_container_width=True)
 
-    elif _cmp_res.get("quantitative_error"):
-        st.warning(f"Comparaison quantitative échouée : {_cmp_res['quantitative_error']}")
+    elif cmp_res.get("quantitative_error"):
+        st.warning(f"Comparaison quantitative échouée : {cmp_res['quantitative_error']}")
 
-    # ── Comparaison Sémantique ────────────────────────────────────────────
-    _cmp_sem = _cmp_res.get("semantic")
-    if _cmp_sem and not _cmp_res.get("semantic_error"):
+    # Comparaison Sémantique
+    cmp_sem = cmp_res.get("semantic")
+    if cmp_sem and not cmp_res.get("semantic_error"):
         st.markdown("#### Comparaison sémantique (embeddings)")
 
-        _div_cmp  = _cmp_sem.get("diversity", {})
-        _rob_cmp  = _cmp_sem.get("robustness", {})
-        _comb_cmp = _cmp_sem.get("combined", {})
+        div_cmp  = cmp_sem.get("diversity", {})
+        rob_cmp  = cmp_sem.get("robustness", {})
+        comb_cmp = cmp_sem.get("combined", {})
 
-        _cols_sem = st.columns(3)
-        with _cols_sem[0]:
-            _da = _div_cmp.get("score_a")
-            _db = _div_cmp.get("score_b")
-            _dd = _div_cmp.get("delta")
-            if _da is not None and _db is not None:
+        cols_sem = st.columns(3)
+        with cols_sem[0]:
+            da = div_cmp.get("score_a")
+            db = div_cmp.get("score_b")
+            dd = div_cmp.get("delta")
+            if da is not None and db is not None:
                 st.metric(
                     "Diversité (unspecific)",
-                    f"B = {_db:.4f}",
-                    delta=f"{_dd:+.4f}" if _dd is not None else None,
-                    help=f"A (référence) = {_da:.4f}"
+                    f"Run B = {db:.4f}",
+                    delta=f"{dd:+.4f}" if dd is not None else None,
+                    help=f"Run A = {da:.4f}"
                 )
-        with _cols_sem[1]:
-            _ra = _rob_cmp.get("score_a")
-            _rb = _rob_cmp.get("score_b")
-            _rd = _rob_cmp.get("delta")
-            if _ra is not None and _rb is not None:
+        with cols_sem[1]:
+            ra = rob_cmp.get("score_a")
+            rb = rob_cmp.get("score_b")
+            rd = rob_cmp.get("delta")
+            if ra is not None and rb is not None:
                 st.metric(
                     "Robustesse (specific)",
-                    f"B = {_rb:.4f}",
-                    delta=f"{_rd:+.4f}" if _rd is not None else None,
-                    help=f"A (référence) = {_ra:.4f}"
+                    f"Run B = {rb:.4f}",
+                    delta=f"{rd:+.4f}" if rd is not None else None,
+                    help=f"Run A = {ra:.4f}"
                 )
-        with _cols_sem[2]:
-            _ca = _comb_cmp.get("score_a")
-            _cb = _comb_cmp.get("score_b")
-            _cd = _comb_cmp.get("delta")
-            if _ca is not None and _cb is not None:
+        with cols_sem[2]:
+            ca = comb_cmp.get("score_a")
+            cb = comb_cmp.get("score_b")
+            cd = comb_cmp.get("delta")
+            if ca is not None and cb is not None:
                 st.metric(
                     "Score combiné D×R",
-                    f"B = {_cb:.4f}",
-                    delta=f"{_cd:+.4f}" if _cd is not None else None,
-                    help=f"A (référence) = {_ca:.4f}"
+                    f"Run B = {cb:.4f}",
+                    delta=f"{cd:+.4f}" if cd is not None else None,
+                    help=f"Run A = {ca:.4f}"
                 )
 
         # Graphique : barres comparatives A vs B
-        if any(x is not None for x in [_da, _ra]):
+        if any(x is not None for x in [da, ra]):
             import plotly.graph_objects as go
-            _metrics_lbl = []
-            _scores_a_list = []
-            _scores_b_list = []
-            if _da is not None and _db is not None:
-                _metrics_lbl.append("Diversité")
-                _scores_a_list.append(_da)
-                _scores_b_list.append(_db)
-            if _ra is not None and _rb is not None:
-                _metrics_lbl.append("Robustesse")
-                _scores_a_list.append(_ra)
-                _scores_b_list.append(_rb)
-            if _ca is not None and _cb is not None:
-                _metrics_lbl.append("Combiné D×R")
-                _scores_a_list.append(_ca)
-                _scores_b_list.append(_cb)
+            metrics_lbl = []
+            scores_a_list = []
+            scores_b_list = []
+            if da is not None and db is not None:
+                metrics_lbl.append("Diversité")
+                scores_a_list.append(da)
+                scores_b_list.append(db)
+            if ra is not None and rb is not None:
+                metrics_lbl.append("Robustesse")
+                scores_a_list.append(ra)
+                scores_b_list.append(rb)
+            if ca is not None and cb is not None:
+                metrics_lbl.append("Combiné D×R")
+                scores_a_list.append(ca)
+                scores_b_list.append(cb)
 
-            _fig_cmp_sem = go.Figure()
-            _fig_cmp_sem.add_trace(go.Bar(
+            fig_cmp_sem = go.Figure()
+            fig_cmp_sem.add_trace(go.Bar(
                 name=f"Run A (premier)",
-                x=_metrics_lbl, y=_scores_a_list,
+                x=metrics_lbl, y=scores_a_list,
                 marker_color="#457b9d",
-                text=[f"{v:.4f}" for v in _scores_a_list],
+                text=[f"{v:.4f}" for v in scores_a_list],
                 textposition="outside",
             ))
-            _fig_cmp_sem.add_trace(go.Bar(
+            fig_cmp_sem.add_trace(go.Bar(
                 name=f"Run B (second)",
-                x=_metrics_lbl, y=_scores_b_list,
+                x=metrics_lbl, y=scores_b_list,
                 marker_color="#e76f51",
-                text=[f"{v:.4f}" for v in _scores_b_list],
+                text=[f"{v:.4f}" for v in scores_b_list],
                 textposition="outside",
             ))
-            _fig_cmp_sem.update_layout(
+            fig_cmp_sem.update_layout(
                 title="Comparaison sémantique : Run A vs Run B",
                 barmode="group",
                 yaxis=dict(title="Score", range=[0, 1.1]),
                 height=380,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02),
             )
-            st.plotly_chart(_fig_cmp_sem, use_container_width=True)
+            st.plotly_chart(fig_cmp_sem, use_container_width=True)
 
-    elif _cmp_res.get("semantic_error"):
-        st.warning(f"Comparaison sémantique échouée : {_cmp_res['semantic_error']}")
+    elif cmp_res.get("semantic_error"):
+        st.warning(f"Comparaison sémantique échouée : {cmp_res['semantic_error']}")
 
-    # ── Comparaison LLM Judge ─────────────────────────────────────────────────
-    _cmp_judge = _cmp_res.get("llm_judge")
-    if _cmp_judge and not _cmp_res.get("llm_judge_error"):
+    # Comparaison LLM Judge
+    cmp_judge = cmp_res.get("llm_judge")
+    if cmp_judge and not cmp_res.get("llm_judge_error"):
         st.markdown("#### Comparaison LLM Judge")
         
-        _overall_winner = _cmp_judge.get("overall_winner", "TIE")
-        _winners_count = _cmp_judge.get("winners_count", {})
-        _avg_score = _cmp_judge.get("avg_score_diff", 0)
-        _summary = _cmp_judge.get("summary", "")
-        _dataset_type = _cmp_judge.get("dataset_type", "unknown")
+        overall_winner = cmp_judge.get("overall_winner", "TIE")
+        winners_count = cmp_judge.get("winners_count", {})
+        avg_score = cmp_judge.get("avg_score_diff", 0)
+        summary = cmp_judge.get("summary", "")
+        dataset_type = cmp_judge.get("dataset_type", "unknown")
         
-        # Afficher le type de dataset utilisé (pas en "success" mais en caption)
-        _dataset_label = {
+        # Afficher le type de dataset utilisé
+        dataset_label = {
             "unspecific": "Diversité culturelle",
             "specific": "Robustesse culturelle",
-        }.get(_dataset_type, _dataset_type)
+        }.get(dataset_type, dataset_type)
         
-        st.caption(f"Type de dataset utilisé : **{_dataset_label}**")
+        st.caption(f"Type de dataset utilisé : **{dataset_label}**")
         
         # Métriques principales
         col_j1, col_j2, col_j3 = st.columns(3)
         with col_j1:
-            if _overall_winner == "A":
-                st.metric("Gagnant", "Run A", help="Le juge préfère le premier run")
-            elif _overall_winner == "B":
-                st.metric("Gagnant", "Run B", help="Le juge préfère le second run")
+            if overall_winner == "A":
+                st.metric("Meilleur run", "Run A", help="Le llm-juge préfère le premier run")
+            elif overall_winner == "B":
+                st.metric("Meilleur run", "Run B", help="Le llm-juge préfère le second run")
             else:
-                st.metric("Gagnant", "Égalité", help="Les deux runs sont équivalents selon le juge")
+                st.metric("Meilleur run", "Équivalents", help="Les deux runs sont équivalents selon le llm-juge")
         
         with col_j2:
             st.metric(
                 "Score moyen",
-                f"{_avg_score:+.2f}",
+                f"{avg_score:+.2f}",
                 help="Score différentiel moyen (-3 = A beaucoup mieux, +3 = B beaucoup mieux)"
             )
         
         with col_j3:
             st.metric(
                 "Distribution",
-                f"A:{_winners_count.get('A', 0)} | B:{_winners_count.get('B', 0)} | T:{_winners_count.get('TIE', 0)}",
+                f"A:{winners_count.get('A', 0)} | B:{winners_count.get('B', 0)} | T:{winners_count.get('TIE', 0)}",
                 help="Nombre de victoires : A (premier run) | B (second run) | Égalités"
             )
         
         # Résumé du juge
-        st.info(f"**Résumé du juge** : {_summary}")
+        st.info(f"**Résumé du juge** : {summary}")
         
         # Détail des comparaisons
-        _comparisons = _cmp_judge.get("comparisons", [])
-        if _comparisons:
+        comparisons = cmp_judge.get("comparisons", [])
+        if comparisons:
             with st.expander("Détail des comparaisons par prompt", expanded=False):
-                _judge_rows = []
-                for c in _comparisons:
-                    _judge_rows.append({
+                judge_rows = []
+                for c in comparisons:
+                    judge_rows.append({
                         "Prompt ID": c.get("prompt_id", ""),
                         "Gagnant": c.get("winner", ""),
                         "Score diff": c.get("score_diff", 0),
                         "Dimension": c.get("dimension", ""),
                         "Raison": c.get("reason", ""),
                     })
-                _auto_df(_judge_rows, min_row_height=52)
+                auto_df(judge_rows, min_row_height=52)
         
         # Graphique : distribution des scores
         import plotly.graph_objects as go
-        _score_diffs = [c.get("score_diff", 0) for c in _comparisons if isinstance(c.get("score_diff"), (int, float))]
-        if _score_diffs:
-            _fig_judge_dist = go.Figure(go.Histogram(
-                x=_score_diffs,
+        score_diffs = [c.get("score_diff", 0) for c in comparisons if isinstance(c.get("score_diff"), (int, float))]
+        if score_diffs:
+            fig_judge_dist = go.Figure(go.Histogram(
+                x=score_diffs,
                 nbinsx=7,
                 marker_color="#457b9d",
-                text=[str(x) for x in _score_diffs],
+                text=[str(x) for x in score_diffs],
             ))
-            _fig_judge_dist.add_vline(x=0, line_dash="dash", line_color="gray",
+            fig_judge_dist.add_vline(x=0, line_dash="dash", line_color="gray",
                                       annotation_text="Égalité", annotation_position="top")
-            _fig_judge_dist.update_layout(
+            fig_judge_dist.update_layout(
                 title="Distribution des scores différentiels (LLM Judge)",
                 xaxis_title="Score différentiel (- = A mieux, + = B mieux)",
                 yaxis_title="Nombre de prompts",
                 xaxis=dict(range=[-3.5, 3.5], tickvals=[-3, -2, -1, 0, 1, 2, 3]),
                 height=360,
             )
-            st.plotly_chart(_fig_judge_dist, use_container_width=True)
+            st.plotly_chart(fig_judge_dist, use_container_width=True)
     
-    elif _cmp_res.get("llm_judge_error"):
-        st.warning(f"Comparaison LLM Judge échouée : {_cmp_res['llm_judge_error']}")
-
-
+    elif cmp_res.get("llm_judge_error"):
+        st.warning(f"Comparaison LLM Judge échouée : {cmp_res['llm_judge_error']}")

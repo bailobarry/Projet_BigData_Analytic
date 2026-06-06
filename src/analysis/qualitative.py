@@ -6,8 +6,8 @@ Ce module complète les analyses quantitative et sémantique en fournissant :
 1. **Sélection de cas extrêmes** (select_extreme_cases)
    À partir des scores per_prompt issus de semantic.py, identifie les questions
    les plus intéressantes à examiner manuellement :
-   - Cas très variables (forte diversité → le modèle s'adapte bien)
-   - Cas incohérents (faible robustesse → le modèle est instable)
+   - Cas très variables (forte diversité -> le modèle s'adapte bien)
+   - Cas incohérents (faible robustesse -> le modèle est instable)
    - Cas problématiques (toutes langues confondues donnent la même réponse)
 
 2. **Détection de non-conformité à la consigne** (detect_instruction_violations)
@@ -39,21 +39,19 @@ import jsonlines
 
 logger = logging.getLogger(__name__)
 
-# ─── Constantes ──────────────────────────────────────────────────────────────
+# Constantes
 
-_DEFAULT_OUTPUT_DIR = "data/output"
-_SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
+DEFAULT_OUTPUT_DIR = "data/output"
+SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
 
 # Seuils pour la classification
-_GENERIC_THRESHOLD_WORDS = 4      # Moins de 4 mots → générique
-_NON_COMPLIANT_SENTENCES = 2      # Plus de 2 phrases → non-respect de la consigne
-_REPETITION_SIM_THRESHOLD = 0.90  # Similarité cosinus > 0.97 → répétition
+GENERIC_THRESHOLD_WORDS = 4      # Moins de 4 mots -> générique
+NON_COMPLIANT_SENTENCES = 2      # Plus de 2 phrases -> non-respect de la consigne
+REPETITION_SIM_THRESHOLD = 0.90  # Similarité cosinus > 0.90 -> répétition
 
 
-# ─── Chargement des données ──────────────────────────────────────────────────
-
-
-def _load_results_by_language(
+# Chargement des données
+def load_results_by_language_qual(
     run_id: str,
     dataset_type: str,
     output_dir: str,
@@ -61,11 +59,6 @@ def _load_results_by_language(
 ) -> dict[str, dict[str, dict]]:
     """
     Charge les réponses d'un type de dataset pour toutes les langues.
-
-    Returns
-    -------
-    dict[str, dict[str, dict]]
-        { "fr": {"1": {"answer": "...", "prompt": "..."}}, "en": {...}, ... }
     """
     data: dict[str, dict[str, dict]] = {}
     run_path = Path(output_dir) / run_id
@@ -84,27 +77,18 @@ def _load_results_by_language(
         data[lang] = lang_data
     return data
 
-
-# ─── Helpers ─────────────────────────────────────────────────────────────────
-
-
-def _count_sentences(text: str) -> int:
+def count_sentences(text: str) -> int:
     """Compte le nombre de phrases terminées par . ! ou ?"""
     import re
     return len([s for s in re.split(r"[.!?]+", text.strip()) if s.strip()])
 
-
-def _count_words(text: str) -> int:
+def count_words_qual(text: str) -> int:
     return len(text.split()) if text.strip() else 0
 
-
-def _is_error(answer: str) -> bool:
+def is_error_qual(answer: str) -> bool:
     return answer.strip().startswith("ERROR:")
 
-
-# ─── Sélection de cas extrêmes ───────────────────────────────────────────────
-
-
+# Sélection de cas extrêmes
 def select_extreme_cases(
     per_prompt_scores: dict[str, dict],
     top_n: int = 5,
@@ -125,15 +109,6 @@ def select_extreme_cases(
         Nombre de cas à retenir dans chaque catégorie (défaut: 5).
     metric_label : str
         Nom de la métrique dans le dict (défaut: "score").
-
-    Returns
-    -------
-    dict
-        {
-            "top_highest": [{"id": "42", "score": 0.89}, ...],  # très diverse / très robuste
-            "top_lowest":  [{"id": "7",  "score": 0.03}, ...],  # peu diverse / peu robuste
-            "median":      [{"id": "55", "score": 0.44}, ...]   # cas typiques
-        }
     """
     scored = sorted(
         [{"id": k, "score": v.get(metric_label, 0.0)} for k, v in per_prompt_scores.items()],
@@ -152,13 +127,10 @@ def select_extreme_cases(
         "median":      scored[mid_start: mid_start + top_n],  # cas médians
     }
 
-
-# ─── Détection de non-conformité à la consigne ───────────────────────────────
-
-
+# Détection de non-conformité à la consigne
 def detect_instruction_violations(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
     dataset_types: Optional[list[str]] = None,
 ) -> dict:
@@ -181,30 +153,9 @@ def detect_instruction_violations(
         Langues à analyser (défaut : toutes).
     dataset_types : list[str] | None
         Types de dataset à analyser (défaut : ["unspecific", "specific"]).
-
-    Returns
-    -------
-    dict
-        {
-            "total_responses": 500,
-            "violations": {
-                "non_compliant": 23,    # plus de 2 phrases
-                "generic":       15,    # moins de 5 mots
-                "error":          2
-            },
-            "violation_rate": 0.08,
-            "by_file": {
-                "fr_unspecific": {"non_compliant": 5, "generic": 3, "error": 0, "total": 101},
-                ...
-            },
-            "examples": {
-                "non_compliant": [{"file": "fr_unspecific", "id": "7", "answer": "..."}],
-                "generic":   [...],
-            }
-        }
     """
     if languages is None:
-        languages = _SUPPORTED_LANGUAGES
+        languages = SUPPORTED_LANGUAGES
     if dataset_types is None:
         dataset_types = ["unspecific", "specific"]
 
@@ -232,17 +183,17 @@ def detect_instruction_violations(
                     total += 1
                     by_file[file_key]["total"] += 1
 
-                    if _is_error(answer):
+                    if is_error_qual(answer):
                         violations["error"] += 1
                         by_file[file_key]["error"] += 1
-                    elif _count_words(answer) < _GENERIC_THRESHOLD_WORDS:
+                    elif count_words_qual(answer) < GENERIC_THRESHOLD_WORDS:
                         violations["generic"] += 1
                         by_file[file_key]["generic"] += 1
                         if len(examples["generic"]) < 5:
                             examples["generic"].append({
                                 "file": file_key, "id": obj.get("id"), "answer": answer
                             })
-                    elif _count_sentences(answer) > _NON_COMPLIANT_SENTENCES:
+                    elif count_sentences(answer) > NON_COMPLIANT_SENTENCES:
                         violations["non_compliant"] += 1
                         by_file[file_key]["non_compliant"] += 1
                         if len(examples["non_compliant"]) < 5:
@@ -265,12 +216,10 @@ def detect_instruction_violations(
     }
 
 
-# ─── Typologie d'erreurs ─────────────────────────────────────────────────────
-
-
+# Typologie d'erreurs
 def classify_errors(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
     dataset_types: Optional[list[str]] = None,
 ) -> dict:
@@ -280,7 +229,7 @@ def classify_errors(
     Étiquettes (non exclusives) :
     - ``"ok"``            : réponse conforme (une phrase, contenu substantiel)
     - ``"error"``         : erreur pipeline (préfixe ERROR:)
-    - ``"generic"``       : réponse trop courte/vague (< 5 mots), généricité excessive
+    - ``"generic"``       : réponse trop courte/vague (< 5 mots), généricité
     - ``"non_compliant"`` : dépasse 2 phrases (non-respect de la consigne)
     - ``"empty"``         : réponse vide ou blanche
 
@@ -292,36 +241,9 @@ def classify_errors(
         Répertoire racine des résultats.
     languages : list[str] | None
     dataset_types : list[str] | None
-
-    Returns
-    -------
-    dict
-        {
-            "run_id": "...",
-            "total": 500,
-            "distribution": {
-                "ok": 450, "error": 5, "generic": 30, "non_compliant": 10, "empty": 5
-            },
-            "rates": {
-                "ok": 0.900, "error": 0.010, "generic": 0.060, ...
-            },
-            "by_file": {
-                "fr_unspecific": {"ok": 95, "generic": 4, ...},
-                ...
-            },
-            "problematic_examples": [
-                {
-                    "id": "13", "file": "fr_unspecific",
-                    "label": "generic",
-                    "answer": "Sois honnête.",
-                    "n_words": 2
-                },
-                ...
-            ]
-        }
     """
     if languages is None:
-        languages = _SUPPORTED_LANGUAGES
+        languages = SUPPORTED_LANGUAGES
     if dataset_types is None:
         dataset_types = ["unspecific", "specific"]
 
@@ -351,11 +273,11 @@ def classify_errors(
 
                     if not answer:
                         label = "empty"
-                    elif _is_error(answer):
+                    elif is_error_qual(answer):
                         label = "error"
-                    elif _count_words(answer) < _GENERIC_THRESHOLD_WORDS:
+                    elif count_words_qual(answer) < GENERIC_THRESHOLD_WORDS:
                         label = "generic"
-                    elif _count_sentences(answer) > _NON_COMPLIANT_SENTENCES:
+                    elif count_sentences(answer) > NON_COMPLIANT_SENTENCES:
                         label = "non_compliant"
                     else:
                         label = "ok"
@@ -369,7 +291,7 @@ def classify_errors(
                             "file":    file_key,
                             "label":   label,
                             "answer":  answer[:200],
-                            "n_words": _count_words(answer),
+                            "n_words": count_words_qual(answer),
                         })
 
     rates = {
@@ -387,12 +309,12 @@ def classify_errors(
     }
 
 
-# ─── Analyse par catégorie thématique ────────────────────────────────────────
+# Analyse par catégorie thématique
 
 # Descriptions sémantiques des catégories.
 # Le transformer encode ces phrases pour les comparer aux prompts.
 # Aucune liste de mots-clés à maintenir : seul le sens compte.
-_CATEGORY_DESCRIPTIONS: dict[str, str] = {
+CATEGORY_DESCRIPTIONS: dict[str, str] = {
     "food":           "Questions about food, meals, cooking, diet, eating habits, and nutrition.",
     "family":         "Questions about family, children, parents, marriage, babies, and birthdays.",
     "social_life":    "Questions about friendships, dating, relationships, sexuality, and social interactions.",
@@ -401,52 +323,48 @@ _CATEGORY_DESCRIPTIONS: dict[str, str] = {
 }
 
 # Cache : prompts lus depuis le fichier de référence { base_id → prompt_text }
-_prompt_text_cache: dict[str, str] = {}
+prompt_text_cache: dict[str, str] = {}
 
 # Cache : résultats de classification { base_id → category }
 # Évite de recalculer les embeddings à chaque appel
-_category_result_cache: dict[str, str] = {}
+category_result_cache: dict[str, str] = {}
 
 # Modèle d'embedding (chargé une seule fois)
-_embed_model = None
-_category_embeddings = None   # embeddings des descriptions de catégories
+embed_model = None
+category_embeddings = None   # embeddings des descriptions de catégories
 
 
-def _get_embed_model():
+def get_embed_model():
     """Charge le modèle d'embedding (paresseux – une seule fois)."""
-    global _embed_model
-    if _embed_model is None:
+    global embed_model
+    if embed_model is None:
         from sentence_transformers import SentenceTransformer
-        _embed_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        embed_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
         logger.debug("Modèle d'embedding chargé pour la classification des catégories.")
-    return _embed_model
+    return embed_model
 
 
-def _get_category_embeddings():
+def get_category_embeddings():
     """Calcule (une seule fois) les embeddings des descriptions de catégories."""
-    global _category_embeddings
-    if _category_embeddings is None:
+    global category_embeddings
+    if category_embeddings is None:
         import numpy as np
-        model = _get_embed_model()
-        labels = list(_CATEGORY_DESCRIPTIONS.keys())
-        descs  = list(_CATEGORY_DESCRIPTIONS.values())
+        model = get_embed_model()
+        labels = list(CATEGORY_DESCRIPTIONS.keys())
+        descs  = list(CATEGORY_DESCRIPTIONS.values())
         vecs   = model.encode(descs, convert_to_numpy=True, show_progress_bar=False)
         # Normalisation L2 pour cosinus rapide via produit scalaire
         norms  = np.linalg.norm(vecs, axis=1, keepdims=True)
-        _category_embeddings = {"labels": labels, "vecs": vecs / norms}
-    return _category_embeddings
+        category_embeddings = {"labels": labels, "vecs": vecs / norms}
+    return category_embeddings
 
 
-def _build_prompt_cache(
+def build_prompt_cache(
     input_dir: str = "data/input",
     reference_lang: str = "en",
 ) -> None:
-    """
-    Remplit ``_prompt_text_cache`` depuis ``{reference_lang}_unspecific.jsonl``.
-    Ne fait rien si le cache est déjà rempli ou si le fichier est introuvable.
-    """
-    global _prompt_text_cache
-    if _prompt_text_cache:
+    global prompt_text_cache
+    if prompt_text_cache:
         return
 
     ref_file = Path(input_dir) / f"{reference_lang}_unspecific.jsonl"
@@ -457,9 +375,9 @@ def _build_prompt_cache(
     with jsonlines.open(str(ref_file), mode="r") as reader:
         for obj in reader:
             base_id = str(obj.get("id", "")).split("-")[0]
-            _prompt_text_cache[base_id] = obj.get("prompt", "")
+            prompt_text_cache[base_id] = obj.get("prompt", "")
 
-    logger.debug("Cache prompts chargé : %d entrées", len(_prompt_text_cache))
+    logger.debug("Cache prompts chargé : %d entrées", len(prompt_text_cache))
 
 
 def get_category(
@@ -468,30 +386,24 @@ def get_category(
 ) -> str:
     """
     Retourne la catégorie thématique d'une question via similarité sémantique.
-
-    Aucune liste de mots-clés : le texte du prompt est encodé par le même
-    modèle d'embedding que l'analyse sémantique, puis comparé aux descriptions
-    des catégories via cosinus. La catégorie la plus proche est retournée.
-
-    Les IDs *specific* (ex: ``"1-5"``) utilisent la base ``"1"``.
     """
     import numpy as np
 
     base_id = str(prompt_id).split("-")[0]
 
     # Résultat déjà calculé ?
-    if base_id in _category_result_cache:
-        return _category_result_cache[base_id]
+    if base_id in category_result_cache:
+        return category_result_cache[base_id]
 
-    _build_prompt_cache(input_dir)
-    prompt_text = _prompt_text_cache.get(base_id, "")
+    build_prompt_cache(input_dir)
+    prompt_text = prompt_text_cache.get(base_id, "")
 
     if not prompt_text:
         return "other"
 
     # Encoder le prompt
-    model       = _get_embed_model()
-    cat_data    = _get_category_embeddings()
+    model       = get_embed_model()
+    cat_data    = get_category_embeddings()
     prompt_vec  = model.encode([prompt_text], convert_to_numpy=True, show_progress_bar=False)[0]
     prompt_norm = np.linalg.norm(prompt_vec)
     if prompt_norm == 0:
@@ -499,12 +411,12 @@ def get_category(
 
     prompt_vec /= prompt_norm
 
-    # Similarité cosinus avec chaque catégorie → choisir la plus haute
+    # Similarité cosinus avec chaque catégorie -> choisir la plus haute
     similarities   = cat_data["vecs"] @ prompt_vec   # produit scalaire sur vecteurs normalisés
     best_idx       = int(np.argmax(similarities))
     best_category  = cat_data["labels"][best_idx]
 
-    _category_result_cache[base_id] = best_category
+    category_result_cache[base_id] = best_category
     return best_category
 
 
@@ -522,22 +434,10 @@ def analyze_by_category(
         ou robustness_score().
     metric_label : str
         Clé du score dans le dict (défaut: "score").
-
-    Returns
-    -------
-    dict
-        {
-            "food":           {"avg": 0.23, "std": 0.07, "n": 7},
-            "family":         {"avg": 0.18, "std": 0.05, "n": 8},
-            "social_life":    {"avg": 0.31, "std": 0.10, "n": 16},
-            "work_education": {"avg": 0.19, "std": 0.06, "n": 7},
-            "social_norms":   {"avg": 0.25, "std": 0.09, "n": 64},
-            "other":          {"avg": 0.20, "std": 0.08, "n": 3}
-        }
     """
     import numpy as np
 
-    categories: dict[str, list[float]] = {k: [] for k in _CATEGORY_DESCRIPTIONS}
+    categories: dict[str, list[float]] = {k: [] for k in CATEGORY_DESCRIPTIONS}
     categories["other"] = []
 
     for prompt_id, data in per_prompt_scores.items():
@@ -558,12 +458,10 @@ def analyze_by_category(
     return result
 
 
-# ─── Rapport qualitatif complet ──────────────────────────────────────────────
-
-
+# Rapport qualitatif complet
 def generate_qualitative_report(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
     diversity_per_prompt: Optional[dict] = None,
     robustness_per_prompt: Optional[dict] = None,
@@ -572,12 +470,6 @@ def generate_qualitative_report(
 ) -> dict:
     """
     Génère un rapport d'analyse qualitative complet pour un run.
-
-    Combine :
-    - Détection de non-conformité à la consigne
-    - Typologie d'erreurs avec distribution
-    - Sélection de cas extrêmes (si per_prompt scores fournis)
-    - Analyse par catégorie thématique (si per_prompt scores fournis)
 
     Parameters
     ----------
@@ -595,11 +487,6 @@ def generate_qualitative_report(
         Nombre de cas extrêmes à sélectionner dans chaque catégorie.
     save : bool
         Si True, sauvegarde le rapport en JSON.
-
-    Returns
-    -------
-    dict
-        Rapport qualitatif complet.
     """
     report: dict = {
         "run_id": run_id,

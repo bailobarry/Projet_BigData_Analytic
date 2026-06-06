@@ -1,18 +1,3 @@
-"""
-Provider **Google Gemma 3 12B** – exécuté localement via Ollama.
-
-Gemma 3 12B (par Google, Mars 2025) :
-- Modèle très récent, excellent multilingue (EN, FR, DE, ES, IT)
-- Nécessite ~8 Go de RAM (compatible avec 16 Go)
-- Fenêtre de contexte de 128k tokens
-- Meilleures performances que Mistral-Nemo sur les benchmarks multilingues
-
-Pré-requis : Ollama doit être installé et le modèle téléchargé :
-    ollama pull gemma3:12b
-"""
-
-from __future__ import annotations
-
 import logging
 from typing import Optional
 
@@ -25,10 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class Gemma3Provider(LLMProvider):
-    """
-    Fournisseur LLM pour Google Gemma 3 12B, exécuté localement
-    via la bibliothèque ``ollama``.
-    """
 
     def __init__(self, config: RunConfig) -> None:
         prov = config.provider
@@ -44,7 +25,7 @@ class Gemma3Provider(LLMProvider):
             self._host,
         )
 
-    # ── Propriétés ──────────────────────────────────────────────────────
+    # Propriétés
 
     @property
     def provider_name(self) -> str:
@@ -54,7 +35,7 @@ class Gemma3Provider(LLMProvider):
     def model_id(self) -> str:
         return self._model
 
-    # ── Génération ──────────────────────────────────────────────────────
+    # Génération
 
     def generate(
         self,

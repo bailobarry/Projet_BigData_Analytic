@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
-# ── Registre des stratégies complètes (Lot C) ───────────────────────────
+# Registre des stratégies complètes (system + prefix + suffix) par langue
 
 _STRATEGIES: dict[str, dict[str, dict[str, str]]] = {
     "cultural_expert": {

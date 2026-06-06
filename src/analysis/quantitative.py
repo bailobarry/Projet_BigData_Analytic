@@ -4,21 +4,6 @@ Analyse quantitative des résultats d'un run.
 Ce module calcule des statistiques simples sur les réponses produites
 par le pipeline ELOQUENT. Il ne nécessite pas de modèle d'embedding :
 tout se calcule directement sur le texte brut.
-
-Fonctions principales
----------------------
-load_run_results(run_id)
-    Charge tous les fichiers JSONL de résultats d'un run.
-
-compute_basic_stats(run_id)
-    Calcule longueur moyenne, taux de vides et taux d'erreurs
-    par langue et par type de dataset.
-
-compare_runs(run_id_a, run_id_b)
-    Compare deux runs prompt par prompt (baseline vs variante).
-
-generate_report(run_id)
-    Génère un rapport complet au format JSON dans le dossier du run.
 """
 
 from __future__ import annotations
@@ -31,9 +16,9 @@ import jsonlines
 
 # ── Constantes ──────────────────────────────────────────────────────────────
 
-_DEFAULT_OUTPUT_DIR = "data/output"
-_SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
-_SUPPORTED_TYPES = ["unspecific", "specific"]
+DEFAULT_OUTPUT_DIR = "data/output"
+SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
+SUPPORTED_TYPES = ["unspecific", "specific"]
 
 
 # ── Chargement ──────────────────────────────────────────────────────────────
@@ -41,23 +26,10 @@ _SUPPORTED_TYPES = ["unspecific", "specific"]
 
 def load_run_results(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
 ) -> dict[str, list[dict]]:
     """
     Charge tous les fichiers JSONL de résultats d'un run.
-
-    Parameters
-    ----------
-    run_id : str
-        Identifiant du run (ex: "run_20260519_054344_513e07").
-    output_dir : str
-        Répertoire racine contenant les résultats (défaut: "data/output").
-
-    Returns
-    -------
-    dict[str, list[dict]]
-        Dictionnaire { "fr_unspecific": [...], "en_specific": [...], ... }
-        où chaque valeur est la liste des résultats (id, prompt, answer).
     """
     run_path = Path(output_dir) / run_id
     if not run_path.exists():
@@ -78,30 +50,23 @@ def load_run_results(
     return results
 
 
-# ── Helpers privés ───────────────────────────────────────────────────────────
-
-
-def _count_words(text: str) -> int:
+def count_words(text: str) -> int:
     """Compte le nombre de mots dans un texte."""
     return len(text.split()) if text.strip() else 0
 
+def is_empty(answer: str) -> bool:
+    """Retourne True si la réponse contient moins de 3 mots."""
+    return (not is_error(answer)) and count_words(answer.strip()) < 3
 
-def _is_empty(answer: str) -> bool:
-    """Retourne True si la réponse contient moins de 3 mots (hors erreur)."""
-    return (not _is_error(answer)) and _count_words(answer.strip()) < 3
-
-
-def _is_error(answer: str) -> bool:
+def is_error(answer: str) -> bool:
     """Retourne True si la réponse est une erreur pipeline (préfixe ERROR:)."""
     return answer.strip().startswith("ERROR:")
 
 
-# ── Statistiques de base ─────────────────────────────────────────────────────
-
-
+# Statistiques de base
 def compute_basic_stats(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
 ) -> dict:
     """
     Calcule des statistiques quantitatives sur toutes les réponses d'un run.
@@ -111,25 +76,6 @@ def compute_basic_stats(
     - Longueur moyenne en mots et en caractères
     - Taux de réponses vides (< 3 mots)
     - Taux d'erreurs pipeline ("ERROR: …")
-
-    Returns
-    -------
-    dict
-        Statistiques par clé ``"lang_type"`` + clé ``"global"`` agrégée.
-
-    Exemple
-    -------
-    {
-        "fr_unspecific": {
-            "total": 101,
-            "avg_words": 25.3,
-            "avg_chars": 142.1,
-            "empty_rate": 0.0,
-            "error_rate": 0.02
-        },
-        ...
-        "global": { ... }
-    }
     """
     all_results = load_run_results(run_id, output_dir)
     stats: dict[str, dict] = {}
@@ -145,11 +91,11 @@ def compute_basic_stats(
 
         for item in items:
             answer = item.get("answer", "")
-            word_counts.append(_count_words(answer))
+            word_counts.append(count_words(answer))
             char_counts.append(len(answer))
-            if _is_error(answer):
+            if is_error(answer):
                 error_count += 1
-            elif _is_empty(answer):
+            elif is_empty(answer):
                 empty_count += 1
 
         n = len(items)
@@ -182,13 +128,11 @@ def compute_basic_stats(
     return stats
 
 
-# ── Comparaison de deux runs ─────────────────────────────────────────────────
-
-
+# Comparaison de deux runs
 def compare_runs(
     run_id_a: str,
     run_id_b: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
 ) -> dict:
     """
     Compare deux runs sur les métriques quantitatives.
@@ -202,27 +146,6 @@ def compare_runs(
         Run de référence (ex: baseline).
     run_id_b : str
         Run à comparer (ex: variante empathetic_synthesis).
-
-    Returns
-    -------
-    dict
-        {
-            "run_a": "...", "run_b": "...",
-            "files": {
-                "fr_unspecific": {
-                    "common_ids": 101,
-                    "only_in_a": 0,
-                    "only_in_b": 0,
-                    "avg_words_a": 25.3,
-                    "avg_words_b": 31.7,
-                    "delta_avg_words": 6.4,
-                    "error_rate_a": 0.0,
-                    "error_rate_b": 0.0,
-                    "delta_error_rate": 0.0
-                },
-                ...
-            }
-        }
     """
     results_a = load_run_results(run_id_a, output_dir)
     results_b = load_run_results(run_id_b, output_dir)
@@ -240,11 +163,11 @@ def compare_runs(
         ids_a = {item["id"] for item in items_a}
         ids_b = {item["id"] for item in items_b}
 
-        words_a = [_count_words(i["answer"]) for i in items_a]
-        words_b = [_count_words(i["answer"]) for i in items_b]
+        words_a = [count_words(i["answer"]) for i in items_a]
+        words_b = [count_words(i["answer"]) for i in items_b]
 
-        errors_a = sum(1 for i in items_a if _is_error(i["answer"]))
-        errors_b = sum(1 for i in items_b if _is_error(i["answer"]))
+        errors_a = sum(1 for i in items_a if is_error(i["answer"]))
+        errors_b = sum(1 for i in items_b if is_error(i["answer"]))
 
         avg_a = round(sum(words_a) / len(words_a), 2) if words_a else 0
         avg_b = round(sum(words_b) / len(words_b), 2) if words_b else 0
@@ -266,9 +189,7 @@ def compare_runs(
     return comparison
 
 
-# ── Fusion de deux rapports quantitatifs ────────────────────────────────────
-
-
+# Fusion de deux rapports quantitatifs
 def merge_stats(stats_a: dict, stats_b: dict) -> dict:
     """
     Fusionne les statistiques de deux runs en un seul dict.
@@ -278,18 +199,6 @@ def merge_stats(stats_a: dict, stats_b: dict) -> dict:
 
     Utilisé pour afficher à la fois les fichiers *unspecific* et *specific*
     lorsque les deux types sont répartis sur deux runs distincts.
-
-    Parameters
-    ----------
-    stats_a : dict
-        Résultat de ``compute_basic_stats()`` pour le run principal.
-    stats_b : dict
-        Résultat de ``compute_basic_stats()`` pour le run secondaire.
-
-    Returns
-    -------
-    dict
-        Stats fusionnées avec ``"global"`` recalculé.
     """
     merged: dict[str, dict] = {}
 
@@ -339,19 +248,14 @@ def merge_stats(stats_a: dict, stats_b: dict) -> dict:
     return merged
 
 
-# ── Rapport complet ──────────────────────────────────────────────────────────
-
-
+# Rapport complet
 def generate_report(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     save: bool = True,
 ) -> dict:
     """
     Génère un rapport d'analyse quantitative complet pour un run.
-
-    Sauvegarde optionnellement le résultat dans
-    ``data/output/{run_id}/analysis_quantitative.json``.
 
     Parameters
     ----------
@@ -361,11 +265,6 @@ def generate_report(
         Répertoire racine des résultats.
     save : bool
         Si True (défaut), sauvegarde le rapport en JSON.
-
-    Returns
-    -------
-    dict
-        Rapport complet (statistiques par fichier + stats globales).
     """
     stats = compute_basic_stats(run_id, output_dir)
 

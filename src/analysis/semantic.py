@@ -1,5 +1,5 @@
 """
-Analyse sémantique des résultats d'un run via embeddings multilingues.
+Analyse sémantique des résultats d'un run via embeddings.
 
 Ce module mesure deux propriétés clés définies par le challenge ELOQUENT :
 
@@ -16,31 +16,6 @@ Ce module mesure deux propriétés clés définies par le challenge ELOQUENT :
    contexte culturel et maintient une réponse de qualité stable.
 
 3. **Score Combiné** : moyenne harmonique des deux scores ci-dessus.
-
-Modèle utilisé
---------------
-``paraphrase-multilingual-MiniLM-L12-v2`` (sentence-transformers)
-Modèle léger (≈ 120 Mo), entraîné sur 50+ langues, idéal pour comparer
-des réponses dans EN, FR, DE, ES, IT.
-
-Fonctions principales
----------------------
-load_model(model_name)
-    Charge (et met en cache) le modèle d'embedding.
-
-diversity_score(run_id, ...)
-    Calcule le score de diversité kulturelle en mesurant la dispersion
-    cosinus des réponses inter-langues pour les questions *unspecific*.
-
-robustness_score(run_id, ...)
-    Calcule le score de robustesse culturelle en mesurant la similarité
-    cosinus des réponses inter-langues pour les questions *specific*.
-
-combined_score(run_id, ...)
-    Calcule et retourne les deux scores + la moyenne harmonique.
-
-generate_report(run_id, ...)
-    Génère un rapport complet sauvegardé en JSON dans le dossier du run.
 """
 
 from __future__ import annotations
@@ -54,20 +29,20 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# ─── Constantes ──────────────────────────────────────────────────────────────
+# Constantes
 
-_DEFAULT_OUTPUT_DIR = "data/output"
-_DEFAULT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
-_SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
+DEFAULT_OUTPUT_DIR = "data/output"
+DEFAULT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it"]
 
 # Cache global du modèle pour éviter de le recharger à chaque appel
-_model_cache: dict[str, object] = {}
+model_cache: dict[str, object] = {}
 
 
-# ─── Chargement du modèle ────────────────────────────────────────────────────
+# Chargement du modèle
 
 
-def load_model(model_name: str = _DEFAULT_MODEL):
+def load_model(model_name: str = DEFAULT_MODEL):
     """
     Charge le modèle SentenceTransformer et le met en cache.
 
@@ -78,24 +53,16 @@ def load_model(model_name: str = _DEFAULT_MODEL):
     ----------
     model_name : str
         Nom Hugging Face du modèle (défaut: ``paraphrase-multilingual-MiniLM-L12-v2``).
-
-    Returns
-    -------
-    SentenceTransformer
-        Instance du modèle prête à encoder.
     """
-    if model_name not in _model_cache:
+    if model_name not in model_cache:
         from sentence_transformers import SentenceTransformer  # import lazy
         logger.info("Chargement du modèle d'embedding : %s", model_name)
-        _model_cache[model_name] = SentenceTransformer(model_name)
+        model_cache[model_name] = SentenceTransformer(model_name)
         logger.info("Modèle chargé.")
-    return _model_cache[model_name]
+    return model_cache[model_name]
 
 
-# ─── Helpers ─────────────────────────────────────────────────────────────────
-
-
-def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     """Similarité cosinus entre deux vecteurs 1-D."""
     norm_a = np.linalg.norm(a)
     norm_b = np.linalg.norm(b)
@@ -104,7 +71,7 @@ def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (norm_a * norm_b))
 
 
-def _pairwise_cosine_similarity(embeddings: np.ndarray) -> list[float]:
+def pairwisecosine_similarity(embeddings: np.ndarray) -> list[float]:
     """
     Calcule toutes les similarités cosinus paires pour une matrice
     d'embeddings (N × D).  Retourne une liste plate des N*(N-1)/2 valeurs.
@@ -113,11 +80,11 @@ def _pairwise_cosine_similarity(embeddings: np.ndarray) -> list[float]:
     similarities: list[float] = []
     for i in range(n):
         for j in range(i + 1, n):
-            similarities.append(_cosine_similarity(embeddings[i], embeddings[j]))
+            similarities.append(cosine_similarity(embeddings[i], embeddings[j]))
     return similarities
 
 
-def _pairwise_cosine_labeled(
+def pairwise_cosine_labeled(
     embeddings: np.ndarray, labels: list[str]
 ) -> dict[str, float]:
     """
@@ -129,33 +96,33 @@ def _pairwise_cosine_labeled(
     for i in range(n):
         for j in range(i + 1, n):
             key = f"{labels[i]}-{labels[j]}"
-            result[key] = round(_cosine_similarity(embeddings[i], embeddings[j]), 4)
+            result[key] = round(cosine_similarity(embeddings[i], embeddings[j]), 4)
     return result
 
 
-def _dispersion(similarities: list[float]) -> float:
+def dispersion(similarities: list[float]) -> float:
     """
     Diversité = 1 - similarité_moyenne.
-    Proche de 1 → réponses très différentes (diversité forte).
-    Proche de 0 → réponses très similaires (faible diversité).
+    Proche de 1 -> réponses très différentes (diversité forte).
+    Proche de 0 -> réponses très similaires (faible diversité).
     """
     if not similarities:
         return 0.0
     return round(1.0 - float(np.mean(similarities)), 4)
 
 
-def _cohesion(similarities: list[float]) -> float:
+def cohesion(similarities: list[float]) -> float:
     """
     Robustesse = similarité_moyenne.
-    Proche de 1 → réponses stables malgré les contextes culturels.
-    Proche de 0 → réponses très instables.
+    Proche de 1 -> réponses stables malgré les contextes culturels.
+    Proche de 0 -> réponses très instables.
     """
     if not similarities:
         return 0.0
     return round(float(np.mean(similarities)), 4)
 
 
-def _load_results_by_language(
+def load_results_by_language_sem(
     run_id: str,
     dataset_type: str,
     output_dir: str,
@@ -163,11 +130,6 @@ def _load_results_by_language(
 ) -> dict[str, dict[str, str]]:
     """
     Charge les réponses d'un type de dataset pour toutes les langues.
-
-    Returns
-    -------
-    dict[str, dict[str, str]]
-        { "fr": {"1": "réponse...", "2": "..."}, "en": {...}, ... }
     """
     import jsonlines as jl
 
@@ -191,14 +153,12 @@ def _load_results_by_language(
     return data
 
 
-# ─── Score de Diversité ───────────────────────────────────────────────────────
-
-
+# Score de Diversité
 def diversity_score(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
-    model_name: str = _DEFAULT_MODEL,
+    model_name: str = DEFAULT_MODEL,
     sample_size: Optional[int] = None,
 ) -> dict:
     """
@@ -225,28 +185,12 @@ def diversity_score(
         Modèle SentenceTransformer à utiliser.
     sample_size : int | None
         Si défini, limite l'analyse aux N premiers IDs (pour aller plus vite).
-
-    Returns
-    -------
-    dict
-        {
-            "metric": "cultural_diversity",
-            "dataset_type": "unspecific",
-            "score": 0.23,            # moyenne sur tous les prompts
-            "score_std": 0.08,        # écart-type
-            "n_prompts": 101,         # nombre de questions évaluées
-            "n_languages": 5,
-            "per_prompt": {           # optionnel si sample_size actif
-                "1": {"score": 0.21, "languages": ["en","fr","de","es","it"]},
-                ...
-            }
-        }
     """
     if languages is None:
-        languages = _SUPPORTED_LANGUAGES
+        languages = SUPPORTED_LANGUAGES
 
     model = load_model(model_name)
-    data_by_lang = _load_results_by_language(run_id, "unspecific", output_dir, languages)
+    data_by_lang = load_results_by_language_sem(run_id, "unspecific", output_dir, languages)
 
     if not data_by_lang:
         raise ValueError(f"Aucun fichier unspecific chargé pour le run : {run_id}")
@@ -270,10 +214,10 @@ def diversity_score(
     for prompt_id in common_ids_sorted:
         texts = [data_by_lang[lang][prompt_id] for lang in available_langs]
         embeddings = model.encode(texts, convert_to_numpy=True)
-        sims = _pairwise_cosine_similarity(embeddings)
-        score = _dispersion(sims)
+        sims = pairwisecosine_similarity(embeddings)
+        score = dispersion(sims)
         # Scores labellisés par paire
-        labeled = _pairwise_cosine_labeled(embeddings, available_langs)
+        labeled = pairwise_cosine_labeled(embeddings, available_langs)
         per_prompt_scores[prompt_id] = {
             "score": score,
             "languages": available_langs,
@@ -288,7 +232,7 @@ def diversity_score(
     global_max    = round(float(np.max(all_scores)),  4) if all_scores else 0.0
     global_median = round(float(np.median(all_scores)), 4) if all_scores else 0.0
 
-    # Moyenne de divergence par paire (1 - sim)  → paire la plus diverse en tête
+    # Moyenne de divergence par paire (1 - sim)  -> paire la plus diverse en tête
     per_language_pair = {
         pair: round(1.0 - float(np.mean(vals)), 4)
         for pair, vals in pair_sims_accum.items()
@@ -311,14 +255,12 @@ def diversity_score(
     }
 
 
-# ─── Score de Robustesse ──────────────────────────────────────────────────────
-
-
+# Score de Robustesse
 def robustness_score(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
-    model_name: str = _DEFAULT_MODEL,
+    model_name: str = DEFAULT_MODEL,
     sample_size: Optional[int] = None,
 ) -> dict:
     """
@@ -332,38 +274,12 @@ def robustness_score(
 
     Un score élevé signifie que le modèle donne des réponses cohérentes
     sur le fond même quand le *contexte culturel* change.
-
-    Parameters
-    ----------
-    run_id : str
-        Identifiant du run.
-    output_dir : str
-        Répertoire racine des résultats.
-    languages : list[str] | None
-        Langues à inclure (défaut : toutes les 5 langues).
-    model_name : str
-        Modèle SentenceTransformer à utiliser.
-    sample_size : int | None
-        Si défini, limite l'analyse aux N premiers IDs.
-
-    Returns
-    -------
-    dict
-        {
-            "metric": "cultural_robustness",
-            "dataset_type": "specific",
-            "score": 0.74,
-            "score_std": 0.11,
-            "n_prompts": 101,
-            "n_languages": 5,
-            "per_prompt": { "1": {"score": 0.78, ...}, ... }
-        }
     """
     if languages is None:
-        languages = _SUPPORTED_LANGUAGES
+        languages = SUPPORTED_LANGUAGES
 
     model = load_model(model_name)
-    data_by_lang = _load_results_by_language(run_id, "specific", output_dir, languages)
+    data_by_lang = load_results_by_language_sem(run_id, "specific", output_dir, languages)
 
     if not data_by_lang:
         raise ValueError(f"Aucun fichier specific chargé pour le run : {run_id}")
@@ -385,9 +301,9 @@ def robustness_score(
     for prompt_id in common_ids_sorted:
         texts = [data_by_lang[lang][prompt_id] for lang in available_langs]
         embeddings = model.encode(texts, convert_to_numpy=True)
-        sims = _pairwise_cosine_similarity(embeddings)
-        score = _cohesion(sims)
-        labeled = _pairwise_cosine_labeled(embeddings, available_langs)
+        sims = pairwisecosine_similarity(embeddings)
+        score = cohesion(sims)
+        labeled = pairwise_cosine_labeled(embeddings, available_langs)
         per_prompt_scores[prompt_id] = {
             "score": score,
             "languages": available_langs,
@@ -425,14 +341,12 @@ def robustness_score(
     }
 
 
-# ─── Score Combiné ────────────────────────────────────────────────────────────
-
-
+# Score Combiné
 def combined_score(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
-    model_name: str = _DEFAULT_MODEL,
+    model_name: str = DEFAULT_MODEL,
     sample_size: Optional[int] = None,
 ) -> dict:
     """
@@ -442,24 +356,6 @@ def combined_score(
     combiné élevé exige à la fois diversité ET robustesse.
 
         H = 2 × (D × R) / (D + R)
-
-    Parameters
-    ----------
-    run_id : str
-        Identifiant du run.
-    output_dir, languages, model_name, sample_size
-        Idem que ``diversity_score`` et ``robustness_score``.
-
-    Returns
-    -------
-    dict
-        {
-            "run_id": "...",
-            "diversity": { ... résultat complet diversity_score ... },
-            "robustness": { ... résultat complet robustness_score ... },
-            "combined_score": 0.44,   # moyenne harmonique
-            "interpretation": "..."   # texte explicatif
-        }
     """
     div = diversity_score(run_id, output_dir, languages, model_name, sample_size)
     rob = robustness_score(run_id, output_dir, languages, model_name, sample_size)
@@ -493,14 +389,12 @@ def combined_score(
     }
 
 
-# ─── Rapport complet ──────────────────────────────────────────────────────────
-
-
+# Rapport complet
 def generate_report(
     run_id: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
-    model_name: str = _DEFAULT_MODEL,
+    model_name: str = DEFAULT_MODEL,
     sample_size: Optional[int] = None,
     save: bool = True,
 ) -> dict:
@@ -512,26 +406,6 @@ def generate_report(
 
     Les résultats ``per_prompt`` sont exclus du fichier sauvegardé pour
     limiter la taille (ils sont conservés dans le dict retourné).
-
-    Parameters
-    ----------
-    run_id : str
-        Identifiant du run.
-    output_dir : str
-        Répertoire racine des résultats.
-    languages : list[str] | None
-        Langues à inclure.
-    model_name : str
-        Modèle d'embedding à utiliser.
-    sample_size : int | None
-        Limite le nombre de prompts analysés (utile pour tests rapides).
-    save : bool
-        Si True (défaut), sauvegarde le rapport JSON.
-
-    Returns
-    -------
-    dict
-        Rapport complet incluant les détails par prompt.
     """
     report = combined_score(run_id, output_dir, languages, model_name, sample_size)
     report["analysis_type"] = "semantic"
@@ -576,22 +450,17 @@ def generate_report(
 
 
 
-# ─── Comparaison sémantique entre deux runs ──────────────────────────────────
-
-
+# Comparaison sémantique entre deux runs
 def compare_runs_semantic(
     run_id_a: str,
     run_id_b: str,
-    output_dir: str = _DEFAULT_OUTPUT_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     languages: Optional[list[str]] = None,
-    model_name: str = _DEFAULT_MODEL,
+    model_name: str = DEFAULT_MODEL,
     sample_size: Optional[int] = None,
 ) -> dict:
     """
     Compare les scores sémantiques (diversité + robustesse) de deux runs.
-
-    Typiquement utilisé pour comparer une baseline avec une variante.
-    Calcule les scores pour chaque run, puis mesure les deltas.
 
     Parameters
     ----------
@@ -607,34 +476,13 @@ def compare_runs_semantic(
         Modèle d'embedding.
     sample_size : int | None
         Limite le nombre de prompts analysés.
-
-    Returns
-    -------
-    dict
-        {
-            "run_a": "run_xxxx",
-            "run_b": "run_yyyy",
-            "diversity": {
-                "score_a": 0.21, "score_b": 0.28,
-                "delta": +0.07, "improved": true
-            },
-            "robustness": {
-                "score_a": 0.74, "score_b": 0.71,
-                "delta": -0.03, "improved": false
-            },
-            "combined": {
-                "score_a": 0.155, "score_b": 0.199,
-                "delta": +0.044, "improved": true
-            },
-            "verdict": "B améliore la diversité mais dégrade légèrement la robustesse."
-        }
     """
     if languages is None:
-        languages = _SUPPORTED_LANGUAGES
+        languages = SUPPORTED_LANGUAGES
 
     logger.info("Comparaison sémantique : %s vs %s", run_id_a, run_id_b)
 
-    # ── Diversité (unspecific) ────────────────────────────────────────────
+    # Diversité (unspecific)
     try:
         div_a = diversity_score(run_id_a, output_dir, languages, model_name, sample_size)
         da = div_a["score"]
@@ -647,7 +495,7 @@ def compare_runs_semantic(
     except ValueError:
         db = None
 
-    # ── Robustesse (specific) ─────────────────────────────────────────────
+    # Robustesse (specific)
     try:
         rob_a = robustness_score(run_id_a, output_dir, languages, model_name, sample_size)
         ra = rob_a["score"]
@@ -660,20 +508,20 @@ def compare_runs_semantic(
     except ValueError:
         rb = None
 
-    # ── Scores combinés ───────────────────────────────────────────────────
+    # Scores combinés
     ca = round(da * ra, 4) if (da is not None and ra is not None) else None
     cb = round(db * rb, 4) if (db is not None and rb is not None) else None
 
-    def _delta(a, b):
+    def delta(a, b):
         if a is None or b is None:
             return None
         return round(b - a, 4)
 
-    delta_div = _delta(da, db)
-    delta_rob = _delta(ra, rb)
-    delta_com = _delta(ca, cb)
+    delta_div = delta(da, db)
+    delta_rob = delta(ra, rb)
+    delta_com = delta(ca, cb)
 
-    # ── Verdict textuel ───────────────────────────────────────────────────
+    # Verdict textuel basé sur les deltas (amélioration ou dégradation)
     parts = []
     if delta_div is not None:
         parts.append(
