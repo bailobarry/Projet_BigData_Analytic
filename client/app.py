@@ -69,7 +69,8 @@ def display_results(run_id: str, results: dict):
         else:
             rows = [json.loads(line) for line in decoded.splitlines() if line.strip()]
             with st.expander(f"{filename} ({len(rows)} lignes)", expanded=False):
-                st.table(rows)
+                if rows:
+                    auto_df(rows)
 
     zip_bytes = utils.download_submission_zip(run_id)
     download_submission_zip_button(zip_bytes)
@@ -88,14 +89,39 @@ def auto_df(data, max_height: int = 600, min_row_height: int = 36, **kwargs):
     n_rows = len(df)
     height = min(38 + n_rows * min_row_height, max_height)
 
-    # Colonnes de texte long → largeur "large" pour éviter le découpage
+    # Colonnes de texte long -> largeur "large" pour éviter le découpage
     wide_cols = {"answer", "reason", "Réponse", "Raison", "Fichier",
                   "strongest_contrast", "weakest_contrast",
-                  "best_response_lang", "worst_response_lang"}
+                  "best_response_lang", "worst_response_lang", "Prompt ID",
+                  "Gagnant", "Dimension"}
     col_config = {}
     for col in df.columns:
-        if col in wide_cols or df[col].dtype == object and df[col].str.len().mean() > 40:
-            col_config[col] = st.column_config.TextColumn(col, width="large")
+        # Déterminer la longueur max du contenu dans la colonne
+        if df[col].dtype == object:
+            max_len = df[col].astype(str).str.len().max() if len(df) > 0 else 0
+            avg_len = df[col].astype(str).str.len().mean() if len(df) > 0 else 0
+            
+            # Configurer la largeur en fonction du contenu
+            if col in wide_cols or avg_len > 40 or max_len > 100:
+                # Colonnes très larges : utiliser "large" pour le texte long
+                col_config[col] = st.column_config.TextColumn(
+                    col, 
+                    width="large",
+                    help=f"Longueur max: {int(max_len)} caractères"
+                )
+            elif avg_len > 20 or max_len > 50:
+                # Colonnes moyennes : utiliser "medium"
+                col_config[col] = st.column_config.TextColumn(
+                    col, 
+                    width="medium",
+                    help=f"Longueur max: {int(max_len)} caractères"
+                )
+            else:
+                # Colonnes courtes : laisser Streamlit décider
+                col_config[col] = st.column_config.TextColumn(col, width=None)
+        elif pd.api.types.is_numeric_dtype(df[col]):
+            # Colonnes numériques : largeur small par défaut
+            col_config[col] = st.column_config.NumberColumn(col, width="small")
 
     st.dataframe(
         df,
