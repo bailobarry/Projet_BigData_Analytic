@@ -130,7 +130,7 @@ def compare_runs(
     }
     if dataset_type is not None:
         payload["dataset_type"] = dataset_type
-    response = httpx.post(f"{API_URL}/runs/compare", json=payload)
+    response = httpx.post(f"{API_URL}/runs/compare", json=payload, timeout=300.0)
     response.raise_for_status()
     return response.json()
 

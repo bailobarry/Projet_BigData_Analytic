@@ -113,7 +113,11 @@ class LLMJudge:
         self.model = model
         self.delay = request_delay
         self.enable_thinking = enable_thinking
-        self.client = openai_pkg.OpenAI(api_key=key, base_url=GROQ_BASE_URL)
+        self.client = openai_pkg.OpenAI(
+            api_key=key,
+            base_url=GROQ_BASE_URL,
+            timeout=120.0  # 2 minutes de timeout
+        )
         
         logger.info(
             "LLMJudge initialisé : model=%s | thinking=%s",
@@ -123,7 +127,7 @@ class LLMJudge:
     
     def call_judge(self, user_prompt: str) -> dict:
         """Appelle l'API juge, parse le JSON, gère 429/503 avec backoff."""
-        from openai import InternalServerError, RateLimitError
+        from openai import InternalServerError, RateLimitError, APITimeoutError
         from openai.types.chat import ChatCompletionMessageParam
         messages: list[ChatCompletionMessageParam] = [
             {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
@@ -142,6 +146,7 @@ class LLMJudge:
         
         for attempt in range(1, max_attempts + 1):
             try:
+                logger.info("LLM Judge appel API (tentative %d/%d)...", attempt, max_attempts)
                 response = self.client.chat.completions.create(**call_kwargs)
                 raw = response.choices[0].message.content or ""
                 time.sleep(self.delay)
@@ -152,6 +157,18 @@ class LLMJudge:
                     return json.loads(json_match.group())
                 logger.warning("Judge response without valid JSON: %s", raw_clean[:200])
                 return {"score": 0, "reason": f"Parsing failed: {raw_clean[:100]}"}
+            except APITimeoutError as exc:
+                last_error = exc
+                logger.warning(
+                    "Timeout judge (attempt %d/%d) - Le modèle prend trop de temps à répondre. "
+                    "Augmentez le timeout ou réduisez la longueur des réponses : %s",
+                    attempt, max_attempts, exc,
+                )
+                if attempt < max_attempts:
+                    wait = 10.0
+                    logger.info("Nouvelle tentative dans %.1fs...", wait)
+                    time.sleep(wait)
+                continue
             except RateLimitError as exc:
                 last_error = exc
                 suggested = parse_retry_after(str(exc))
