@@ -747,7 +747,7 @@ def show_analysis_form(preselected_run_id: str | None = None):
     default_idx = run_ids.index(preselected_run_id) if preselected_run_id in run_ids else 0
 
     selected_main = st.selectbox(
-        "Run à analyser :",
+        "Run à analyser pour la diversité (fichier un_specific) :",
         options=run_ids,
         format_func=lambda rid: run_labels[run_ids.index(rid)],
         index=default_idx,
