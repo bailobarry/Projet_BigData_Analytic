@@ -1,0 +1,32 @@
+{
+  "run_id": "llama_temperature_1",
+  "created_at": "2026-05-05T19:34:45.703969+00:00",
+  "description": "Non deterministe",
+  "provider": {
+    "type": "groq",
+    "model": "llama-3.3-70b-versatile",
+    "ollama_host": "http://localhost:11434"
+  },
+  "generation": {
+    "temperature": 1.0,
+    "max_tokens": 256,
+    "top_p": 1.0,
+    "seed": 42
+  },
+  "pipeline": {
+    "input_dir": "data/input",
+    "output_dir": "data/output",
+    "languages": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "it"
+    ],
+    "dataset_types": [
+      "unspecific"
+    ],
+    "request_delay": 0.0,
+    "system_prompt": null
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "team": "Master MIAGE Toulouse",
+  "system": "ELOQUENT-Cultural-Pipeline",
+  "model": "llama-3.3-70b-versatile",
+  "submissionid": "llama_temperature_1",
+  "date": "2026-05-05",
+  "label": "eloquent-2026-cultural",
+  "languages": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "it"
+  ],
+  "modifications": {
+    "system_prompt": null,
+    "prompt_prefix_english": null,
+    "prompt_suffix_english": null,
+    "generation_params": {
+      "do_sample": true,
+      "temperature": 1.0,
+      "max_new_tokens": 256,
+      "top_p": 1.0,
+      "seed": 42
+    },
+    "notes": "Non deterministe"
+  }
+}

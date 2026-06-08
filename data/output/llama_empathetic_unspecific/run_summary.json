@@ -1,0 +1,9 @@
+{
+  "run_id": "run_20260506_182505_ad8456",
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile",
+  "total_prompts": 505,
+  "total_errors": 0,
+  "duration_seconds": 1215.83,
+  "finished_at": "2026-05-06T18:45:26.568855+00:00"
+}

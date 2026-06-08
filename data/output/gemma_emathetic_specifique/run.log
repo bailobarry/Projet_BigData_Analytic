@@ -1,0 +1,648 @@
+[2026-05-20 08:00:31] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-20 08:00:31] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-20 08:00:31] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-20 08:00:31] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-20 08:00:31] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-20 08:00:31] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-20 08:00:31] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-20 08:00:31] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-20 08:00:33] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-20 08:00:33] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-20 08:00:33] INFO     pipeline – ────────────────────────────────────────
+[2026-05-20 08:00:33] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-20 08:00:33] INFO     pipeline –   4140 prompts chargés
+[2026-05-20 08:00:33] INFO     pipeline –   4140 prompts à traiter
+[2026-05-20 08:19:13] INFO     pipeline –   Progression : 50/4140  (erreurs: 0)
+[2026-05-20 08:36:54] INFO     pipeline –   Progression : 100/4140  (erreurs: 0)
+[2026-05-20 08:54:13] INFO     pipeline –   Progression : 150/4140  (erreurs: 0)
+[2026-05-20 09:12:29] INFO     pipeline –   Progression : 200/4140  (erreurs: 0)
+[2026-05-20 09:28:06] INFO     pipeline –   Progression : 250/4140  (erreurs: 0)
+[2026-05-20 09:43:23] INFO     pipeline –   Progression : 300/4140  (erreurs: 0)
+[2026-05-20 09:59:53] INFO     pipeline –   Progression : 350/4140  (erreurs: 0)
+[2026-05-20 10:16:22] INFO     pipeline –   Progression : 400/4140  (erreurs: 0)
+[2026-05-20 10:31:42] INFO     pipeline –   Progression : 450/4140  (erreurs: 0)
+[2026-05-20 10:47:40] INFO     pipeline –   Progression : 500/4140  (erreurs: 0)
+[2026-05-20 11:05:36] INFO     pipeline –   Progression : 550/4140  (erreurs: 0)
+[2026-05-20 11:22:36] INFO     pipeline –   Progression : 600/4140  (erreurs: 0)
+[2026-05-20 11:39:59] INFO     pipeline –   Progression : 650/4140  (erreurs: 0)
+[2026-05-20 11:57:20] INFO     pipeline –   Progression : 700/4140  (erreurs: 0)
+[2026-05-20 12:16:25] INFO     pipeline –   Progression : 750/4140  (erreurs: 0)
+[2026-05-20 12:35:15] INFO     pipeline –   Progression : 800/4140  (erreurs: 0)
+[2026-05-20 12:53:57] INFO     pipeline –   Progression : 850/4140  (erreurs: 0)
+[2026-05-20 13:13:15] INFO     pipeline –   Progression : 900/4140  (erreurs: 0)
+[2026-05-20 13:30:18] INFO     pipeline –   Progression : 950/4140  (erreurs: 0)
+[2026-05-20 13:49:42] INFO     pipeline –   Progression : 1000/4140  (erreurs: 0)
+[2026-05-20 14:09:29] INFO     pipeline –   Progression : 1050/4140  (erreurs: 0)
+[2026-05-20 14:24:16] INFO     pipeline –   Progression : 1100/4140  (erreurs: 0)
+[2026-05-20 14:39:22] INFO     pipeline –   Progression : 1150/4140  (erreurs: 0)
+[2026-05-20 14:54:37] INFO     pipeline –   Progression : 1200/4140  (erreurs: 0)
+[2026-05-20 15:10:53] INFO     pipeline –   Progression : 1250/4140  (erreurs: 0)
+[2026-05-20 15:33:02] INFO     pipeline –   Progression : 1300/4140  (erreurs: 0)
+[2026-05-20 15:54:04] INFO     pipeline –   Progression : 1350/4140  (erreurs: 0)
+[2026-05-20 16:17:49] INFO     pipeline –   Progression : 1400/4140  (erreurs: 0)
+[2026-05-20 16:40:03] INFO     pipeline –   Progression : 1450/4140  (erreurs: 0)
+[2026-05-20 17:03:26] INFO     pipeline –   Progression : 1500/4140  (erreurs: 0)
+[2026-05-20 17:22:16] INFO     pipeline –   Progression : 1550/4140  (erreurs: 0)
+[2026-05-20 17:40:33] INFO     pipeline –   Progression : 1600/4140  (erreurs: 0)
+[2026-05-20 17:59:27] INFO     pipeline –   Progression : 1650/4140  (erreurs: 0)
+[2026-05-20 18:17:57] INFO     pipeline –   Progression : 1700/4140  (erreurs: 0)
+[2026-05-20 18:35:02] INFO     pipeline –   Progression : 1750/4140  (erreurs: 0)
+[2026-05-20 18:52:25] INFO     pipeline –   Progression : 1800/4140  (erreurs: 0)
+[2026-05-20 19:09:22] INFO     pipeline –   Progression : 1850/4140  (erreurs: 0)
+[2026-05-20 19:27:09] INFO     pipeline –   Progression : 1900/4140  (erreurs: 0)
+[2026-05-20 19:44:56] INFO     pipeline –   Progression : 1950/4140  (erreurs: 0)
+[2026-05-20 20:01:44] INFO     pipeline –   Progression : 2000/4140  (erreurs: 0)
+[2026-05-20 20:17:40] INFO     pipeline –   Progression : 2050/4140  (erreurs: 0)
+[2026-05-20 20:33:22] INFO     pipeline –   Progression : 2100/4140  (erreurs: 0)
+[2026-05-20 20:49:22] INFO     pipeline –   Progression : 2150/4140  (erreurs: 0)
+[2026-05-20 21:04:45] INFO     pipeline –   Progression : 2200/4140  (erreurs: 0)
+[2026-05-20 21:23:56] INFO     pipeline –   Progression : 2250/4140  (erreurs: 0)
+[2026-05-20 21:41:47] INFO     pipeline –   Progression : 2300/4140  (erreurs: 0)
+[2026-05-20 21:58:39] INFO     pipeline –   Progression : 2350/4140  (erreurs: 0)
+[2026-05-20 22:18:19] INFO     pipeline –   Progression : 2400/4140  (erreurs: 0)
+[2026-05-20 22:35:43] INFO     pipeline –   Progression : 2450/4140  (erreurs: 0)
+[2026-05-20 22:52:07] INFO     pipeline –   Progression : 2500/4140  (erreurs: 0)
+[2026-05-20 23:08:29] INFO     pipeline –   Progression : 2550/4140  (erreurs: 0)
+[2026-05-20 23:25:31] INFO     pipeline –   Progression : 2600/4140  (erreurs: 0)
+[2026-05-20 23:48:24] INFO     pipeline –   Progression : 2650/4140  (erreurs: 0)
+[2026-05-21 00:08:23] INFO     pipeline –   Progression : 2700/4140  (erreurs: 0)
+[2026-05-21 00:24:20] INFO     pipeline –   Progression : 2750/4140  (erreurs: 0)
+[2026-05-21 00:41:03] INFO     pipeline –   Progression : 2800/4140  (erreurs: 0)
+[2026-05-21 01:09:18] INFO     pipeline –   Progression : 2850/4140  (erreurs: 0)
+[2026-05-21 01:34:53] INFO     pipeline –   Progression : 2900/4140  (erreurs: 0)
+[2026-05-21 01:54:56] INFO     pipeline –   Progression : 2950/4140  (erreurs: 0)
+[2026-05-21 02:12:44] INFO     pipeline –   Progression : 3000/4140  (erreurs: 0)
+[2026-05-21 02:30:35] INFO     pipeline –   Progression : 3050/4140  (erreurs: 0)
+[2026-05-21 02:50:21] INFO     pipeline –   Progression : 3100/4140  (erreurs: 0)
+[2026-05-21 03:08:23] INFO     pipeline –   Progression : 3150/4140  (erreurs: 0)
+[2026-05-21 03:25:58] INFO     pipeline –   Progression : 3200/4140  (erreurs: 0)
+[2026-05-21 03:45:11] INFO     pipeline –   Progression : 3250/4140  (erreurs: 0)
+[2026-05-21 04:00:59] INFO     pipeline –   Progression : 3300/4140  (erreurs: 0)
+[2026-05-21 04:17:15] INFO     pipeline –   Progression : 3350/4140  (erreurs: 0)
+[2026-05-21 04:38:06] INFO     pipeline –   Progression : 3400/4140  (erreurs: 0)
+[2026-05-21 04:58:33] INFO     pipeline –   Progression : 3450/4140  (erreurs: 0)
+[2026-05-21 05:16:25] INFO     pipeline –   Progression : 3500/4140  (erreurs: 0)
+[2026-05-21 05:32:10] INFO     pipeline –   Progression : 3550/4140  (erreurs: 0)
+[2026-05-21 05:47:17] INFO     pipeline –   Progression : 3600/4140  (erreurs: 0)
+[2026-05-21 06:03:29] INFO     pipeline –   Progression : 3650/4140  (erreurs: 0)
+[2026-05-21 06:24:13] INFO     pipeline –   Progression : 3700/4140  (erreurs: 0)
+[2026-05-21 06:42:59] INFO     pipeline –   Progression : 3750/4140  (erreurs: 0)
+[2026-05-21 06:58:52] INFO     pipeline –   Progression : 3800/4140  (erreurs: 0)
+[2026-05-21 07:15:49] INFO     pipeline –   Progression : 3850/4140  (erreurs: 0)
+[2026-05-21 07:32:04] INFO     pipeline –   Progression : 3900/4140  (erreurs: 0)
+[2026-05-21 07:49:28] INFO     pipeline –   Progression : 3950/4140  (erreurs: 0)
+[2026-05-21 08:07:05] INFO     pipeline –   Progression : 4000/4140  (erreurs: 0)
+[2026-05-21 08:22:30] INFO     pipeline –   Progression : 4050/4140  (erreurs: 0)
+[2026-05-21 08:38:35] INFO     pipeline –   Progression : 4100/4140  (erreurs: 0)
+[2026-05-21 08:52:42] INFO     pipeline –   Progression : 4140/4140  (erreurs: 0)
+[2026-05-21 08:52:42] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-21 08:52:42] INFO     pipeline – ────────────────────────────────────────
+[2026-05-21 08:52:42] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-21 08:52:42] INFO     pipeline –   4104 prompts chargés
+[2026-05-21 08:52:42] INFO     pipeline –   4104 prompts à traiter
+[2026-05-21 09:16:08] INFO     pipeline –   Progression : 50/4104  (erreurs: 0)
+[2026-05-21 09:37:44] INFO     pipeline –   Progression : 100/4104  (erreurs: 0)
+[2026-05-21 09:59:05] INFO     pipeline –   Progression : 150/4104  (erreurs: 0)
+[2026-05-21 10:20:42] INFO     pipeline –   Progression : 200/4104  (erreurs: 0)
+[2026-05-21 10:42:28] INFO     pipeline –   Progression : 250/4104  (erreurs: 0)
+[2026-05-21 11:05:42] INFO     pipeline –   Progression : 300/4104  (erreurs: 0)
+[2026-05-21 11:27:30] INFO     pipeline –   Progression : 350/4104  (erreurs: 0)
+[2026-05-21 11:49:00] INFO     pipeline –   Progression : 400/4104  (erreurs: 0)
+[2026-05-21 12:10:49] INFO     pipeline –   Progression : 450/4104  (erreurs: 0)
+[2026-05-21 12:32:13] INFO     pipeline –   Progression : 500/4104  (erreurs: 0)
+[2026-05-21 12:56:18] INFO     pipeline –   Progression : 550/4104  (erreurs: 0)
+[2026-05-21 13:19:25] INFO     pipeline –   Progression : 600/4104  (erreurs: 0)
+[2026-05-21 13:39:39] INFO     pipeline –   Progression : 650/4104  (erreurs: 0)
+[2026-05-21 14:00:55] INFO     pipeline –   Progression : 700/4104  (erreurs: 0)
+[2026-05-21 14:23:05] INFO     pipeline –   Progression : 750/4104  (erreurs: 0)
+[2026-05-21 14:45:15] INFO     pipeline –   Progression : 800/4104  (erreurs: 0)
+[2026-05-21 15:07:33] INFO     pipeline –   Progression : 850/4104  (erreurs: 0)
+[2026-05-21 15:30:03] INFO     pipeline –   Progression : 900/4104  (erreurs: 0)
+[2026-05-21 15:52:26] INFO     pipeline –   Progression : 950/4104  (erreurs: 0)
+[2026-05-21 16:16:33] INFO     pipeline –   Progression : 1000/4104  (erreurs: 0)
+[2026-05-21 16:38:24] INFO     pipeline –   Progression : 1050/4104  (erreurs: 0)
+[2026-05-21 16:58:37] INFO     pipeline –   Progression : 1100/4104  (erreurs: 0)
+[2026-05-21 17:18:49] INFO     pipeline –   Progression : 1150/4104  (erreurs: 0)
+[2026-05-21 17:37:57] INFO     pipeline –   Progression : 1200/4104  (erreurs: 0)
+[2026-05-21 17:59:20] INFO     pipeline –   Progression : 1250/4104  (erreurs: 0)
+[2026-05-21 18:22:22] INFO     pipeline –   Progression : 1300/4104  (erreurs: 0)
+[2026-05-21 18:44:02] INFO     pipeline –   Progression : 1350/4104  (erreurs: 0)
+[2026-05-21 19:06:56] INFO     pipeline –   Progression : 1400/4104  (erreurs: 0)
+[2026-05-21 19:30:02] INFO     pipeline –   Progression : 1450/4104  (erreurs: 0)
+[2026-05-21 19:53:03] INFO     pipeline –   Progression : 1500/4104  (erreurs: 0)
+[2026-05-21 20:19:14] INFO     pipeline –   Progression : 1550/4104  (erreurs: 0)
+[2026-05-21 20:43:13] INFO     pipeline –   Progression : 1600/4104  (erreurs: 0)
+[2026-05-21 21:07:50] INFO     pipeline –   Progression : 1650/4104  (erreurs: 0)
+[2026-05-21 21:31:22] INFO     pipeline –   Progression : 1700/4104  (erreurs: 0)
+[2026-05-21 21:54:06] INFO     pipeline –   Progression : 1750/4104  (erreurs: 0)
+[2026-05-21 22:16:49] INFO     pipeline –   Progression : 1800/4104  (erreurs: 0)
+[2026-05-21 22:38:13] INFO     pipeline –   Progression : 1850/4104  (erreurs: 0)
+[2026-05-21 23:00:50] INFO     pipeline –   Progression : 1900/4104  (erreurs: 0)
+[2026-05-21 23:23:05] INFO     pipeline –   Progression : 1950/4104  (erreurs: 0)
+[2026-05-21 23:44:34] INFO     pipeline –   Progression : 2000/4104  (erreurs: 0)
+[2026-05-22 00:06:14] INFO     pipeline –   Progression : 2050/4104  (erreurs: 0)
+[2026-05-22 00:29:01] INFO     pipeline –   Progression : 2100/4104  (erreurs: 0)
+[2026-05-22 00:50:57] INFO     pipeline –   Progression : 2150/4104  (erreurs: 0)
+[2026-05-22 01:14:26] INFO     pipeline –   Progression : 2200/4104  (erreurs: 0)
+[2026-05-22 01:38:35] INFO     pipeline –   Progression : 2250/4104  (erreurs: 0)
+[2026-05-22 02:02:12] INFO     pipeline –   Progression : 2300/4104  (erreurs: 0)
+[2026-05-22 02:27:31] INFO     pipeline –   Progression : 2350/4104  (erreurs: 0)
+[2026-05-22 02:52:16] INFO     pipeline –   Progression : 2400/4104  (erreurs: 0)
+[2026-05-22 03:16:40] INFO     pipeline –   Progression : 2450/4104  (erreurs: 0)
+[2026-05-22 03:39:05] INFO     pipeline –   Progression : 2500/4104  (erreurs: 0)
+[2026-05-22 03:58:54] INFO     pipeline –   Progression : 2550/4104  (erreurs: 0)
+[2026-05-22 04:25:38] INFO     pipeline –   Progression : 2600/4104  (erreurs: 0)
+[2026-05-22 04:50:06] INFO     pipeline –   Progression : 2650/4104  (erreurs: 0)
+[2026-05-22 05:12:32] INFO     pipeline –   Progression : 2700/4104  (erreurs: 0)
+[2026-05-22 05:35:22] INFO     pipeline –   Progression : 2750/4104  (erreurs: 0)
+[2026-05-22 05:59:51] INFO     pipeline –   Progression : 2800/4104  (erreurs: 0)
+[2026-05-22 06:23:20] INFO     pipeline –   Progression : 2850/4104  (erreurs: 0)
+[2026-05-22 06:48:05] INFO     pipeline –   Progression : 2900/4104  (erreurs: 0)
+[2026-05-22 07:12:56] INFO     pipeline –   Progression : 2950/4104  (erreurs: 0)
+[2026-05-22 07:36:55] INFO     pipeline –   Progression : 3000/4104  (erreurs: 0)
+[2026-05-22 07:59:20] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-22 07:59:20] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-22 07:59:20] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-22 07:59:20] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-22 07:59:20] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-22 07:59:20] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-22 07:59:20] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-22 07:59:20] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-22 07:59:22] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-22 07:59:22] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-22 07:59:22] INFO     pipeline – ────────────────────────────────────────
+[2026-05-22 07:59:22] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-22 07:59:22] INFO     pipeline –   4140 prompts chargés
+[2026-05-22 07:59:22] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-22 07:59:22] INFO     pipeline –   0 prompts à traiter
+[2026-05-22 07:59:22] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-22 07:59:22] INFO     pipeline – ────────────────────────────────────────
+[2026-05-22 07:59:22] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-22 07:59:22] INFO     pipeline –   4104 prompts chargés
+[2026-05-22 07:59:22] INFO     pipeline –   2998 prompts déjà traités (reprise)
+[2026-05-22 07:59:22] INFO     pipeline –   1106 prompts à traiter
+[2026-05-22 08:26:43] INFO     pipeline –   Progression : 50/1106  (erreurs: 0)
+[2026-05-22 08:51:38] INFO     pipeline –   Progression : 100/1106  (erreurs: 0)
+[2026-05-22 09:15:15] INFO     pipeline –   Progression : 150/1106  (erreurs: 0)
+[2026-05-22 09:38:54] INFO     pipeline –   Progression : 200/1106  (erreurs: 0)
+[2026-05-22 10:01:09] INFO     pipeline –   Progression : 250/1106  (erreurs: 0)
+[2026-05-22 10:22:32] INFO     pipeline –   Progression : 300/1106  (erreurs: 0)
+[2026-05-22 10:45:23] INFO     pipeline –   Progression : 350/1106  (erreurs: 0)
+[2026-05-22 11:08:24] INFO     pipeline –   Progression : 400/1106  (erreurs: 0)
+[2026-05-22 11:33:48] INFO     pipeline –   Progression : 450/1106  (erreurs: 0)
+[2026-05-22 11:56:54] INFO     pipeline –   Progression : 500/1106  (erreurs: 0)
+[2026-05-22 12:18:11] INFO     pipeline –   Progression : 550/1106  (erreurs: 0)
+[2026-05-22 12:39:20] INFO     pipeline –   Progression : 600/1106  (erreurs: 0)
+[2026-05-22 13:06:35] INFO     pipeline –   Progression : 650/1106  (erreurs: 0)
+[2026-05-22 13:33:18] INFO     pipeline –   Progression : 700/1106  (erreurs: 0)
+[2026-05-22 13:56:36] INFO     pipeline –   Progression : 750/1106  (erreurs: 0)
+[2026-05-22 14:19:58] INFO     pipeline –   Progression : 800/1106  (erreurs: 0)
+[2026-05-22 14:42:31] INFO     pipeline –   Progression : 850/1106  (erreurs: 0)
+[2026-05-22 15:06:22] INFO     pipeline –   Progression : 900/1106  (erreurs: 0)
+[2026-05-22 15:29:28] INFO     pipeline –   Progression : 950/1106  (erreurs: 0)
+[2026-05-22 15:50:33] INFO     pipeline –   Progression : 1000/1106  (erreurs: 0)
+[2026-05-22 16:11:40] INFO     pipeline –   Progression : 1050/1106  (erreurs: 0)
+[2026-05-22 16:35:55] INFO     pipeline –   Progression : 1100/1106  (erreurs: 0)
+[2026-05-22 16:38:44] INFO     pipeline –   Progression : 1106/1106  (erreurs: 0)
+[2026-05-22 16:38:44] INFO     pipeline – System prompt actif : 'Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage verste…'
+[2026-05-22 16:38:44] INFO     pipeline – ────────────────────────────────────────
+[2026-05-22 16:38:44] INFO     pipeline – [3/5] Traitement de de_specific.jsonl
+[2026-05-22 16:38:44] INFO     pipeline –   4140 prompts chargés
+[2026-05-22 16:38:44] INFO     pipeline –   4140 prompts à traiter
+[2026-05-22 16:59:58] INFO     pipeline –   Progression : 50/4140  (erreurs: 0)
+[2026-05-22 17:19:54] INFO     pipeline –   Progression : 100/4140  (erreurs: 0)
+[2026-05-22 17:41:41] INFO     pipeline –   Progression : 150/4140  (erreurs: 0)
+[2026-05-22 18:04:21] INFO     pipeline –   Progression : 200/4140  (erreurs: 0)
+[2026-05-22 18:27:23] INFO     pipeline –   Progression : 250/4140  (erreurs: 0)
+[2026-05-22 18:50:57] INFO     pipeline –   Progression : 300/4140  (erreurs: 0)
+[2026-05-22 19:13:52] INFO     pipeline –   Progression : 350/4140  (erreurs: 0)
+[2026-05-22 19:36:46] INFO     pipeline –   Progression : 400/4140  (erreurs: 0)
+[2026-05-22 19:59:49] INFO     pipeline –   Progression : 450/4140  (erreurs: 0)
+[2026-05-22 20:21:04] INFO     pipeline –   Progression : 500/4140  (erreurs: 0)
+[2026-05-22 20:42:55] INFO     pipeline –   Progression : 550/4140  (erreurs: 0)
+[2026-05-22 21:04:49] INFO     pipeline –   Progression : 600/4140  (erreurs: 0)
+[2026-05-22 21:28:05] INFO     pipeline –   Progression : 650/4140  (erreurs: 0)
+[2026-05-22 21:49:33] INFO     pipeline –   Progression : 700/4140  (erreurs: 0)
+[2026-05-22 22:10:11] INFO     pipeline –   Progression : 750/4140  (erreurs: 0)
+[2026-05-22 22:31:39] INFO     pipeline –   Progression : 800/4140  (erreurs: 0)
+[2026-05-22 22:53:13] INFO     pipeline –   Progression : 850/4140  (erreurs: 0)
+[2026-05-22 23:14:04] INFO     pipeline –   Progression : 900/4140  (erreurs: 0)
+[2026-05-22 23:35:51] INFO     pipeline –   Progression : 950/4140  (erreurs: 0)
+[2026-05-22 23:58:45] INFO     pipeline –   Progression : 1000/4140  (erreurs: 0)
+[2026-05-23 00:23:20] INFO     pipeline –   Progression : 1050/4140  (erreurs: 0)
+[2026-05-23 00:42:24] INFO     pipeline –   Progression : 1100/4140  (erreurs: 0)
+[2026-05-23 01:01:32] INFO     pipeline –   Progression : 1150/4140  (erreurs: 0)
+[2026-05-23 01:20:55] INFO     pipeline –   Progression : 1200/4140  (erreurs: 0)
+[2026-05-23 01:43:32] INFO     pipeline –   Progression : 1250/4140  (erreurs: 0)
+[2026-05-23 02:07:41] INFO     pipeline –   Progression : 1300/4140  (erreurs: 0)
+[2026-05-23 02:32:56] INFO     pipeline –   Progression : 1350/4140  (erreurs: 0)
+[2026-05-23 02:58:33] INFO     pipeline –   Progression : 1400/4140  (erreurs: 0)
+[2026-05-23 03:24:13] INFO     pipeline –   Progression : 1450/4140  (erreurs: 0)
+[2026-05-23 03:48:43] INFO     pipeline –   Progression : 1500/4140  (erreurs: 0)
+[2026-05-23 04:11:57] INFO     pipeline –   Progression : 1550/4140  (erreurs: 0)
+[2026-05-23 04:33:55] INFO     pipeline –   Progression : 1600/4140  (erreurs: 0)
+[2026-05-23 04:55:41] INFO     pipeline –   Progression : 1650/4140  (erreurs: 0)
+[2026-05-23 05:17:30] INFO     pipeline –   Progression : 1700/4140  (erreurs: 0)
+[2026-05-23 05:38:32] INFO     pipeline –   Progression : 1750/4140  (erreurs: 0)
+[2026-05-23 05:59:58] INFO     pipeline –   Progression : 1800/4140  (erreurs: 0)
+[2026-05-23 06:20:42] INFO     pipeline –   Progression : 1850/4140  (erreurs: 0)
+[2026-05-23 06:42:26] INFO     pipeline –   Progression : 1900/4140  (erreurs: 0)
+[2026-05-23 07:03:20] INFO     pipeline –   Progression : 1950/4140  (erreurs: 0)
+[2026-05-23 07:23:47] INFO     pipeline –   Progression : 2000/4140  (erreurs: 0)
+[2026-05-23 07:42:48] INFO     pipeline –   Progression : 2050/4140  (erreurs: 0)
+[2026-05-23 08:02:46] INFO     pipeline –   Progression : 2100/4140  (erreurs: 0)
+[2026-05-23 08:24:37] INFO     pipeline –   Progression : 2150/4140  (erreurs: 0)
+[2026-05-23 08:48:31] INFO     pipeline –   Progression : 2200/4140  (erreurs: 0)
+[2026-05-23 09:11:21] INFO     pipeline –   Progression : 2250/4140  (erreurs: 0)
+[2026-05-23 09:33:33] INFO     pipeline –   Progression : 2300/4140  (erreurs: 0)
+[2026-05-23 09:58:44] INFO     pipeline –   Progression : 2350/4140  (erreurs: 0)
+[2026-05-23 10:23:42] INFO     pipeline –   Progression : 2400/4140  (erreurs: 0)
+[2026-05-23 10:46:54] INFO     pipeline –   Progression : 2450/4140  (erreurs: 0)
+[2026-05-23 11:08:50] INFO     pipeline –   Progression : 2500/4140  (erreurs: 0)
+[2026-05-23 11:30:45] INFO     pipeline –   Progression : 2550/4140  (erreurs: 0)
+[2026-05-23 11:55:15] INFO     pipeline –   Progression : 2600/4140  (erreurs: 0)
+[2026-05-23 12:18:08] INFO     pipeline –   Progression : 2650/4140  (erreurs: 0)
+[2026-05-23 12:40:02] INFO     pipeline –   Progression : 2700/4140  (erreurs: 0)
+[2026-05-23 13:01:30] INFO     pipeline –   Progression : 2750/4140  (erreurs: 0)
+[2026-05-23 13:24:47] INFO     pipeline –   Progression : 2800/4140  (erreurs: 0)
+[2026-05-23 13:45:55] INFO     pipeline –   Progression : 2850/4140  (erreurs: 0)
+[2026-05-23 14:06:59] INFO     pipeline –   Progression : 2900/4140  (erreurs: 0)
+[2026-05-23 14:29:36] INFO     pipeline –   Progression : 2950/4140  (erreurs: 0)
+[2026-05-23 14:51:25] INFO     pipeline –   Progression : 3000/4140  (erreurs: 0)
+[2026-05-23 15:13:59] INFO     pipeline –   Progression : 3050/4140  (erreurs: 0)
+[2026-05-23 15:39:45] INFO     pipeline –   Progression : 3100/4140  (erreurs: 0)
+[2026-05-23 16:03:31] INFO     pipeline –   Progression : 3150/4140  (erreurs: 0)
+[2026-05-23 16:24:31] INFO     pipeline –   Progression : 3200/4140  (erreurs: 0)
+[2026-05-23 16:44:26] INFO     pipeline –   Progression : 3250/4140  (erreurs: 0)
+[2026-05-23 17:05:56] INFO     pipeline –   Progression : 3300/4140  (erreurs: 0)
+[2026-05-23 17:29:51] INFO     pipeline –   Progression : 3350/4140  (erreurs: 0)
+[2026-05-23 17:50:42] INFO     pipeline –   Progression : 3400/4140  (erreurs: 0)
+[2026-05-23 18:11:24] INFO     pipeline –   Progression : 3450/4140  (erreurs: 0)
+[2026-05-23 18:32:43] INFO     pipeline –   Progression : 3500/4140  (erreurs: 0)
+[2026-05-23 18:52:43] INFO     pipeline –   Progression : 3550/4140  (erreurs: 0)
+[2026-05-23 19:13:20] INFO     pipeline –   Progression : 3600/4140  (erreurs: 0)
+[2026-05-23 19:36:00] INFO     pipeline –   Progression : 3650/4140  (erreurs: 0)
+[2026-05-23 19:57:41] INFO     pipeline –   Progression : 3700/4140  (erreurs: 0)
+[2026-05-23 20:19:04] INFO     pipeline –   Progression : 3750/4140  (erreurs: 0)
+[2026-05-23 20:39:52] INFO     pipeline –   Progression : 3800/4140  (erreurs: 0)
+[2026-05-23 21:02:18] INFO     pipeline –   Progression : 3850/4140  (erreurs: 0)
+[2026-05-23 21:25:13] INFO     pipeline –   Progression : 3900/4140  (erreurs: 0)
+[2026-05-23 21:46:51] INFO     pipeline –   Progression : 3950/4140  (erreurs: 0)
+[2026-05-23 22:08:06] INFO     pipeline –   Progression : 4000/4140  (erreurs: 0)
+[2026-05-23 22:30:05] INFO     pipeline –   Progression : 4050/4140  (erreurs: 0)
+[2026-05-23 22:54:22] INFO     pipeline –   Progression : 4100/4140  (erreurs: 0)
+[2026-05-23 23:14:34] INFO     pipeline –   Progression : 4140/4140  (erreurs: 0)
+[2026-05-23 23:14:34] INFO     pipeline – System prompt actif : 'Eres un asesor atento que comprende el factor humano detrás de cada pregunta.…'
+[2026-05-23 23:14:34] INFO     pipeline – ────────────────────────────────────────
+[2026-05-23 23:14:34] INFO     pipeline – [4/5] Traitement de es_specific.jsonl
+[2026-05-23 23:14:34] INFO     pipeline –   4140 prompts chargés
+[2026-05-23 23:14:34] INFO     pipeline –   4140 prompts à traiter
+[2026-05-23 23:32:08] INFO     pipeline –   Progression : 50/4140  (erreurs: 0)
+[2026-05-23 23:48:23] INFO     pipeline –   Progression : 100/4140  (erreurs: 0)
+[2026-05-24 00:05:12] INFO     pipeline –   Progression : 150/4140  (erreurs: 0)
+[2026-05-24 00:22:28] INFO     pipeline –   Progression : 200/4140  (erreurs: 0)
+[2026-05-24 00:38:34] INFO     pipeline –   Progression : 250/4140  (erreurs: 0)
+[2026-05-24 00:54:32] INFO     pipeline –   Progression : 300/4140  (erreurs: 0)
+[2026-05-24 01:10:37] INFO     pipeline –   Progression : 350/4140  (erreurs: 0)
+[2026-05-24 01:25:58] INFO     pipeline –   Progression : 400/4140  (erreurs: 0)
+[2026-05-24 01:42:14] INFO     pipeline –   Progression : 450/4140  (erreurs: 0)
+[2026-05-24 01:58:58] INFO     pipeline –   Progression : 500/4140  (erreurs: 0)
+[2026-05-24 02:18:20] INFO     pipeline –   Progression : 550/4140  (erreurs: 0)
+[2026-05-24 02:34:43] INFO     pipeline –   Progression : 600/4140  (erreurs: 0)
+[2026-05-24 02:52:16] INFO     pipeline –   Progression : 650/4140  (erreurs: 0)
+[2026-05-24 03:08:03] INFO     pipeline –   Progression : 700/4140  (erreurs: 0)
+[2026-05-24 03:25:15] INFO     pipeline –   Progression : 750/4140  (erreurs: 0)
+[2026-05-24 03:42:27] INFO     pipeline –   Progression : 800/4140  (erreurs: 0)
+[2026-05-24 03:59:36] INFO     pipeline –   Progression : 850/4140  (erreurs: 0)
+[2026-05-24 04:16:36] INFO     pipeline –   Progression : 900/4140  (erreurs: 0)
+[2026-05-24 04:32:23] INFO     pipeline –   Progression : 950/4140  (erreurs: 0)
+[2026-05-24 04:51:55] INFO     pipeline –   Progression : 1000/4140  (erreurs: 0)
+[2026-05-24 05:11:52] INFO     pipeline –   Progression : 1050/4140  (erreurs: 0)
+[2026-05-24 05:26:08] INFO     pipeline –   Progression : 1100/4140  (erreurs: 0)
+[2026-05-24 05:41:23] INFO     pipeline –   Progression : 1150/4140  (erreurs: 0)
+[2026-05-24 05:56:15] INFO     pipeline –   Progression : 1200/4140  (erreurs: 0)
+[2026-05-24 06:11:36] INFO     pipeline –   Progression : 1250/4140  (erreurs: 0)
+[2026-05-24 06:31:47] INFO     pipeline –   Progression : 1300/4140  (erreurs: 0)
+[2026-05-24 16:15:59] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-24 16:15:59] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-24 16:15:59] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-24 16:15:59] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-24 16:15:59] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-24 16:15:59] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-24 16:15:59] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-24 16:15:59] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-24 16:16:01] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-24 16:16:01] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-24 16:16:01] INFO     pipeline – ────────────────────────────────────────
+[2026-05-24 16:16:01] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-24 16:16:01] INFO     pipeline –   4140 prompts chargés
+[2026-05-24 16:16:01] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-24 16:16:01] INFO     pipeline –   0 prompts à traiter
+[2026-05-24 16:16:01] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-24 16:16:01] INFO     pipeline – ────────────────────────────────────────
+[2026-05-24 16:16:01] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-24 16:16:01] INFO     pipeline –   4104 prompts chargés
+[2026-05-25 14:04:11] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-25 14:04:11] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-25 14:04:11] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-25 14:04:11] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-25 14:04:11] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-25 14:04:11] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-25 14:04:11] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-25 14:04:11] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-25 14:04:14] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-25 14:04:14] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-25 14:04:14] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 14:04:14] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-25 14:04:14] INFO     pipeline –   4140 prompts chargés
+[2026-05-25 14:04:14] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-25 14:04:14] INFO     pipeline –   0 prompts à traiter
+[2026-05-25 14:04:14] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-25 14:04:14] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 14:04:14] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-25 14:04:14] INFO     pipeline –   4104 prompts chargés
+[2026-05-25 16:04:34] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-25 16:04:34] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-25 16:04:34] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-25 16:04:34] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-25 16:04:34] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-25 16:04:34] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-25 16:04:34] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-25 16:04:34] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-25 16:04:36] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-25 16:04:36] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-25 16:04:36] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 16:04:36] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-25 16:04:36] INFO     pipeline –   4140 prompts chargés
+[2026-05-25 16:04:36] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-25 16:04:36] INFO     pipeline –   0 prompts à traiter
+[2026-05-25 16:04:36] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-25 16:04:36] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 16:04:36] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-25 16:04:36] INFO     pipeline –   4104 prompts chargés
+[2026-05-25 16:25:37] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-25 16:25:37] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-25 16:25:37] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-25 16:25:37] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-25 16:25:37] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-25 16:25:37] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-25 16:25:37] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-25 16:25:37] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-25 16:25:38] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-25 16:25:38] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-25 16:25:38] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 16:25:38] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-25 16:25:39] INFO     pipeline –   4140 prompts chargés
+[2026-05-25 16:25:39] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-25 16:25:39] INFO     pipeline –   0 prompts à traiter
+[2026-05-25 16:25:39] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-25 16:25:39] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 16:25:39] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-25 16:25:39] INFO     pipeline –   4104 prompts chargés
+[2026-05-25 16:25:39] INFO     pipeline –   4102 prompts déjà traités (reprise)
+[2026-05-25 16:25:39] INFO     pipeline –   2 prompts à traiter
+[2026-05-25 16:28:28] INFO     pipeline –   Progression : 2/2  (erreurs: 0)
+[2026-05-25 16:28:28] INFO     pipeline – System prompt actif : 'Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage verste…'
+[2026-05-25 16:28:28] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 16:28:28] INFO     pipeline – [3/5] Traitement de de_specific.jsonl
+[2026-05-25 16:28:28] INFO     pipeline –   4140 prompts chargés
+[2026-05-25 16:28:28] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-25 16:28:28] INFO     pipeline –   0 prompts à traiter
+[2026-05-25 16:28:28] INFO     pipeline – System prompt actif : 'Eres un asesor atento que comprende el factor humano detrás de cada pregunta.…'
+[2026-05-25 16:28:28] INFO     pipeline – ────────────────────────────────────────
+[2026-05-25 16:28:28] INFO     pipeline – [4/5] Traitement de es_specific.jsonl
+[2026-05-25 16:28:28] INFO     pipeline –   4140 prompts chargés
+[2026-05-25 16:28:28] INFO     pipeline –   1324 prompts déjà traités (reprise)
+[2026-05-25 16:28:28] INFO     pipeline –   2816 prompts à traiter
+[2026-05-25 16:59:41] INFO     pipeline –   Progression : 50/2816  (erreurs: 0)
+[2026-05-25 17:26:03] INFO     pipeline –   Progression : 100/2816  (erreurs: 0)
+[2026-05-25 17:56:12] INFO     pipeline –   Progression : 150/2816  (erreurs: 0)
+[2026-05-25 18:25:13] INFO     pipeline –   Progression : 200/2816  (erreurs: 0)
+[2026-05-25 18:58:05] INFO     pipeline –   Progression : 250/2816  (erreurs: 0)
+[2026-05-25 19:24:13] INFO     pipeline –   Progression : 300/2816  (erreurs: 0)
+[2026-05-25 20:23:30] INFO     pipeline –   Progression : 350/2816  (erreurs: 0)
+[2026-05-25 20:40:18] INFO     pipeline –   Progression : 400/2816  (erreurs: 0)
+[2026-05-25 20:57:36] INFO     pipeline –   Progression : 450/2816  (erreurs: 0)
+[2026-05-25 21:13:48] INFO     pipeline –   Progression : 500/2816  (erreurs: 0)
+[2026-05-25 21:28:32] INFO     pipeline –   Progression : 550/2816  (erreurs: 0)
+[2026-05-25 21:48:38] INFO     pipeline –   Progression : 600/2816  (erreurs: 0)
+[2026-05-25 22:07:24] INFO     pipeline –   Progression : 650/2816  (erreurs: 0)
+[2026-05-25 22:22:38] INFO     pipeline –   Progression : 700/2816  (erreurs: 0)
+[2026-05-25 22:38:31] INFO     pipeline –   Progression : 750/2816  (erreurs: 0)
+[2026-05-25 22:55:40] INFO     pipeline –   Progression : 800/2816  (erreurs: 0)
+[2026-05-25 23:11:00] INFO     pipeline –   Progression : 850/2816  (erreurs: 0)
+[2026-05-25 23:28:19] INFO     pipeline –   Progression : 900/2816  (erreurs: 0)
+[2026-05-25 23:46:18] INFO     pipeline –   Progression : 950/2816  (erreurs: 0)
+[2026-05-26 00:04:15] INFO     pipeline –   Progression : 1000/2816  (erreurs: 0)
+[2026-05-26 00:23:28] INFO     pipeline –   Progression : 1050/2816  (erreurs: 0)
+[2026-05-26 00:42:08] INFO     pipeline –   Progression : 1100/2816  (erreurs: 0)
+[2026-05-26 00:58:34] INFO     pipeline –   Progression : 1150/2816  (erreurs: 0)
+[2026-05-26 01:15:55] INFO     pipeline –   Progression : 1200/2816  (erreurs: 0)
+[2026-05-26 01:33:09] INFO     pipeline –   Progression : 1250/2816  (erreurs: 0)
+[2026-05-26 01:52:54] INFO     pipeline –   Progression : 1300/2816  (erreurs: 0)
+[2026-05-26 02:13:48] INFO     pipeline –   Progression : 1350/2816  (erreurs: 0)
+[2026-05-26 02:30:53] INFO     pipeline –   Progression : 1400/2816  (erreurs: 0)
+[2026-05-26 02:49:00] INFO     pipeline –   Progression : 1450/2816  (erreurs: 0)
+[2026-05-26 03:08:18] INFO     pipeline –   Progression : 1500/2816  (erreurs: 0)
+[2026-05-26 03:25:39] INFO     pipeline –   Progression : 1550/2816  (erreurs: 0)
+[2026-05-26 03:43:46] INFO     pipeline –   Progression : 1600/2816  (erreurs: 0)
+[2026-05-26 04:02:02] INFO     pipeline –   Progression : 1650/2816  (erreurs: 0)
+[2026-05-26 04:18:10] INFO     pipeline –   Progression : 1700/2816  (erreurs: 0)
+[2026-05-26 04:36:54] INFO     pipeline –   Progression : 1750/2816  (erreurs: 0)
+[2026-05-26 04:58:03] INFO     pipeline –   Progression : 1800/2816  (erreurs: 0)
+[2026-05-26 05:17:35] INFO     pipeline –   Progression : 1850/2816  (erreurs: 0)
+[2026-05-26 05:37:49] INFO     pipeline –   Progression : 1900/2816  (erreurs: 0)
+[2026-05-26 05:57:56] INFO     pipeline –   Progression : 1950/2816  (erreurs: 0)
+[2026-05-26 06:18:56] INFO     pipeline –   Progression : 2000/2816  (erreurs: 0)
+[2026-05-26 06:37:33] INFO     pipeline –   Progression : 2050/2816  (erreurs: 0)
+[2026-05-26 06:57:41] INFO     pipeline –   Progression : 2100/2816  (erreurs: 0)
+[2026-05-26 07:18:13] INFO     pipeline –   Progression : 2150/2816  (erreurs: 0)
+[2026-05-26 07:35:17] INFO     pipeline –   Progression : 2200/2816  (erreurs: 0)
+[2026-05-26 07:51:37] INFO     pipeline –   Progression : 2250/2816  (erreurs: 0)
+[2026-05-26 08:06:57] INFO     pipeline –   Progression : 2300/2816  (erreurs: 0)
+[2026-05-26 08:26:13] INFO     pipeline –   Progression : 2350/2816  (erreurs: 0)
+[2026-05-26 08:44:39] INFO     pipeline –   Progression : 2400/2816  (erreurs: 0)
+[2026-05-26 09:10:02] INFO     pipeline –   Progression : 2450/2816  (erreurs: 0)
+[2026-05-26 09:31:32] INFO     pipeline –   Progression : 2500/2816  (erreurs: 0)
+[2026-05-26 09:48:54] INFO     pipeline –   Progression : 2550/2816  (erreurs: 0)
+[2026-05-26 10:08:14] INFO     pipeline –   Progression : 2600/2816  (erreurs: 0)
+[2026-05-26 10:25:44] INFO     pipeline –   Progression : 2650/2816  (erreurs: 0)
+[2026-05-26 10:43:05] INFO     pipeline –   Progression : 2700/2816  (erreurs: 0)
+[2026-05-26 11:01:26] INFO     pipeline –   Progression : 2750/2816  (erreurs: 0)
+[2026-05-26 11:20:36] INFO     pipeline –   Progression : 2800/2816  (erreurs: 0)
+[2026-05-26 11:26:47] INFO     pipeline –   Progression : 2816/2816  (erreurs: 0)
+[2026-05-26 11:26:47] INFO     pipeline – System prompt actif : 'Sei un consulente premuroso che comprende l'elemento umano dietro ogni domanda.…'
+[2026-05-26 11:26:47] INFO     pipeline – ────────────────────────────────────────
+[2026-05-26 11:26:47] INFO     pipeline – [5/5] Traitement de it_specific.jsonl
+[2026-05-26 11:26:47] INFO     pipeline –   4140 prompts chargés
+[2026-05-26 11:26:47] INFO     pipeline –   4140 prompts à traiter
+[2026-05-26 11:46:53] INFO     pipeline –   Progression : 50/4140  (erreurs: 0)
+[2026-05-26 12:05:40] INFO     pipeline –   Progression : 100/4140  (erreurs: 0)
+[2026-05-26 20:23:08] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-26 20:23:08] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-26 20:23:08] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-26 20:23:08] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-26 20:23:08] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-26 20:23:08] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-26 20:23:08] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-26 20:23:08] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-26 20:23:11] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-26 20:23:11] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-26 20:23:11] INFO     pipeline – ────────────────────────────────────────
+[2026-05-26 20:23:11] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-26 20:23:11] INFO     pipeline –   4140 prompts chargés
+[2026-05-26 20:23:11] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-26 20:23:11] INFO     pipeline –   0 prompts à traiter
+[2026-05-26 20:23:11] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-26 20:23:11] INFO     pipeline – ────────────────────────────────────────
+[2026-05-26 20:23:11] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-26 20:23:12] INFO     pipeline –   4104 prompts chargés
+[2026-05-26 20:23:12] INFO     pipeline –   4104 prompts déjà traités (reprise)
+[2026-05-26 20:23:12] INFO     pipeline –   0 prompts à traiter
+[2026-05-26 20:23:12] INFO     pipeline – System prompt actif : 'Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage verste…'
+[2026-05-26 20:23:12] INFO     pipeline – ────────────────────────────────────────
+[2026-05-26 20:23:12] INFO     pipeline – [3/5] Traitement de de_specific.jsonl
+[2026-05-26 20:23:12] INFO     pipeline –   4140 prompts chargés
+[2026-05-26 20:23:12] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-26 20:23:12] INFO     pipeline –   0 prompts à traiter
+[2026-05-26 20:23:12] INFO     pipeline – System prompt actif : 'Eres un asesor atento que comprende el factor humano detrás de cada pregunta.…'
+[2026-05-26 20:23:12] INFO     pipeline – ────────────────────────────────────────
+[2026-05-26 20:23:12] INFO     pipeline – [4/5] Traitement de es_specific.jsonl
+[2026-05-26 20:23:12] INFO     pipeline –   4140 prompts chargés
+[2026-05-26 20:23:13] INFO     pipeline –   4138 prompts déjà traités (reprise)
+[2026-05-26 20:23:13] INFO     pipeline –   2 prompts à traiter
+[2026-05-26 20:25:27] INFO     pipeline –   Progression : 2/2  (erreurs: 0)
+[2026-05-26 20:25:27] INFO     pipeline – System prompt actif : 'Sei un consulente premuroso che comprende l'elemento umano dietro ogni domanda.…'
+[2026-05-26 20:25:27] INFO     pipeline – ────────────────────────────────────────
+[2026-05-26 20:25:27] INFO     pipeline – [5/5] Traitement de it_specific.jsonl
+[2026-05-26 20:25:28] INFO     pipeline –   4140 prompts chargés
+[2026-05-26 20:25:28] INFO     pipeline –   136 prompts déjà traités (reprise)
+[2026-05-26 20:25:28] INFO     pipeline –   4004 prompts à traiter
+[2026-05-26 20:43:46] INFO     pipeline –   Progression : 50/4004  (erreurs: 0)
+[2026-05-26 21:01:05] INFO     pipeline –   Progression : 100/4004  (erreurs: 0)
+[2026-05-26 21:17:23] INFO     pipeline –   Progression : 150/4004  (erreurs: 0)
+[2026-05-26 21:34:29] INFO     pipeline –   Progression : 200/4004  (erreurs: 0)
+[2026-05-26 21:51:59] INFO     pipeline –   Progression : 250/4004  (erreurs: 0)
+[2026-05-26 22:09:05] INFO     pipeline –   Progression : 300/4004  (erreurs: 0)
+[2026-05-26 22:25:46] INFO     pipeline –   Progression : 350/4004  (erreurs: 0)
+[2026-05-26 22:46:09] INFO     pipeline –   Progression : 400/4004  (erreurs: 0)
+[2026-05-26 23:03:57] INFO     pipeline –   Progression : 450/4004  (erreurs: 0)
+[2026-05-26 23:22:52] INFO     pipeline –   Progression : 500/4004  (erreurs: 0)
+[2026-05-26 23:40:41] INFO     pipeline –   Progression : 550/4004  (erreurs: 0)
+[2026-05-26 23:57:57] INFO     pipeline –   Progression : 600/4004  (erreurs: 0)
+[2026-05-27 00:16:18] INFO     pipeline –   Progression : 650/4004  (erreurs: 0)
+[2026-05-27 00:34:05] INFO     pipeline –   Progression : 700/4004  (erreurs: 0)
+[2026-05-27 00:51:17] INFO     pipeline –   Progression : 750/4004  (erreurs: 0)
+[2026-05-27 01:07:09] INFO     pipeline –   Progression : 800/4004  (erreurs: 0)
+[2026-05-27 01:28:04] INFO     pipeline –   Progression : 850/4004  (erreurs: 0)
+[2026-05-27 01:48:51] INFO     pipeline –   Progression : 900/4004  (erreurs: 0)
+[2026-05-27 02:05:53] INFO     pipeline –   Progression : 950/4004  (erreurs: 0)
+[2026-05-27 02:21:02] INFO     pipeline –   Progression : 1000/4004  (erreurs: 0)
+[2026-05-27 02:37:43] INFO     pipeline –   Progression : 1050/4004  (erreurs: 0)
+[2026-05-27 02:53:08] INFO     pipeline –   Progression : 1100/4004  (erreurs: 0)
+[2026-05-27 03:10:12] INFO     pipeline –   Progression : 1150/4004  (erreurs: 0)
+[2026-05-27 03:28:59] INFO     pipeline –   Progression : 1200/4004  (erreurs: 0)
+[2026-05-27 03:50:36] INFO     pipeline –   Progression : 1250/4004  (erreurs: 0)
+[2026-05-27 04:10:07] INFO     pipeline –   Progression : 1300/4004  (erreurs: 0)
+[2026-05-27 04:29:05] INFO     pipeline –   Progression : 1350/4004  (erreurs: 0)
+[2026-05-27 04:49:36] INFO     pipeline –   Progression : 1400/4004  (erreurs: 0)
+[2026-05-27 05:08:21] INFO     pipeline –   Progression : 1450/4004  (erreurs: 0)
+[2026-05-27 05:26:25] INFO     pipeline –   Progression : 1500/4004  (erreurs: 0)
+[2026-05-27 05:44:16] INFO     pipeline –   Progression : 1550/4004  (erreurs: 0)
+[2026-05-27 06:03:20] INFO     pipeline –   Progression : 1600/4004  (erreurs: 0)
+[2026-05-27 06:21:15] INFO     pipeline –   Progression : 1650/4004  (erreurs: 0)
+[2026-05-27 06:40:11] INFO     pipeline –   Progression : 1700/4004  (erreurs: 0)
+[2026-05-27 06:58:03] INFO     pipeline –   Progression : 1750/4004  (erreurs: 0)
+[2026-05-27 07:16:51] INFO     pipeline –   Progression : 1800/4004  (erreurs: 0)
+[2026-05-27 07:35:22] INFO     pipeline –   Progression : 1850/4004  (erreurs: 0)
+[2026-05-27 07:52:31] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260520_060031_563e80\run.log
+[2026-05-27 07:52:31] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-27 07:52:31] INFO     pipeline – DÉBUT DU RUN : run_20260520_060031_563e80
+[2026-05-27 07:52:31] INFO     pipeline – Description  : Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics
+[2026-05-27 07:52:31] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-05-27 07:52:31] INFO     pipeline – Température  : 0.6  |  Seed : 42
+[2026-05-27 07:52:31] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-27 07:52:31] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260520_060031_563e80\config.json
+[2026-05-27 07:52:33] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-05-27 07:52:33] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-27 07:52:33] INFO     pipeline – ────────────────────────────────────────
+[2026-05-27 07:52:33] INFO     pipeline – [1/5] Traitement de en_specific.jsonl
+[2026-05-27 07:52:33] INFO     pipeline –   4140 prompts chargés
+[2026-05-27 07:52:33] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-27 07:52:33] INFO     pipeline –   0 prompts à traiter
+[2026-05-27 07:52:33] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-27 07:52:33] INFO     pipeline – ────────────────────────────────────────
+[2026-05-27 07:52:33] INFO     pipeline – [2/5] Traitement de fr_specific.jsonl
+[2026-05-27 07:52:33] INFO     pipeline –   4104 prompts chargés
+[2026-05-27 07:52:33] INFO     pipeline –   4104 prompts déjà traités (reprise)
+[2026-05-27 07:52:33] INFO     pipeline –   0 prompts à traiter
+[2026-05-27 07:52:33] INFO     pipeline – System prompt actif : 'Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage verste…'
+[2026-05-27 07:52:33] INFO     pipeline – ────────────────────────────────────────
+[2026-05-27 07:52:33] INFO     pipeline – [3/5] Traitement de de_specific.jsonl
+[2026-05-27 07:52:33] INFO     pipeline –   4140 prompts chargés
+[2026-05-27 07:52:33] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-27 07:52:33] INFO     pipeline –   0 prompts à traiter
+[2026-05-27 07:52:33] INFO     pipeline – System prompt actif : 'Eres un asesor atento que comprende el factor humano detrás de cada pregunta.…'
+[2026-05-27 07:52:33] INFO     pipeline – ────────────────────────────────────────
+[2026-05-27 07:52:33] INFO     pipeline – [4/5] Traitement de es_specific.jsonl
+[2026-05-27 07:52:33] INFO     pipeline –   4140 prompts chargés
+[2026-05-27 07:52:34] INFO     pipeline –   4140 prompts déjà traités (reprise)
+[2026-05-27 07:52:34] INFO     pipeline –   0 prompts à traiter
+[2026-05-27 07:52:34] INFO     pipeline – System prompt actif : 'Sei un consulente premuroso che comprende l'elemento umano dietro ogni domanda.…'
+[2026-05-27 07:52:34] INFO     pipeline – ────────────────────────────────────────
+[2026-05-27 07:52:34] INFO     pipeline – [5/5] Traitement de it_specific.jsonl
+[2026-05-27 07:52:34] INFO     pipeline –   4140 prompts chargés
+[2026-05-27 07:52:34] INFO     pipeline –   1994 prompts déjà traités (reprise)
+[2026-05-27 07:52:34] INFO     pipeline –   2146 prompts à traiter
+[2026-05-27 08:13:49] INFO     pipeline –   Progression : 50/2146  (erreurs: 0)
+[2026-05-27 08:35:01] INFO     pipeline –   Progression : 100/2146  (erreurs: 0)
+[2026-05-27 08:51:59] INFO     pipeline –   Progression : 150/2146  (erreurs: 0)
+[2026-05-27 09:11:07] INFO     pipeline –   Progression : 200/2146  (erreurs: 0)
+[2026-05-27 09:29:07] INFO     pipeline –   Progression : 250/2146  (erreurs: 0)
+[2026-05-27 09:47:23] INFO     pipeline –   Progression : 300/2146  (erreurs: 0)
+[2026-05-27 10:07:30] INFO     pipeline –   Progression : 350/2146  (erreurs: 0)
+[2026-05-27 10:28:51] INFO     pipeline –   Progression : 400/2146  (erreurs: 0)
+[2026-05-27 10:47:19] INFO     pipeline –   Progression : 450/2146  (erreurs: 0)
+[2026-05-27 11:05:42] INFO     pipeline –   Progression : 500/2146  (erreurs: 0)
+[2026-05-27 11:23:34] INFO     pipeline –   Progression : 550/2146  (erreurs: 0)
+[2026-05-27 11:41:44] INFO     pipeline –   Progression : 600/2146  (erreurs: 0)
+[2026-05-27 12:02:37] INFO     pipeline –   Progression : 650/2146  (erreurs: 0)
+[2026-05-27 12:22:01] INFO     pipeline –   Progression : 700/2146  (erreurs: 0)
+[2026-05-27 12:41:01] INFO     pipeline –   Progression : 750/2146  (erreurs: 0)
+[2026-05-27 13:01:07] INFO     pipeline –   Progression : 800/2146  (erreurs: 0)
+[2026-05-27 13:19:56] INFO     pipeline –   Progression : 850/2146  (erreurs: 0)
+[2026-05-27 13:39:29] INFO     pipeline –   Progression : 900/2146  (erreurs: 0)
+[2026-05-27 13:59:34] INFO     pipeline –   Progression : 950/2146  (erreurs: 0)
+[2026-05-27 14:19:56] INFO     pipeline –   Progression : 1000/2146  (erreurs: 0)
+[2026-05-27 14:40:29] INFO     pipeline –   Progression : 1050/2146  (erreurs: 0)
+[2026-05-27 14:59:21] INFO     pipeline –   Progression : 1100/2146  (erreurs: 0)
+[2026-05-27 15:16:17] INFO     pipeline –   Progression : 1150/2146  (erreurs: 0)
+[2026-05-27 15:36:51] INFO     pipeline –   Progression : 1200/2146  (erreurs: 0)
+[2026-05-27 15:57:34] INFO     pipeline –   Progression : 1250/2146  (erreurs: 0)
+[2026-05-27 16:16:38] INFO     pipeline –   Progression : 1300/2146  (erreurs: 0)
+[2026-05-27 16:34:42] INFO     pipeline –   Progression : 1350/2146  (erreurs: 0)
+[2026-05-27 16:55:16] INFO     pipeline –   Progression : 1400/2146  (erreurs: 0)
+[2026-05-27 17:17:57] INFO     pipeline –   Progression : 1450/2146  (erreurs: 0)
+[2026-05-27 17:39:08] INFO     pipeline –   Progression : 1500/2146  (erreurs: 0)
+[2026-05-27 17:57:12] INFO     pipeline –   Progression : 1550/2146  (erreurs: 0)
+[2026-05-27 18:15:05] INFO     pipeline –   Progression : 1600/2146  (erreurs: 0)
+[2026-05-27 18:32:26] INFO     pipeline –   Progression : 1650/2146  (erreurs: 0)
+[2026-05-27 18:55:06] INFO     pipeline –   Progression : 1700/2146  (erreurs: 0)
+[2026-05-27 19:17:56] INFO     pipeline –   Progression : 1750/2146  (erreurs: 0)
+[2026-05-27 19:37:02] INFO     pipeline –   Progression : 1800/2146  (erreurs: 0)
+[2026-05-27 19:55:45] INFO     pipeline –   Progression : 1850/2146  (erreurs: 0)
+[2026-05-27 20:14:15] INFO     pipeline –   Progression : 1900/2146  (erreurs: 0)
+[2026-05-27 20:31:40] INFO     pipeline –   Progression : 1950/2146  (erreurs: 0)
+[2026-05-27 20:50:05] INFO     pipeline –   Progression : 2000/2146  (erreurs: 0)
+[2026-05-27 21:08:24] INFO     pipeline –   Progression : 2050/2146  (erreurs: 0)
+[2026-05-27 21:27:34] INFO     pipeline –   Progression : 2100/2146  (erreurs: 0)
+[2026-05-27 21:48:41] INFO     pipeline –   Progression : 2146/2146  (erreurs: 0)
+[2026-05-27 21:48:41] INFO     pipeline –  Résultats dans : data\output\run_20260520_060031_563e80
+[2026-05-27 21:48:41] INFO     pipeline –  Submission ZIP généré : data\output\run_20260520_060031_563e80\submission.zip
+[2026-05-27 21:48:41] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-27 21:48:41] INFO     pipeline – FIN DU RUN : run_20260520_060031_563e80
+[2026-05-27 21:48:41] INFO     pipeline –   Prompts traités : 2146
+[2026-05-27 21:48:41] INFO     pipeline –   Erreurs         : 0
+[2026-05-27 21:48:41] INFO     pipeline –   Durée           : 50168.2 s
+[2026-05-27 21:48:41] INFO     pipeline –   Résultats dans  : data\output\run_20260520_060031_563e80
+[2026-05-27 21:48:41] INFO     pipeline – ════════════════════════════════════════════════════════════

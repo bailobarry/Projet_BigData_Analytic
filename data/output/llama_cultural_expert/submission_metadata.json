@@ -1,0 +1,28 @@
+{
+  "team": "Master MIAGE Toulouse",
+  "system": "ELOQUENT-Cultural-Pipeline",
+  "model": "llama-3.3-70b-versatile",
+  "submissionid": "llama_cultural_expert",
+  "date": "2026-05-05",
+  "label": "eloquent-2026-cultural",
+  "languages": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "it"
+  ],
+  "modifications": {
+    "system_prompt": "You are an expert in local culture, traditions, and regional history.",
+    "prompt_prefix_english": "As a local expert, please answer the following question:",
+    "prompt_suffix_english": "Answer based exclusively on local customs.",
+    "generation_params": {
+      "do_sample": false,
+      "temperature": 0.0,
+      "max_new_tokens": 256,
+      "top_p": 1.0,
+      "seed": 42
+    },
+    "notes": "Variante expert culturel (system prompt, prefix, suffix)"
+  }
+}

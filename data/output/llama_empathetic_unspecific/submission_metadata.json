@@ -1,0 +1,28 @@
+{
+  "team": "Master MIAGE Toulouse",
+  "system": "ELOQUENT-Cultural-Pipeline",
+  "model": "llama-3.3-70b-versatile",
+  "submissionid": "run_20260506_182505_ad8456",
+  "date": "2026-05-06",
+  "label": "eloquent-2026-cultural",
+  "languages": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "it"
+  ],
+  "modifications": {
+    "system_prompt": "You are a thoughtful advisor who understands the human element behind every question.",
+    "prompt_prefix_english": "Consider the sensitive nature of the following situation:",
+    "prompt_suffix_english": "Give a kind and fair piece of advice.",
+    "generation_params": {
+      "do_sample": false,
+      "temperature": 0.0,
+      "max_new_tokens": 256,
+      "top_p": 1.0,
+      "seed": 42
+    },
+    "notes": "Test avec la stratégie empathetic_synthesis"
+  }
+}

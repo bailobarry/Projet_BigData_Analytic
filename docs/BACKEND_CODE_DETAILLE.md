@@ -1,4 +1,4 @@
-# 📚 Guide Complet pour Réécrire le Lot A de Zéro
+# Guide Complet pour Réécrire le Lot A de Zéro
 
 Ce document explique **chaque ligne de code** pour que vous puissiez tout réécrire sans aide.
 
@@ -108,9 +108,9 @@ item = {"id": "1", "prompt": "Que manger ?"}
 Avec Pydantic, Python **vérifie automatiquement** que les données sont correctes :
 ```python
 # AVEC Pydantic (bon) :
-item = PromptItem(id="1", prompt="Que manger ?")  # ✅ OK
-item = PromptItem(id=123, prompt="Que manger ?")  # ❌ Erreur : id doit être str
-item = PromptItem(id="1")  # ❌ Erreur : prompt manquant
+item = PromptItem(id="1", prompt="Que manger ?")  # OK
+item = PromptItem(id=123, prompt="Que manger ?")  # Erreur : id doit être str
+item = PromptItem(id="1")  # Erreur : prompt manquant
 ```
 
 ### À quoi ça sert ?
@@ -193,7 +193,7 @@ item2 = PromptItem(**data)  # ** = décompresse le dict
 
 ## 3. FICHIER `config.py`
 
-**📍 Chemin** : `src/models/config.py`
+** Chemin** : `src/models/config.py`
 
 ### Pourquoi ce fichier ?
 
@@ -441,7 +441,7 @@ class RunConfig(BaseModel):
 
 ## 4. FICHIER `base.py`
 
-**📍 Chemin** : `src/providers/base.py`
+** Chemin** : `src/providers/base.py`
 
 ### Pourquoi ce fichier ?
 
@@ -573,7 +573,7 @@ class LLMProvider(ABC):
 
 ## 5. FICHIER `__init__.py` (providers)
 
-**📍 Chemin** : `src/providers/__init__.py`
+**Chemin** : `src/providers/__init__.py`
 
 ### Pourquoi ce fichier ?
 
@@ -690,7 +690,7 @@ answer = provider.generate("Que manger ?", config.generation)
 
 ## 6. FICHIER `gemini_provider.py`
 
-**📍 Chemin** : `src/providers/gemini_provider.py`
+**Chemin** : `src/providers/gemini_provider.py`
 
 ### Pourquoi ce fichier ?
 
@@ -905,7 +905,7 @@ class GeminiProvider(LLMProvider):
 
 ## 7. FICHIER `mistral_nemo_provider.py`
 
-**📍 Chemin** : `src/providers/mistral_nemo_provider.py`
+**Chemin** : `src/providers/mistral_nemo_provider.py`
 
 ### Pourquoi ce fichier ?
 
@@ -1060,7 +1060,7 @@ class MistralNemoProvider(LLMProvider):
 
 ## 8. FICHIER `system_prompt.py`
 
-**📍 Chemin** : `src/promptings/system_prompt.py`
+**Chemin** : `src/promptings/system_prompt.py`
 
 ### Pourquoi ce fichier ?
 
@@ -1220,7 +1220,7 @@ def apply_prompt_template(
 
 ## 9. FICHIER `logs.py`
 
-**📍 Chemin** : `src/pipelines/logs.py`
+**Chemin** : `src/pipelines/logs.py`
 
 ### Pourquoi ce fichier ?
 
@@ -1360,7 +1360,7 @@ def setup_logging(run_id: str, output_dir: str = "data/output") -> logging.Logge
 
 ## 10. FICHIER `runner.py`
 
-**📍 Chemin** : `src/pipelines/runner.py`
+**Chemin** : `src/pipelines/runner.py`
 
 ### Pourquoi ce fichier ?
 
@@ -1901,7 +1901,7 @@ async def list_providers():
 
 ## 12. FICHIER `run_baseline.py`
 
-**📍 Chemin** : `run_baseline.py` (racine du projet)
+**Chemin** : `run_baseline.py` (racine du projet)
 
 ### Pourquoi ce fichier ?
 
@@ -1958,7 +1958,7 @@ Types     : ['specific', 'unspecific']
 [2026-04-12 14:30:02] INFO  [1/10] Traitement de en_specific.jsonl
 ...
 
-✅ Terminé ! 21061 prompts traités.
+Terminé ! 21061 prompts traités.
 ```
 
 ### Les arguments disponibles
@@ -1980,7 +1980,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 Quand vous lancez `python run_baseline.py`, Python ne connaît pas le dossier `src/`. Cette ligne ajoute la racine du projet au `PYTHONPATH`, ce qui permet :
 
 ```python
-from src.models.config import RunConfig  # ✅ Fonctionne maintenant
+from src.models.config import RunConfig  # Fonctionne maintenant
 ```
 
 ### Pourquoi `if __name__ == "__main__"` ?
@@ -2103,7 +2103,7 @@ def main() -> None:
     
     summary = run_pipeline(config)
     
-    print(f"\n✅ Terminé ! {summary['total_prompts']} prompts traités.")
+    print(f"\nTerminé ! {summary['total_prompts']} prompts traités.")
 
 
 if __name__ == "__main__":

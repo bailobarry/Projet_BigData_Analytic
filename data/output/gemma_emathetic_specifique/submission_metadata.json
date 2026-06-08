@@ -1,0 +1,52 @@
+{
+  "team": "Master MIAGE Toulouse",
+  "system": "ELOQUENT-Cultural-Pipeline",
+  "model": "gemma3:12b",
+  "submissionid": "run_20260520_060031_563e80",
+  "date": "2026-05-27",
+  "label": "eloquent-2026-cultural",
+  "languages": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "it"
+  ],
+  "modifications": {
+    "templates_by_language": {
+      "en": {
+        "system_prompt": "You are a thoughtful advisor who understands the human element behind every question.",
+        "prompt_prefix": "Consider the sensitive nature of the following situation:",
+        "prompt_suffix": "Give a kind and fair piece of advice."
+      },
+      "fr": {
+        "system_prompt": "Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.",
+        "prompt_prefix": "Prenez en compte la sensibilité de la situation suivante :",
+        "prompt_suffix": "Donnez un conseil bienveillant et juste."
+      },
+      "de": {
+        "system_prompt": "Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage versteht.",
+        "prompt_prefix": "Berücksichtigen Sie die Sensibilität der folgenden Situation:",
+        "prompt_suffix": "Geben Sie einen wohlwollenden und fairen Rat."
+      },
+      "es": {
+        "system_prompt": "Eres un asesor atento que comprende el factor humano detrás de cada pregunta.",
+        "prompt_prefix": "Tenga en cuenta la sensibilidad de la siguiente situación:",
+        "prompt_suffix": "Dé un consejo amable y justo."
+      },
+      "it": {
+        "system_prompt": "Sei un consulente premuroso che comprende l'elemento umano dietro ogni domanda.",
+        "prompt_prefix": "Considera la natura sensibile della seguente situazione:",
+        "prompt_suffix": "Dai un consiglio gentile e giusto."
+      }
+    },
+    "generation_params": {
+      "do_sample": true,
+      "temperature": 0.6,
+      "max_new_tokens": 256,
+      "top_p": 0.5,
+      "seed": 42
+    },
+    "notes": "Test de la stratégie empathetic_synthesis  avec le modèle gemma sur tous les datasets specifics"
+  }
+}

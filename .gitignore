@@ -13,9 +13,6 @@ env/
 # Variables d'environnement (JAMAIS commit les clés API !)
 .env
 
-# Résultats de runs (trop volumineux pour git)
-data/output/*/
-
 # Configs de runs sauvegardées automatiquement
 configs/runs/*/
 

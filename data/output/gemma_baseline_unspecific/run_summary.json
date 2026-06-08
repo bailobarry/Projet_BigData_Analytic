@@ -1,0 +1,9 @@
+{
+  "run_id": "run_20260603_182220_6327c0",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "total_prompts": 505,
+  "total_errors": 0,
+  "duration_seconds": 12378.23,
+  "finished_at": "2026-06-03T21:48:40.195610+00:00"
+}

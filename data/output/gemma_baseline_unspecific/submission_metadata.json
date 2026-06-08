@@ -1,0 +1,26 @@
+{
+  "team": "Master MIAGE Toulouse",
+  "system": "ELOQUENT-Cultural-Pipeline",
+  "model": "gemma3:12b",
+  "submissionid": "run_20260603_182220_6327c0",
+  "date": "2026-06-03",
+  "label": "eloquent-2026-cultural",
+  "languages": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "it"
+  ],
+  "modifications": {
+    "templates_by_language": {},
+    "generation_params": {
+      "do_sample": false,
+      "temperature": 0.0,
+      "max_new_tokens": 256,
+      "top_p": 1.0,
+      "seed": 42
+    },
+    "notes": "Test du modèle gemma avec la baseline sur les datasets un_specific"
+  }
+}

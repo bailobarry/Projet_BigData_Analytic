@@ -1,0 +1,9 @@
+{
+  "run_id": "gemma_cultural_expert",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "total_prompts": 505,
+  "total_errors": 0,
+  "duration_seconds": 15083.66,
+  "finished_at": "2026-05-05T09:23:50.139378+00:00"
+}

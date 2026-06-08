@@ -1,0 +1,9 @@
+{
+  "run_id": "llama_cultural_expert",
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile",
+  "total_prompts": 505,
+  "total_errors": 0,
+  "duration_seconds": 1202.78,
+  "finished_at": "2026-05-05T17:49:22.278404+00:00"
+}

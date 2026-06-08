@@ -1,0 +1,25 @@
+{
+  "team": "Master MIAGE Toulouse",
+  "system": "ELOQUENT-Cultural-Pipeline",
+  "model": "gemma3:12b",
+  "submissionid": "run_20260505_050801_83bc70",
+  "date": "2026-05-05",
+  "label": "eloquent-2026-cultural",
+  "languages": [
+    "en",
+    "fr"
+  ],
+  "modifications": {
+    "system_prompt": null,
+    "prompt_prefix_english": null,
+    "prompt_suffix_english": null,
+    "generation_params": {
+      "do_sample": false,
+      "temperature": 0.0,
+      "max_new_tokens": 256,
+      "top_p": 1.0,
+      "seed": 42
+    },
+    "notes": "Test avec la baseline (sans aucune modification des paramètres, mode déterministe)"
+  }
+}

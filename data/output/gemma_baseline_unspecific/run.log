@@ -1,0 +1,58 @@
+[2026-06-03 20:22:20] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260603_182220_6327c0\run.log
+[2026-06-03 20:22:20] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-06-03 20:22:20] INFO     pipeline – DÉBUT DU RUN : run_20260603_182220_6327c0
+[2026-06-03 20:22:20] INFO     pipeline – Description  : Test du modèle gemma avec la baseline sur les datasets un_specific
+[2026-06-03 20:22:20] INFO     pipeline – Provider     : ollama / gemma3:12b
+[2026-06-03 20:22:20] INFO     pipeline – Température  : 0.0  |  Seed : 42
+[2026-06-03 20:22:20] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-06-03 20:22:20] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260603_182220_6327c0\config.json
+[2026-06-03 20:22:21] INFO     pipeline – Provider instancié : ollama (gemma3:12b)
+[2026-06-03 20:22:21] INFO     pipeline – Pas de system prompt (mode baseline vanilla)
+[2026-06-03 20:22:21] INFO     pipeline – ────────────────────────────────────────
+[2026-06-03 20:22:21] INFO     pipeline – [1/5] Traitement de en_unspecific.jsonl
+[2026-06-03 20:22:21] INFO     pipeline –   101 prompts chargés
+[2026-06-03 20:22:21] INFO     pipeline –   101 prompts à traiter
+[2026-06-03 20:44:24] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-06-03 21:03:31] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-06-03 21:04:05] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-06-03 21:04:05] INFO     pipeline – Pas de system prompt (mode baseline vanilla)
+[2026-06-03 21:04:05] INFO     pipeline – ────────────────────────────────────────
+[2026-06-03 21:04:05] INFO     pipeline – [2/5] Traitement de fr_unspecific.jsonl
+[2026-06-03 21:04:05] INFO     pipeline –   101 prompts chargés
+[2026-06-03 21:04:05] INFO     pipeline –   101 prompts à traiter
+[2026-06-03 21:25:20] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-06-03 21:49:31] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-06-03 21:50:13] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-06-03 21:50:13] INFO     pipeline – Pas de system prompt (mode baseline vanilla)
+[2026-06-03 21:50:13] INFO     pipeline – ────────────────────────────────────────
+[2026-06-03 21:50:13] INFO     pipeline – [3/5] Traitement de de_unspecific.jsonl
+[2026-06-03 21:50:14] INFO     pipeline –   101 prompts chargés
+[2026-06-03 21:50:14] INFO     pipeline –   101 prompts à traiter
+[2026-06-03 22:10:28] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-06-03 22:33:03] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-06-03 22:33:46] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-06-03 22:33:46] INFO     pipeline – Pas de system prompt (mode baseline vanilla)
+[2026-06-03 22:33:46] INFO     pipeline – ────────────────────────────────────────
+[2026-06-03 22:33:46] INFO     pipeline – [4/5] Traitement de es_unspecific.jsonl
+[2026-06-03 22:33:46] INFO     pipeline –   101 prompts chargés
+[2026-06-03 22:33:46] INFO     pipeline –   101 prompts à traiter
+[2026-06-03 22:51:31] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-06-03 23:09:40] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-06-03 23:10:14] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-06-03 23:10:14] INFO     pipeline – Pas de system prompt (mode baseline vanilla)
+[2026-06-03 23:10:14] INFO     pipeline – ────────────────────────────────────────
+[2026-06-03 23:10:14] INFO     pipeline – [5/5] Traitement de it_unspecific.jsonl
+[2026-06-03 23:10:14] INFO     pipeline –   101 prompts chargés
+[2026-06-03 23:10:14] INFO     pipeline –   101 prompts à traiter
+[2026-06-03 23:28:10] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-06-03 23:48:05] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-06-03 23:48:40] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-06-03 23:48:40] INFO     pipeline –  Résultats dans : data\output\run_20260603_182220_6327c0
+[2026-06-03 23:48:40] INFO     pipeline –  Submission ZIP généré : data\output\run_20260603_182220_6327c0\submission.zip
+[2026-06-03 23:48:40] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-06-03 23:48:40] INFO     pipeline – FIN DU RUN : run_20260603_182220_6327c0
+[2026-06-03 23:48:40] INFO     pipeline –   Prompts traités : 505
+[2026-06-03 23:48:40] INFO     pipeline –   Erreurs         : 0
+[2026-06-03 23:48:40] INFO     pipeline –   Durée           : 12378.2 s
+[2026-06-03 23:48:40] INFO     pipeline –   Résultats dans  : data\output\run_20260603_182220_6327c0
+[2026-06-03 23:48:40] INFO     pipeline – ════════════════════════════════════════════════════════════

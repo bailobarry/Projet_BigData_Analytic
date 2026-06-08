@@ -1,0 +1,33 @@
+{
+  "run_id": "run_20260603_182220_6327c0",
+  "created_at": "2026-06-03T18:22:20.399229+00:00",
+  "description": "Test du modèle gemma avec la baseline sur les datasets un_specific",
+  "provider": {
+    "type": "ollama",
+    "model": "gemma3:12b",
+    "ollama_host": "http://localhost:11434"
+  },
+  "generation": {
+    "temperature": 0.0,
+    "max_tokens": 256,
+    "top_p": 1.0,
+    "seed": 42
+  },
+  "pipeline": {
+    "input_dir": "data/input",
+    "output_dir": "data/output",
+    "languages": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "it"
+    ],
+    "dataset_types": [
+      "unspecific"
+    ],
+    "request_delay": 2.1,
+    "system_prompt": null,
+    "prompt_template": null
+  }
+}

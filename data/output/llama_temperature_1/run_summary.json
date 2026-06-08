@@ -1,0 +1,9 @@
+{
+  "run_id": "llama_temperature_1",
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile",
+  "total_prompts": 505,
+  "total_errors": 0,
+  "duration_seconds": 1205.05,
+  "finished_at": "2026-05-04T19:52:43.649390+00:00"
+}

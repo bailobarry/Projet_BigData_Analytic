@@ -1,0 +1,58 @@
+[2026-05-06 20:25:05] INFO     pipeline – Logging initialisé – fichier : data\output\run_20260506_182505_ad8456\run.log
+[2026-05-06 20:25:05] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-06 20:25:05] INFO     pipeline – DÉBUT DU RUN : run_20260506_182505_ad8456
+[2026-05-06 20:25:05] INFO     pipeline – Description  : Test avec la stratégie empathetic_synthesis
+[2026-05-06 20:25:05] INFO     pipeline – Provider     : groq / llama-3.3-70b-versatile
+[2026-05-06 20:25:05] INFO     pipeline – Température  : 0.0  |  Seed : 42
+[2026-05-06 20:25:05] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-06 20:25:05] INFO     pipeline – Configuration sauvegardée dans data\output\run_20260506_182505_ad8456\config.json
+[2026-05-06 20:25:10] INFO     pipeline – Provider instancié : groq (llama-3.3-70b-versatile)
+[2026-05-06 20:25:10] INFO     pipeline – System prompt actif : 'You are a thoughtful advisor who understands the human element behind every ques…'
+[2026-05-06 20:25:10] INFO     pipeline – ────────────────────────────────────────
+[2026-05-06 20:25:10] INFO     pipeline – [1/5] Traitement de en_unspecific.jsonl
+[2026-05-06 20:25:10] INFO     pipeline –   101 prompts chargés
+[2026-05-06 20:25:10] INFO     pipeline –   101 prompts à traiter
+[2026-05-06 20:27:09] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-05-06 20:29:06] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-05-06 20:29:08] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-05-06 20:29:09] INFO     pipeline – System prompt actif : 'Vous êtes un conseiller attentif qui comprend l'humain derrière chaque question.…'
+[2026-05-06 20:29:09] INFO     pipeline – ────────────────────────────────────────
+[2026-05-06 20:29:09] INFO     pipeline – [2/5] Traitement de fr_unspecific.jsonl
+[2026-05-06 20:29:09] INFO     pipeline –   101 prompts chargés
+[2026-05-06 20:29:09] INFO     pipeline –   101 prompts à traiter
+[2026-05-06 20:31:08] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-05-06 20:33:12] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-05-06 20:33:14] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-05-06 20:33:15] INFO     pipeline – System prompt actif : 'Sie sind ein aufmerksamer Berater, der das Menschliche hinter jeder Frage verste…'
+[2026-05-06 20:33:15] INFO     pipeline – ────────────────────────────────────────
+[2026-05-06 20:33:15] INFO     pipeline – [3/5] Traitement de de_unspecific.jsonl
+[2026-05-06 20:33:15] INFO     pipeline –   101 prompts chargés
+[2026-05-06 20:33:15] INFO     pipeline –   101 prompts à traiter
+[2026-05-06 20:35:16] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-05-06 20:37:18] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-05-06 20:37:20] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-05-06 20:37:20] INFO     pipeline – System prompt actif : 'Eres un asesor atento que comprende el factor humano detrás de cada pregunta.…'
+[2026-05-06 20:37:21] INFO     pipeline – ────────────────────────────────────────
+[2026-05-06 20:37:21] INFO     pipeline – [4/5] Traitement de es_unspecific.jsonl
+[2026-05-06 20:37:21] INFO     pipeline –   101 prompts chargés
+[2026-05-06 20:37:21] INFO     pipeline –   101 prompts à traiter
+[2026-05-06 20:39:20] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-05-06 20:41:20] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-05-06 20:41:23] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-05-06 20:41:23] INFO     pipeline – System prompt actif : 'Sei un consulente premuroso che comprende l'elemento umano dietro ogni domanda.…'
+[2026-05-06 20:41:23] INFO     pipeline – ────────────────────────────────────────
+[2026-05-06 20:41:23] INFO     pipeline – [5/5] Traitement de it_unspecific.jsonl
+[2026-05-06 20:41:23] INFO     pipeline –   101 prompts chargés
+[2026-05-06 20:41:23] INFO     pipeline –   101 prompts à traiter
+[2026-05-06 20:43:23] INFO     pipeline –   Progression : 50/101  (erreurs: 0)
+[2026-05-06 20:45:24] INFO     pipeline –   Progression : 100/101  (erreurs: 0)
+[2026-05-06 20:45:26] INFO     pipeline –   Progression : 101/101  (erreurs: 0)
+[2026-05-06 20:45:26] INFO     pipeline –  Résultats dans : data\output\run_20260506_182505_ad8456
+[2026-05-06 20:45:26] INFO     pipeline –  Submission ZIP généré : data\output\run_20260506_182505_ad8456\submission.zip
+[2026-05-06 20:45:26] INFO     pipeline – ════════════════════════════════════════════════════════════
+[2026-05-06 20:45:26] INFO     pipeline – FIN DU RUN : run_20260506_182505_ad8456
+[2026-05-06 20:45:26] INFO     pipeline –   Prompts traités : 505
+[2026-05-06 20:45:26] INFO     pipeline –   Erreurs         : 0
+[2026-05-06 20:45:26] INFO     pipeline –   Durée           : 1215.8 s
+[2026-05-06 20:45:26] INFO     pipeline –   Résultats dans  : data\output\run_20260506_182505_ad8456
+[2026-05-06 20:45:26] INFO     pipeline – ════════════════════════════════════════════════════════════
