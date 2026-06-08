@@ -2112,23 +2112,3 @@ if __name__ == "__main__":
     # (pas si on l'importe)
 ```
 
----
-
-## RÉSUMÉ : ORDRE D'IMPLÉMENTATION
-
-Pour tout réécrire de zéro, suivez cet ordre :
-
-1. **`src/models/schemas.py`** – Les structures de données (5 min)
-2. **`src/models/config.py`** – La configuration (15 min)
-3. **`src/providers/base.py`** – L'interface abstraite (5 min)
-4. **`src/providers/gemini_provider.py`** – Le provider Gemini (10 min)
-5. **`src/providers/mistral_nemo_provider.py`** – Le provider Ollama (10 min)
-6. **`src/providers/__init__.py`** – La factory (5 min)
-7. **`src/promptings/system_prompt.py`** – Le prompting (5 min)
-8. **`src/pipelines/logs.py`** – Le logging (5 min)
-9. **`src/pipelines/runner.py`** – Le pipeline (20 min)
-10. **`api/routes.py`** – L'API (15 min)
-11. **`run_baseline.py`** – Le script CLI (10 min)
-
-**Total estimé : ~1h30** si vous comprenez bien chaque concept.
-
