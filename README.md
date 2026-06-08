@@ -149,14 +149,9 @@ Puis editer `.env` :
 # Cle API Groq pour le provider (gratuit) : https://console.groq.com/keys
 GROQ_API_KEY=ta_cle_groq_ici
 
-# Cle API Groq pour le LLM Judge (OBLIGATOIRE si vous utilisez l'analyse LLM Judge)
+# Cle API Groq pour le LLM Judge
 GROQ_JUDGE_API_KEY=ta_cle_groq_judge_ici
 
-# Option multi-cles pour le provider (prioritaire si renseignee)
-# GROQ_API_KEYS=cle_compte_1,cle_compte_2,cle_compte_3
-
-# Limite locale en req/min par cle (provider run)
-GROQ_RPM_PER_KEY=1500
 ```
 
 ### 4. (Optionnel) Installer Ollama pour le modèle local
